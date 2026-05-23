@@ -71,6 +71,12 @@
 
 ---
 
+## ✅ Completed: v1.0.5 Post-fixes — by Claude (2026-05-23)
+
+- [x] Hotfix: PWA bottom controls clipping — `#touch-controls` had `padding-bottom:max(16px,env(safe-area-inset-bottom))` duplicating the safe area already applied by `#app`. In standalone PWA mode (home indicator = 34px) controls rendered 18px taller than `initLayout`'s fixed `ctrlH=188`, causing overflow and clipping. Fixed by removing `env()` from `#touch-controls` (fixed 16px only); `#app padding-bottom:max(8px,var(--safe-bottom))` handles safe area exclusively.
+
+---
+
 ## 🔮 Planned: v1.0.6 (Settings & Accessibility)
 
 - [ ] Task 1: **Ghost Piece Toggle** — add an on/off switch in the pause-menu settings panel; persist choice to `localStorage`.
