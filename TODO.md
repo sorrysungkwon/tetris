@@ -55,10 +55,18 @@
 
 ---
 
-## 🔮 Planned: v1.1 (Sprint Mode)
+## ✅ Completed: v1.0.4 Post-fixes — by Antigravity (2026-05-23)
 
-- [ ] Task 1: Implement Sprint mode — clear 40 lines as fast as possible; show elapsed time instead of score.
-- [ ] Task 2: Separate Sprint leaderboard (time-based, TODAY / ALL TIME tabs).
-- [ ] Task 3: Mode selection on start screen — Marathon vs Sprint.
-- [ ] Task 4: Rename existing endless mode to "Marathon" across all UI labels.
-- [ ] Task 5: Document v1.1 changes in `README.md` roadmap and update this file.
+- [x] Fix: Expand leaderboard table to fill 100% of container width using `display: table` and `.lb-inner` scrolling.
+- [x] Polish: Redesign Canvas Share image to a premium 1200x630 layout, featuring the game board snapshot and a sleek glassmorphism stats panel.
+
+---
+
+## 🔮 Planned: v1.1 (Sprint Mode & Polish)
+
+- [ ] Task 1: **Sprint Mode Engine**: Implement game mode logic — clear 40 lines as fast as possible. The game ends when 40 lines are cleared, recording elapsed time.
+- [ ] Task 2: **Sprint UI**: Display an elapsed stopwatch timer (e.g. `01:23.45`) and remaining lines in the side panels.
+- [ ] Task 3: **Mode Selection**: Add a sleek toggle/button group on the start screen to select between "MARATHON" (endless, score-based) and "SPRINT" (40 lines, time-based).
+- [ ] Task 4: **Sprint Leaderboard**: Create a separate time-based Redis leaderboard (ascending sort, fastest times win) with TODAY / WEEKLY / ALL TIME tabs.
+- [ ] Task 5: **Sprint Stats & Share**: Update `STATS` overlay and Canvas Share to properly format and display Sprint times and ranks.
+- [ ] Task 6: **Settings Polish**: Add a toggle in settings to enable/disable the Ghost Piece.
