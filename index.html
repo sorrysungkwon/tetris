@@ -342,7 +342,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">NEON TETRIS</span>
-    <span class="dh-version">v0.9.1</span>
+    <span class="dh-version">v0.9.2</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -829,7 +829,7 @@ function drawBoard(){
   if(gameRunning&&!gamePaused){
     let topRow=ROWS;
     for(let r=0;r<ROWS;r++){if(board[r].some(v=>v!==null)){topRow=r;break;}}
-    const dangerThreshold=Math.floor(ROWS*0.35); // row 7
+    const dangerThreshold=Math.floor(ROWS*0.25); // row 5
     if(topRow<dangerThreshold){
       dangerPulse++;
       const speed=0.06+((dangerThreshold-topRow)/dangerThreshold)*0.1;
@@ -944,6 +944,18 @@ function updateUI(){
 // ─── Audio ────────────────────────────────────────────────────────────────────
 let audioCtx=null,masterGain=null,bgmPlaying=false,bgmNextTime=0,bgmBeat=0,bgmScheduler=null,bgmNodes=[];
 
+// iOS routes Web Audio to earpiece by default; playing a silent <audio> forces speaker output
+let _speakerUnlocked=false;
+function unlockSpeaker(){
+  if(_speakerUnlocked)return;
+  _speakerUnlocked=true;
+  const a=document.createElement('audio');
+  // minimal silent WAV (0 samples, valid header)
+  a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+  a.volume=0.001;a.loop=true;
+  a.play().catch(()=>{});
+}
+
 function getAudioCtx(){
   if(!audioCtx){
     audioCtx=new(window.AudioContext||window.webkitAudioContext)();
@@ -951,6 +963,7 @@ function getAudioCtx(){
     masterGain.connect(audioCtx.destination);
     masterGain.gain.value=muteAudio?0:1;
   }
+  unlockSpeaker();
   if(audioCtx.state==='suspended')audioCtx.resume();
   return audioCtx;
 }
@@ -1027,10 +1040,12 @@ function bgmScheduleLoop(){
   bgmScheduler=setTimeout(bgmScheduleLoop,100);
 }
 
-function startBGM(){
-  stopBGM();getAudioCtx();
+async function startBGM(){
+  stopBGM();
+  const ctx=getAudioCtx();
+  if(ctx.state!=='running')await ctx.resume();
   bgmPlaying=true;bgmBeat=0;
-  bgmNextTime=audioCtx.currentTime+0.1;
+  bgmNextTime=ctx.currentTime+0.1;
   bgmScheduleLoop();
 }
 
@@ -1054,6 +1069,7 @@ function playBeep(freq,type,dur,vol,delay=0,freqEnd=null){
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur);
   osc.start(t);osc.stop(t+dur);
+  osc.onended=()=>{try{osc.disconnect();gain.disconnect();}catch(e){}};
 }
 
 function sfxMove(){playBeep(220,'square',.04,.1);}
@@ -1148,15 +1164,13 @@ makeTouchBtn('btn-pause', ()=>togglePause(),'any');
 
 // ─── Game loop ────────────────────────────────────────────────────────────────
 function gameLoop(ts){
-  try{
-    const dt=prevTs?Math.min(ts-prevTs,100):16;prevTs=ts;
-    drawBackground();
-    if(!gamePaused&&gameRunning&&current){
-      if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
-      else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1))current.y++;else{lockActive=true;lockTimer=LOCK_MS;}}
-    }
-    drawBoard();updateParticles();applyShake();
-  }catch(e){console.error(e);}
+  const dt=prevTs?Math.min(ts-prevTs,100):16;prevTs=ts;
+  drawBackground();
+  if(!gamePaused&&gameRunning&&current){
+    if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
+    else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1))current.y++;else{lockActive=true;lockTimer=LOCK_MS;}}
+  }
+  drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
 }
 
