@@ -53,3 +53,201 @@ time=2026-05-23T00:55:56.588Z level=WARN msg="daemon: agent-event publish failed
 time=2026-05-23T01:00:09.291Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
 time=2026-05-23T01:06:34.269Z level=INFO msg="usage poller: synced" count=1
 time=2026-05-23T01:08:39.177Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T01:29:05.117Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:30:05.675Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:30:54.562Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:31:06.923Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:32:07.507Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:34:33.118Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:36:21.967Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:37:11.440Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T01:37:22.530Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:38:23.118Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:38:41.343Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T01:38:59.785Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T01:39:40.577Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T01:44:51.316Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:47:04.940Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:47:53.280Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:48:53.872Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T01:53:45.093Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:07:53.401Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:09:54.741Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:10:55.311Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:11:12.584Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:12:32.562Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:14:21.532Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:16:22.849Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:18:24.043Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:18:55.340Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:19:13.073Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:19:36.934Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:19:37.134Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:19:42.644Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:19:46.253Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:22:50.816Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:22:55.596Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:23:06.855Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:23:12.837Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:23:28.110Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:23:35.297Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:23:51.487Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:28:06.534Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:37:36.458Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:37:43.788Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:37:50.873Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:40:25.918Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:41:50.835Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:42:33.805Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:43:52.681Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:44:46.091Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:44:53.290Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:45:09.651Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:45:50.147Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:46:05.084Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:47:11.104Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:47:29.218Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:47:55.128Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:48:12.143Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:48:17.572Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:48:21.790Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:48:37.778Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:48:56.332Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:49:49.139Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:49:53.358Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:52:34.198Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:53:08.699Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T02:55:36.101Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T02:57:25.148Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:00:51.336Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:01:53.415Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T03:01:59.873Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T03:02:52.713Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:03:53.344Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:06:55.151Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:07:55.731Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:08:32.367Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:09:20.659Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:10:21.287Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:11:14.564Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T03:11:21.944Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:13:23.586Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:14:24.368Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T03:18:47.270Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T03:19:20.700Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T03:44:55.565Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T04:15:02.942Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T04:20:05.945Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T04:50:25.302Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T04:59:30.706Z level=WARN msg="ws bridge dropped" err="failed to get reader: failed to read frame header: EOF" backoff=1s
+time=2026-05-23T04:59:32.149Z level=INFO msg="ws bridge connected" hostId=host_50eede2845184cab97afec94fa8b1f8c
+time=2026-05-23T05:20:32.636Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T05:50:51.825Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T06:21:06.047Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T06:39:42.165Z level=WARN msg="ws bridge dropped" err="failed to get reader: failed to read frame header: EOF" backoff=2s
+time=2026-05-23T06:39:44.712Z level=INFO msg="ws bridge connected" hostId=host_50eede2845184cab97afec94fa8b1f8c
+time=2026-05-23T06:51:21.353Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:21:53.554Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:23:54.684Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:25:07.651Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:26:32.681Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:28:21.661Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:28:34.026Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:29:22.662Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:30:02.470Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T07:34:25.530Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:34:37.787Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:38:52.632Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:39:53.252Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:39:58.304Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T07:41:54.481Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:42:55.132Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:43:55.723Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:44:08.093Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:45:21.230Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:46:22.944Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T07:49:23.268Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:50:29.698Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T07:51:24.483Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:54:50.628Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T07:57:51.777Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T07:59:37.048Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:01:06.974Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:04:23.777Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:08:06.149Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:08:55.236Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:09:56.748Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:11:22.841Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:14:03.080Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:15:16.770Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:15:25.498Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:15:36.565Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:16:31.064Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:17:08.018Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:17:32.824Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:18:01.053Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:18:14.563Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:18:29.471Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:18:46.331Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:18:46.486Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:19:04.485Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:19:34.533Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:20:00.650Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:20:46.105Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:20:53.472Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:21:26.911Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:21:45.794Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:22:16.332Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:22:21.075Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:23:18.599Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:23:42.666Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:24:19.552Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T08:25:25.077Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:27:36.743Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:46:07.110Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:50:00.958Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:53:58.924Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:57:50.006Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:57:57.049Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:58:03.812Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:58:09.051Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T08:58:22.802Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:01:03.241Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:01:05.995Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:01:18.018Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:01:27.450Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:01:32.369Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:02:00.858Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:02:42.419Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:04:37.255Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:04:46.045Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:04:58.020Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:16:33.684Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:18:48.492Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:18:49.287Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:18:56.349Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:20:27.947Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:22:43.279Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:24:22.658Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:24:31.197Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:24:33.291Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:25:35.414Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:25:47.974Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:26:37.116Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:28:51.686Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:30:21.523Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:30:25.411Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:30:53.406Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:33:54.627Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:36:08.209Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:38:21.379Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:38:32.176Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:39:21.945Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:42:14.657Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:42:23.817Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:43:42.852Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:45:25.839Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T09:46:29.469Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:47:07.332Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:47:11.863Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T09:50:04.273Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
