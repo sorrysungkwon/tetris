@@ -1392,17 +1392,17 @@ async function loadStartLeaderboard(){
   try{
     const r=await fetch('/api/leaderboard');
     _lbCache=await r.json();
-    renderLbTab(document.querySelector('.lb-tab.active')?document.querySelector('.lb-tab.active').dataset.tab:'daily');
+    const activeTab=document.querySelector('.lb-tab.active');
+    renderLbTab(activeTab?activeTab.dataset.tab:'daily');
   }catch(e){}
 }
 
 function renderLbTab(tab){
-  const el=document.getElementById('start-lb');
-  if(!el)return;
+  const inner=document.querySelector('.lb-inner');
+  if(!inner)return;
   const entries=tab==='daily'?(_lbCache.dailyBoard||[]):(_lbCache.board||[]);
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const inner=el.querySelector('.lb-inner');
-  if(inner)inner.innerHTML=lbHTML(entries,'');
+  inner.innerHTML=lbHTML(entries,'');
 }
 
 function showStartScreen(){
