@@ -1178,7 +1178,7 @@ function endGame(){
       <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600;margin-bottom:14px">BEST: ${hiScore.toLocaleString()}</div>
       <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
       <div class="btn-row">
-        <button class="action-btn sm" onclick="submitScore()">SUBMIT</button>
+        <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
         <button class="action-btn sm ghost" onclick="startGame()">PLAY AGAIN</button>
       </div>
       <div id="lb-result" style="margin-top:10px;width:100%;display:flex;flex-direction:column;align-items:center"></div>`;
@@ -1202,22 +1202,34 @@ function lbHTML(board, myName) {
 async function submitScore(){
   const inp=document.getElementById('lb-name');
   const res=document.getElementById('lb-result');
-  if(!inp||!res)return;
+  const btn=document.getElementById('lb-submit-btn');
+  if(!inp||!res||!btn)return;
+  if(btn.disabled)return;
   const name=inp.value.trim();
   if(!name){inp.focus();return;}
   localStorage.setItem('neonTetrisName',name);
+
+  // 제출 즉시 폼 숨기고 버튼 비활성화
+  btn.disabled=true;
+  inp.disabled=true;
   res.innerHTML='<div class="sub">SUBMITTING...</div>';
+
   try{
     const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score})});
     const data=await r.json();
     if(data.board){
       const rankMsg=data.rank?`<div class="sub" style="color:#ffe600;margin-bottom:4px">🏆 YOUR RANK: #${data.rank}</div>`:'';
-      res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm ghost" onclick="startGame()">PLAY AGAIN</button></div>`;
+      // 제출 후: 입력 폼 완전히 숨기고 결과만 표시
+      inp.style.display='none';
+      btn.closest('.btn-row').style.display='none';
+      res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="startGame()">PLAY AGAIN</button></div>`;
     }else{
-      res.innerHTML='<div class="sub">저장 실패</div>';
+      btn.disabled=false;inp.disabled=false;
+      res.innerHTML='<div class="sub">저장 실패 — 다시 시도해주세요</div>';
     }
   }catch(e){
-    res.innerHTML='<div class="sub">네트워크 오류</div>';
+    btn.disabled=false;inp.disabled=false;
+    res.innerHTML='<div class="sub">네트워크 오류 — 다시 시도해주세요</div>';
   }
 }
 
