@@ -39,7 +39,7 @@ A Glowtris game with neon aesthetic built as a single HTML file.
 | ~~v0.9~~ ✅ | Online leaderboard (Upstash Redis), result share (Web Share API) |
 | ~~v0.9.1~~ ✅ | Code optimisation, refactor, bug fixes, desktop leaderboard overlay fix |
 | ~~v0.9.2~~ ✅ | iOS speaker fix (silent audio unlock), startBGM async resume, danger threshold 25%, SFX node cleanup |
-| v1.0 | Polish & release |
+| ~~v1.0~~ ✅ | OG image + social meta, PWA manifest + favicon, all-clear bonus, NEW BEST effect + gold particles, daily leaderboard (TODAY/ALL TIME tabs), personal game history |
 
 ## Rules
 

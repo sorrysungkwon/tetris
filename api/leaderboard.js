@@ -1,7 +1,9 @@
 const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
-const KEY = 'neon-glowtris-lb';
+const KEY_ALL   = 'neon-glowtris-lb';
+const KEY_DAILY = () => `neon-glowtris-daily-${new Date().toISOString().slice(0,10)}`; // e.g. neon-glowtris-daily-2026-05-23
 const TOP = 10;
+const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
 
 async function redis(cmd) {
   const res = await fetch(`${REDIS_URL}/${cmd}`, {
@@ -17,6 +19,16 @@ function parseMember(member) {
   return idx === -1 ? decoded : decoded.slice(0, idx);
 }
 
+async function getBoard(key) {
+  const data = await redis(`zrange/${key}/0/${TOP - 1}/rev/withscores`);
+  const raw = data.result || [];
+  const board = [];
+  for (let i = 0; i < raw.length; i += 2) {
+    board.push({ name: parseMember(raw[i]), score: parseInt(raw[i + 1], 10) });
+  }
+  return board;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -24,14 +36,11 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
 
+  const daily = KEY_DAILY();
+
   if (req.method === 'GET') {
-    const data = await redis(`zrange/${KEY}/0/${TOP - 1}/rev/withscores`);
-    const raw = data.result || [];
-    const board = [];
-    for (let i = 0; i < raw.length; i += 2) {
-      board.push({ name: parseMember(raw[i]), score: parseInt(raw[i + 1], 10) });
-    }
-    return res.status(200).json({ board });
+    const [board, dailyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily)]);
+    return res.status(200).json({ board, dailyBoard });
   }
 
   if (req.method === 'POST') {
@@ -42,25 +51,31 @@ export default async function handler(req, res) {
     const clean = String(name).slice(0, 12).replace(/[^\w가-힣ㄱ-ㅎㅏ-ㅣ\s\-_.]/g, '');
     if (!clean) return res.status(400).json({ error: 'invalid name' });
 
-    // name#timestamp ensures every submission is a unique entry
     const member = encodeURIComponent(`${clean}#${Date.now()}`);
-    await redis(`zadd/${KEY}/${score}/${member}`);
 
-    // keep only top 100 entries
-    await redis(`zremrangebyrank/${KEY}/0/-101`);
+    // Write to both all-time and daily boards in parallel
+    await Promise.all([
+      redis(`zadd/${KEY_ALL}/${score}/${member}`),
+      redis(`zadd/${daily}/${score}/${member}`),
+    ]);
 
-    const data = await redis(`zrange/${KEY}/0/${TOP - 1}/rev/withscores`);
-    const raw = data.result || [];
-    const board = [];
-    for (let i = 0; i < raw.length; i += 2) {
-      board.push({ name: parseMember(raw[i]), score: parseInt(raw[i + 1], 10) });
-    }
+    // Trim all-time to top 100; set TTL on daily key
+    await Promise.all([
+      redis(`zremrangebyrank/${KEY_ALL}/0/-101`),
+      redis(`expire/${daily}/${DAILY_TTL}`),
+    ]);
 
-    // rank = number of entries scoring higher than this submission + 1
-    const rankData = await redis(`zcount/${KEY}/${score + 1}/+inf`);
+    const [board, dailyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily)]);
+
+    // rank on all-time board
+    const rankData = await redis(`zcount/${KEY_ALL}/${score + 1}/+inf`);
     const rank = (rankData.result || 0) + 1;
 
-    return res.status(200).json({ board, rank });
+    // daily rank
+    const dailyRankData = await redis(`zcount/${daily}/${score + 1}/+inf`);
+    const dailyRank = (dailyRankData.result || 0) + 1;
+
+    return res.status(200).json({ board, dailyBoard, rank, dailyRank });
   }
 
   return res.status(405).json({ error: 'method not allowed' });
