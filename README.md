@@ -47,8 +47,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v0.9.1~~ ✅ | Code optimisation, refactor, bug fixes, desktop leaderboard overlay fix |
 | ~~v0.9.2~~ ✅ | iOS speaker fix, audio resume, danger warning overlay, SFX node cleanup |
 | ~~v1.0~~ ✅ | All-clear bonus, NEW BEST effect, daily leaderboard, PWA, OG image — **LAUNCHED** |
-| ~~v1.0.1~~ ✅ | Rename to Glowtris, clean up variable names, update all URLs and metadata |
-| ~~v1.0.2~~ ✅ | **Premium Visual Upgrade**: Color-shifting nebulae, Glassmorphism 3D panels, horizontal landing shockwaves, keyboard press feedback, and level-up sweep. |
+| ~~v1.0.1~~ ✅ | Rename to Glowtris, variable clean up, and **Premium Visual Upgrade** (Color-shifting nebulae, Glassmorphism 3D panels, landing shockwaves, keyboard press feedback, and level-up sweep). |
 
 ## Rules
 
