@@ -1769,7 +1769,9 @@ function showStartScreen(){
     <div class="btn-row" style="margin-bottom:6px">
       <button class="action-btn" onclick="startGame()">START GAME</button>
     </div>
-    <button class="toggle-btn" id="htp-btn" onclick="toggleHowToPlay()" style="max-width:240px">▸ HOW TO PLAY</button>
+    <div class="btn-row" style="margin-bottom:0">
+      <button class="action-btn ghost" id="htp-btn" onclick="toggleHowToPlay()">▸ HOW TO PLAY</button>
+    </div>
     <div class="htp-panel" id="htp-panel" style="display:none">
       <div class="htp-section">KEYBOARD</div>
       <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
@@ -1780,11 +1782,11 @@ function showStartScreen(){
       <div class="htp-row"><span class="htp-key">P</span><span class="htp-lbl">Pause</span></div>
       <div class="htp-row"><span class="htp-key">M</span><span class="htp-lbl">Mute</span></div>
       <div class="htp-section">TOUCH</div>
-      <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
-      <div class="htp-row"><span class="htp-key">↓</span><span class="htp-lbl">Soft Drop</span></div>
-      <div class="htp-row"><span class="htp-key">⚡</span><span class="htp-lbl">Hard Drop</span></div>
-      <div class="htp-row"><span class="htp-key">↺</span><span class="htp-lbl">Rotate</span></div>
-      <div class="htp-row"><span class="htp-key">⇄</span><span class="htp-lbl">Hold</span></div>
+      <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_left</span><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_right</span></span><span class="htp-lbl">Move</span></div>
+      <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">keyboard_arrow_down</span></span><span class="htp-lbl">Soft Drop</span></div>
+      <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">keyboard_double_arrow_down</span></span><span class="htp-lbl">Hard Drop</span></div>
+      <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">rotate_right</span></span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">swap_horiz</span></span><span class="htp-lbl">Hold</span></div>
     </div>`;
   $overlay.style.display='flex';
   loadStartLeaderboard();
