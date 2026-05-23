@@ -10,7 +10,7 @@ async function redis(cmd) {
   return res.json();
 }
 
-// member 형식: "이름#타임스탬프" → 표시 시 # 앞부분만 사용
+// member format: "name#timestamp" — display only the part before #
 function parseMember(member) {
   const decoded = decodeURIComponent(member);
   const idx = decoded.lastIndexOf('#');
@@ -42,11 +42,11 @@ export default async function handler(req, res) {
     const clean = String(name).slice(0, 12).replace(/[^\w가-힣ㄱ-ㅎㅏ-ㅣ\s\-_.]/g, '');
     if (!clean) return res.status(400).json({ error: 'invalid name' });
 
-    // 이름#타임스탬프 → 항상 새 항목으로 추가
+    // name#timestamp ensures every submission is a unique entry
     const member = encodeURIComponent(`${clean}#${Date.now()}`);
     await redis(`zadd/${KEY}/${score}/${member}`);
 
-    // 상위 100개만 유지
+    // keep only top 100 entries
     await redis(`zremrangebyrank/${KEY}/0/-101`);
 
     const data = await redis(`zrange/${KEY}/0/${TOP - 1}/rev/withscores`);
@@ -56,7 +56,7 @@ export default async function handler(req, res) {
       board.push({ name: parseMember(raw[i]), score: parseInt(raw[i + 1], 10) });
     }
 
-    // 내 항목의 순위: 전체에서 내 점수보다 높은 항목 수 + 1
+    // rank = number of entries scoring higher than this submission + 1
     const rankData = await redis(`zcount/${KEY}/${score + 1}/+inf`);
     const rank = (rankData.result || 0) + 1;
 
