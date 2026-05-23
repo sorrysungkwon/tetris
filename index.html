@@ -207,6 +207,18 @@
   .tbtn-hold.pressed { background:rgba(255,230,0,0.12); box-shadow:0 0 16px rgba(255,230,0,0.32); }
   .tbtn-pause { border-color:rgba(0,255,136,0.35); color:rgba(0,255,136,0.85); }
   .tbtn-pause.pressed { background:rgba(0,255,136,0.12); }
+  .tbtn-mute { border-color:rgba(0,200,255,0.35); color:rgba(0,200,255,0.85); }
+  .tbtn-mute.pressed { background:rgba(0,200,255,0.12); }
+  .tbtn-mute.muted { border-color:rgba(255,0,128,0.4); color:rgba(255,0,128,0.9); }
+
+  /* Settings in pause overlay */
+  .settings-box { width:100%; max-width:230px; display:flex; flex-direction:column; gap:10px; margin:8px 0 14px; }
+  .settings-row { display:flex; align-items:center; gap:10px; }
+  .settings-lbl { font-size:9px; letter-spacing:2px; color:rgba(0,200,255,0.6); width:36px; }
+  .settings-val { font-size:9px; color:var(--cyan); width:44px; text-align:right; letter-spacing:1px; }
+  input[type=range].neon-range { flex:1; accent-color:var(--cyan); cursor:pointer; }
+  .toggle-btn { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; padding:7px 12px; border-radius:5px; cursor:pointer; border:1px solid rgba(0,200,255,0.4); background:rgba(0,200,255,0.12); color:var(--cyan); width:100%; transition:all .2s; }
+  .toggle-btn.muted { border-color:rgba(255,0,128,0.45); background:rgba(255,0,128,0.12); color:var(--pink); }
 
   /* ── DESKTOP / TABLET (≥ 600px): fixed-size buttons ── */
   @media (min-width:600px) {
@@ -330,6 +342,9 @@
       <button class="tbtn tbtn-md tbtn-drop" id="btn-drop">
         <span class="material-icons-round">keyboard_double_arrow_down</span>
       </button>
+      <button class="tbtn tbtn-sm tbtn-mute" id="btn-mute" onclick="toggleMute()">
+        <span class="material-icons-round" id="mute-icon">volume_up</span>
+      </button>
       <button class="tbtn tbtn-sm tbtn-pause" id="btn-pause">
         <span class="material-icons-round">pause</span>
       </button>
@@ -365,6 +380,7 @@ const PIECES = {
   L:{shape:[[0,0,1],[1,1,1]],color:'#ff8800'},
 };
 const SCORE_TABLE=[0,100,300,500,800];
+const TSPIN_SCORE=[400,800,1200,1600];
 const LEVEL_LINES=10;
 const LOCK_MS=500;
 
@@ -383,6 +399,8 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
+let lastWasRotate=false;
+let muteAudio=false,das=150,arr=50;
 
 // ─── Canvas refs ──────────────────────────────────────────────────────────────
 const gc  = document.getElementById('game-canvas');
@@ -480,12 +498,13 @@ function rotate(shape){const R=shape.length,C=shape[0].length;return Array.from(
 
 function rotatePiece(){
   const rot=rotate(current.shape);
-  for(const k of [0,-1,1,-2,2]){if(validPos(current,k,0,rot)){current.shape=rot;current.x+=k;cancelLock();sfxRotate();return;}}
+  for(const k of [0,-1,1,-2,2]){if(validPos(current,k,0,rot)){current.shape=rot;current.x+=k;cancelLock();lastWasRotate=true;sfxRotate();return;}}
 }
 
 function cancelLock(){lockActive=false;lockTimer=0;}
 
 function lockPiece(){
+  const tspin=checkTSpin();
   lockActive=false;lockTimer=0;
   for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
     if(!current.shape[r][c])continue;
@@ -497,9 +516,13 @@ function lockPiece(){
   for(let r=ROWS-1;r>=0;r--){if(board[r].every(v=>v!==null))cleared.push(r);}
   if(cleared.length>0){
     flashLines=[...cleared];flashTimer=12;combo++;
-    const pts=SCORE_TABLE[Math.min(cleared.length,4)]*level*(combo>1?combo:1);
+    const mul=combo>1?combo:1;
+    const pts=tspin
+      ?TSPIN_SCORE[Math.min(cleared.length,3)]*level*mul
+      :SCORE_TABLE[Math.min(cleared.length,4)]*level*mul;
     sfxLineClear(cleared.length);
-    addScore(pts,cleared.length);
+    if(tspin){sfxTSpin();shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}
+    addScore(pts,cleared.length,tspin);
     lines+=cleared.length;level=Math.floor(lines/LEVEL_LINES)+1;
     dropInterval=Math.max(80,800-(level-1)*70);
     updateUI();
@@ -507,31 +530,43 @@ function lockPiece(){
     setTimeout(()=>{
       for(const r of snap.slice().sort((a,b)=>a-b)){board.splice(r,1);board.unshift(Array(COLS).fill(null));}
       spawnLineClearParticles(snap);
-      if(snap.length>=4){shakeFrames=25;shakeMag=0.7;}
+      if(snap.length>=4&&!tspin){shakeFrames=25;shakeMag=0.7;}
       flashLines=[];
     },120);
   } else {
-    combo=0;document.getElementById('combo-display').textContent='';
+    if(tspin){sfxTSpin();addScore(TSPIN_SCORE[0]*level,0,true);}
+    else{combo=0;document.getElementById('combo-display').textContent='';}
   }
+  lastWasRotate=false;
   spawnLockParticles();
   spawnPiece();
 }
 
-function addScore(pts,n){
+function addScore(pts,n,tspin=false){
   score+=pts;if(score>hiScore){hiScore=score;localStorage.setItem('neonGlowtrisHi',hiScore);}
-  updateUI();showScorePopup(pts,n);
+  updateUI();showScorePopup(pts,n,tspin);
 }
 
-function showScorePopup(pts,n){
+function showScorePopup(pts,n,tspin=false){
   const popup=document.getElementById('score-popup');
+  const tspinLabels=['T-SPIN!','T-SPIN SINGLE','T-SPIN DOUBLE!!','T-SPIN TRIPLE!!!'];
   const labels=['','','DOUBLE!','TRIPLE!','GLOWTRIS!!'];
-  popup.textContent=n>=4?`★ GLOWTRIS ★ +${pts}`:(n>=2?`${labels[n]} +${pts}`:`+${pts}`);
-  popup.style.cssText=`left:50%;top:50%;transform:translate(-50%,-50%);opacity:1;font-size:${n>=4?'24px':'16px'};color:${n>=4?'#ff0080':'#fff'};text-shadow:${n>=4?'0 0 28px #ff0080':'0 0 16px #00c8ff'};transition:none;position:absolute;pointer-events:none;font-family:Orbitron,monospace;font-weight:900;z-index:20;`;
+  let txt,color,sz,glow;
+  if(tspin){
+    txt=`${tspinLabels[Math.min(n,3)]} +${pts}`;color='#a000ff';sz=n>=2?'19px':'14px';glow='0 0 24px #a000ff';
+  } else if(n>=4){
+    txt=`★ GLOWTRIS ★ +${pts}`;color='#ff0080';sz='24px';glow='0 0 28px #ff0080';
+  } else {
+    txt=n>=2?`${labels[n]} +${pts}`:`+${pts}`;color='#fff';sz='16px';glow='0 0 16px #00c8ff';
+  }
+  popup.textContent=txt;
+  popup.style.cssText=`left:50%;top:50%;transform:translate(-50%,-50%);opacity:1;font-size:${sz};color:${color};text-shadow:${glow};transition:none;position:absolute;pointer-events:none;font-family:Orbitron,monospace;font-weight:900;z-index:20;`;
   requestAnimationFrame(()=>{popup.style.transition='opacity .9s ease,transform .9s ease';popup.style.opacity='0';popup.style.transform='translate(-50%,-130%)';});
   if(combo>1){const cd=document.getElementById('combo-display');cd.textContent=`x${combo} COMBO`;cd.style.opacity='1';setTimeout(()=>cd.style.opacity='0',1400);}
 }
 
 function spawnPiece(){
+  lastWasRotate=false;
   current=makePiece(next.key);next=makePiece(nextFromBag());canHold=true;
   drawNext();if(!validPos(current))endGame();
 }
@@ -722,12 +757,38 @@ function updateUI(){
 }
 
 // ─── Audio ────────────────────────────────────────────────────────────────────
-let audioCtx=null,bgmPlaying=false,bgmNextTime=0,bgmBeat=0,bgmScheduler=null,bgmNodes=[];
+let audioCtx=null,masterGain=null,bgmPlaying=false,bgmNextTime=0,bgmBeat=0,bgmScheduler=null,bgmNodes=[];
 
 function getAudioCtx(){
-  if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(!audioCtx){
+    audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+    masterGain=audioCtx.createGain();
+    masterGain.connect(audioCtx.destination);
+    masterGain.gain.value=muteAudio?0:1;
+  }
   if(audioCtx.state==='suspended')audioCtx.resume();
   return audioCtx;
+}
+
+function toggleMute(){
+  muteAudio=!muteAudio;
+  if(masterGain)masterGain.gain.value=muteAudio?0:1;
+  localStorage.setItem('neonGlowtrisMute',muteAudio?'1':'0');
+  const icon=document.getElementById('mute-icon');
+  const btn=document.getElementById('btn-mute');
+  if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
+  if(btn)btn.classList.toggle('muted',muteAudio);
+  const ovBtn=document.getElementById('ov-mute-btn');
+  if(ovBtn){ovBtn.textContent=muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON';ovBtn.classList.toggle('muted',muteAudio);}
+}
+
+function updateDAS(v){
+  das=parseInt(v);localStorage.setItem('neonGlowtrisDAS',v);
+  const el=document.getElementById('ov-das-val');if(el)el.textContent=v+'ms';
+}
+function updateARR(v){
+  arr=parseInt(v);localStorage.setItem('neonGlowtrisARR',v);
+  const el=document.getElementById('ov-arr-val');if(el)el.textContent=v+'ms';
 }
 
 const _n=s=>440*Math.pow(2,s/12);
@@ -751,7 +812,7 @@ const BGM_BEAT=60/140/4;
 function bgmScheduleNote(freq,t,dur,vol){
   const ctx=audioCtx;
   const osc=ctx.createOscillator(),gain=ctx.createGain();
-  osc.connect(gain);gain.connect(ctx.destination);
+  osc.connect(gain);gain.connect(masterGain);
   osc.type='square';osc.frequency.setValueAtTime(freq,t);
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
@@ -797,7 +858,7 @@ function playBeep(freq,type,dur,vol,delay=0,freqEnd=null){
   const ctx=getAudioCtx();
   const t=ctx.currentTime+delay;
   const osc=ctx.createOscillator(),gain=ctx.createGain();
-  osc.connect(gain);gain.connect(ctx.destination);
+  osc.connect(gain);gain.connect(masterGain);
   osc.type=type;osc.frequency.setValueAtTime(freq,t);
   if(freqEnd)osc.frequency.exponentialRampToValueAtTime(freqEnd,t+dur);
   gain.gain.setValueAtTime(vol,t);
@@ -817,6 +878,19 @@ function sfxGameOver(){
   [392,349,329,261].forEach((f,i)=>playBeep(f,'sawtooth',.28,.38,i*.18));
   playBeep(130,'sawtooth',.6,.3,.75);
 }
+function sfxTSpin(){
+  playBeep(880,'square',.07,.22);
+  playBeep(1046,'square',.06,.18,.06);
+  playBeep(1318,'sawtooth',.14,.28,.1);
+}
+
+// ─── T-spin ───────────────────────────────────────────────────────────────────
+function checkTSpin(){
+  if(!current||current.key!=='T'||!lastWasRotate)return false;
+  const corners=[[current.x,current.y],[current.x+2,current.y],[current.x,current.y+2],[current.x+2,current.y+2]];
+  const filled=corners.reduce((n,[cx,cy])=>n+(cx<0||cx>=COLS||cy>=ROWS||(cy>=0&&board[cy][cx])?1:0),0);
+  return filled>=3;
+}
 
 // ─── Keyboard ─────────────────────────────────────────────────────────────────
 const KEYS={};let dasTimer=null;
@@ -835,11 +909,11 @@ document.addEventListener('keydown',e=>{
   }
 });
 document.addEventListener('keyup',e=>{KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();});
-function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},50);},150);}
+function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
 
-function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();sfxMove();}}
-function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();}else{lockActive=true;lockTimer=LOCK_MS;}}
+function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
+function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;}else{lockActive=true;lockTimer=LOCK_MS;}}
 function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
@@ -854,7 +928,7 @@ function hardDrop(){
 function makeTouchBtn(id,onPress,mode='repeat'){
   const el=document.getElementById(id);if(!el)return;
   let iv=null,to=null,on=false;
-  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!gameRunning&&mode!=='any')return;if(gamePaused&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(gameRunning&&!gamePaused)onPress();},55);},160);}}
+  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!gameRunning&&mode!=='any')return;if(gamePaused&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(gameRunning&&!gamePaused)onPress();},arr);},das);}}
   function rel(e){if(e)e.preventDefault();if(!on)return;on=false;el.classList.remove('pressed');clearTimeout(to);clearInterval(iv);to=null;iv=null;}
   el.addEventListener('touchstart',press,{passive:false});
   el.addEventListener('touchend',rel,{passive:false});
@@ -887,9 +961,21 @@ function gameLoop(ts){
 }
 
 // ─── Game control ─────────────────────────────────────────────────────────────
+function loadSettings(){
+  muteAudio=localStorage.getItem('neonGlowtrisMute')==='1';
+  das=parseInt(localStorage.getItem('neonGlowtrisDAS')||'150');
+  arr=parseInt(localStorage.getItem('neonGlowtrisARR')||'50');
+  const icon=document.getElementById('mute-icon');
+  const btn=document.getElementById('btn-mute');
+  if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
+  if(btn)btn.classList.toggle('muted',muteAudio);
+  if(masterGain)masterGain.gain.value=muteAudio?0:1;
+}
+
 function startGame(){
+  loadSettings();
   board=createBoard();score=0;lines=0;level=1;combo=0;dropInterval=800;
-  particles=[];shakeFrames=0;flashLines=[];flashTimer=0;lockTimer=0;lockActive=false;
+  particles=[];shakeFrames=0;flashLines=[];flashTimer=0;lockTimer=0;lockActive=false;lastWasRotate=false;
   hiScore=parseInt(localStorage.getItem('neonGlowtrisHi')||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
@@ -908,7 +994,21 @@ function togglePause(){
   const ov=document.getElementById('overlay');
   if(gamePaused){
     pauseBGM();
-    ov.innerHTML=`<h1 style="font-size:22px">PAUSED</h1><div class="sub">TAP TO RESUME</div><button class="action-btn" onclick="togglePause()">RESUME</button>`;
+    ov.innerHTML=`<h1 style="font-size:22px">PAUSED</h1>
+<div class="settings-box">
+  <button class="toggle-btn${muteAudio?' muted':''}" id="ov-mute-btn" onclick="toggleMute()">${muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON'}</button>
+  <div class="settings-row">
+    <span class="settings-lbl">DAS</span>
+    <input type="range" class="neon-range" min="50" max="300" value="${das}" oninput="updateDAS(this.value)">
+    <span class="settings-val" id="ov-das-val">${das}ms</span>
+  </div>
+  <div class="settings-row">
+    <span class="settings-lbl">ARR</span>
+    <input type="range" class="neon-range" min="0" max="100" value="${arr}" oninput="updateARR(this.value)">
+    <span class="settings-val" id="ov-arr-val">${arr}ms</span>
+  </div>
+</div>
+<div class="sub">TAP TO RESUME</div><button class="action-btn" onclick="togglePause()">RESUME</button>`;
     ov.style.display='flex';
   } else {
     resumeBGM();
@@ -936,6 +1036,7 @@ function endGame(){
 // ─── Init ─────────────────────────────────────────────────────────────────────
 initLayout();
 initStars();
+loadSettings();
 hiScore=parseInt(localStorage.getItem('neonGlowtrisHi')||'0');
 document.getElementById('hi-score').textContent=hiScore.toLocaleString();
 document.getElementById('hi-score-m').textContent=hiScore.toLocaleString();
