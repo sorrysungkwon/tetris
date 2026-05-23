@@ -1,0 +1,4 @@
+time=2026-05-22T23:51:02.778Z level=INFO msg="starting moshi-hook daemon" platform=linux socket=/run/user/1000/moshi-hook.sock gateway=127.0.0.1:24543 log=/home/ubuntu/.local/state/moshi/hook.log paired=true
+time=2026-05-22T23:51:05.281Z level=INFO msg="gateway: listening" listen=127.0.0.1:24543
+time=2026-05-22T23:51:05.281Z level=INFO msg="socket listening" path=/run/user/1000/moshi-hook.sock
+time=2026-05-22T23:51:05.972Z level=INFO msg="ws bridge connected" hostId=host_50eede2845184cab97afec94fa8b1f8c
