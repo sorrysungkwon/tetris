@@ -75,10 +75,20 @@
     flex:0 0 auto; padding:2px 0;
   }
   .dh-title {
-    font-size:20px; font-weight:900; letter-spacing:7px;
-    background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    filter:drop-shadow(0 0 10px rgba(0,200,255,0.35));
+    font-size: 22px; font-weight: 900; letter-spacing: 9px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink), var(--cyan));
+    background-size: 300% 100%;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    filter: drop-shadow(0 0 15px rgba(0,200,255,0.45));
+    animation: gradient-flow 6s linear infinite, title-pulse 3s ease-in-out infinite;
+  }
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  @keyframes title-pulse {
+    0%, 100% { filter: drop-shadow(0 0 10px rgba(0,200,255,0.4)) drop-shadow(0 0 2px var(--cyan)); }
+    50% { filter: drop-shadow(0 0 20px rgba(255,0,128,0.75)) drop-shadow(0 0 5px var(--pink)); }
   }
   .dh-version { font-size:8px; color:rgba(0,200,255,0.32); letter-spacing:2px; align-self:flex-end; padding-bottom:3px; }
 
@@ -91,14 +101,40 @@
 
   /* Side panels */
   .panel {
-    background:var(--panel-bg);
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:14px 12px;
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    box-shadow:0 0 22px rgba(0,200,255,0.13), inset 0 0 20px rgba(0,0,50,0.5);
-    width:132px;
+    background: rgba(4, 4, 30, 0.65);
+    border: 1px solid rgba(0, 200, 255, 0.22);
+    border-radius: 16px;
+    padding: 16px 14px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 
+      0 0 25px rgba(0, 200, 255, 0.08), 
+      inset 0 0 15px rgba(0, 0, 40, 0.4),
+      0 4px 30px rgba(0, 0, 0, 0.4);
+    width: 132px;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                border-color 0.3s ease, 
+                box-shadow 0.3s ease;
+  }
+  @media (pointer:fine) {
+    .panel:hover {
+      transform: translateY(-3px);
+      border-color: rgba(0, 200, 255, 0.55);
+    }
+    #left-panel:hover {
+      box-shadow: 
+        0 0 35px rgba(0, 200, 255, 0.25), 
+        0 0 10px rgba(0, 200, 255, 0.15),
+        inset 0 0 15px rgba(0, 0, 40, 0.2),
+        0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    #right-panel:hover {
+      box-shadow: 
+        0 0 35px rgba(160, 0, 255, 0.25), 
+        0 0 10px rgba(255, 0, 128, 0.15),
+        inset 0 0 15px rgba(0, 0, 40, 0.2),
+        0 8px 32px rgba(0, 0, 0, 0.6);
+    }
   }
   .panel-title {
     color:rgba(0,200,255,0.55);
@@ -123,10 +159,57 @@
   #bpm-display { font-size:12px; font-weight:900; text-align:center; color:var(--purple); text-shadow:0 0 14px rgba(160,0,255,0.7); letter-spacing:1px; }
 
   /* Keyboard shortcut map */
-  .key-map { display:flex; flex-direction:column; gap:4px; margin-top:2px; }
-  .key-row { display:flex; align-items:center; justify-content:space-between; }
-  .key-row kbd { font-family:'Orbitron',monospace; font-size:7px; background:rgba(0,200,255,0.07); border:1px solid rgba(0,200,255,0.2); border-radius:3px; padding:2px 5px; color:rgba(0,200,255,0.75); white-space:nowrap; }
-  .key-row span { font-size:7px; color:rgba(255,255,255,0.38); letter-spacing:1px; text-transform:uppercase; }
+  .key-map { display:flex; flex-direction:column; gap:6px; margin-top:2px; }
+  .key-row { 
+    display:flex; align-items:center; justify-content:space-between; 
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .key-row kbd { 
+    font-family:'Orbitron',monospace; font-size:7px; 
+    background:rgba(0,200,255,0.07); 
+    border:1px solid rgba(0,200,255,0.2); 
+    border-radius:3px; padding:2px 5px; 
+    color:rgba(0,200,255,0.75); white-space:nowrap; 
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .key-row span { 
+    font-size:7px; color:rgba(255,255,255,0.38); letter-spacing:1px; 
+    text-transform:uppercase; 
+    transition: color 0.25s ease;
+  }
+  .key-row.key-pressed {
+    transform: scale(1.06) translateX(2px);
+  }
+  .key-row.key-pressed kbd {
+    background: rgba(0, 200, 255, 0.22);
+    border-color: var(--cyan);
+    color: #fff;
+    box-shadow: 0 0 10px var(--cyan);
+  }
+  .key-row.key-pressed span {
+    color: var(--cyan);
+  }
+  .key-row.key-pressed#key-hard kbd {
+    background: rgba(255, 0, 128, 0.22);
+    border-color: var(--pink);
+    box-shadow: 0 0 10px var(--pink);
+  }
+  .key-row.key-pressed#key-hard span { color: var(--pink); }
+  .key-row.key-pressed#key-rotate kbd {
+    background: rgba(160, 0, 255, 0.22);
+    border-color: var(--purple);
+    box-shadow: 0 0 10px var(--purple);
+  }
+  .key-row.key-pressed#key-rotate span { color: var(--purple); }
+
+  @keyframes scale-pop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.35); text-shadow: 0 0 25px var(--cyan); color: #fff; }
+    100% { transform: scale(1); }
+  }
+  .scale-pop-active {
+    animation: scale-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
 
   /* Game wrap */
   .game-wrap { position:relative; flex:0 0 auto; }
@@ -160,15 +243,37 @@
   }
   #overlay .sub { color:rgba(0,200,255,0.55); font-size:9px; letter-spacing:3px; margin-bottom:20px; }
   .action-btn {
-    background:linear-gradient(135deg,rgba(0,200,255,0.18),rgba(160,0,255,0.18));
-    border:1px solid rgba(0,200,255,0.45); color:#fff;
-    font-family:'Orbitron',monospace; font-size:11px; letter-spacing:3px;
-    padding:11px 26px; border-radius:6px; cursor:pointer; text-transform:uppercase;
-    transition:all .25s;
+    position: relative;
+    background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(160,0,255,0.18));
+    border: 1px solid rgba(0,200,255,0.45); color: #fff;
+    font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 3px;
+    padding: 11px 26px; border-radius: 8px; cursor: pointer; text-transform: uppercase;
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
+                box-shadow 0.3s ease, 
+                border-color 0.3s ease;
+    overflow: hidden;
   }
-  .action-btn:hover, .action-btn:active {
-    background:linear-gradient(135deg,rgba(0,200,255,0.35),rgba(160,0,255,0.35));
-    box-shadow:0 0 18px rgba(0,200,255,0.45); transform:scale(1.04);
+  .action-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    transform: skewX(-25deg);
+    transition: none;
+  }
+  .action-btn:hover {
+    border-color: var(--cyan);
+    box-shadow: 0 0 25px rgba(0,200,255,0.55), 0 0 8px rgba(160,0,255,0.35);
+    transform: scale(1.05);
+  }
+  .action-btn:hover::after {
+    left: 150%;
+    transition: left 0.6s ease-in-out;
+  }
+  .action-btn:active {
+    transform: scale(0.96);
+    box-shadow: 0 0 15px rgba(0,200,255,0.35);
   }
   #score-popup {
     position:absolute; pointer-events:none;
@@ -229,21 +334,34 @@
   /* Base button */
   .tbtn {
     display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,28,0.78);
-    border:1px solid var(--border);
-    border-radius:10px;
+    background:rgba(2,2,22,0.85);
+    border:1px solid rgba(0,200,255,0.24);
+    border-radius:12px;
     color:var(--cyan);
     cursor:pointer;
-    transition:background .08s, box-shadow .08s, transform .07s;
+    transition: background 0.15s ease, 
+                box-shadow 0.15s ease, 
+                transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1),
+                border-color 0.15s ease;
     touch-action:none; -webkit-user-select:none; user-select:none;
-    -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
-    box-shadow:0 0 8px rgba(0,200,255,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+    -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+    box-shadow:0 0 10px rgba(0,200,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05);
   }
   .tbtn .material-icons-round { font-size:inherit; line-height:1; }
+  
+  @media (pointer:fine) {
+    .tbtn:hover {
+      border-color: rgba(0, 200, 255, 0.55);
+      box-shadow: 0 0 14px rgba(0, 200, 255, 0.2);
+      transform: scale(1.03);
+    }
+  }
+  
   .tbtn.pressed {
-    background:rgba(0,200,255,0.14);
-    box-shadow:0 0 16px rgba(0,200,255,0.38), inset 0 0 8px rgba(0,100,200,0.2);
-    transform:scale(0.92);
+    background:rgba(0,200,255,0.16);
+    border-color: var(--cyan);
+    box-shadow:0 0 20px rgba(0,200,255,0.48), inset 0 0 8px rgba(0,100,200,0.3);
+    transform:scale(0.90);
   }
 
   /* Color variants */
@@ -438,13 +556,13 @@
       <div class="divider"></div>
       <div class="panel-title">KEYS</div>
       <div class="key-map">
-        <div class="key-row"><kbd>← →</kbd><span>move</span></div>
-        <div class="key-row"><kbd>↑</kbd><span>rotate</span></div>
-        <div class="key-row"><kbd>↓</kbd><span>soft drop</span></div>
-        <div class="key-row"><kbd>SPC</kbd><span>hard drop</span></div>
-        <div class="key-row"><kbd>C</kbd><span>hold</span></div>
-        <div class="key-row"><kbd>P</kbd><span>pause</span></div>
-        <div class="key-row"><kbd>M</kbd><span>mute</span></div>
+        <div class="key-row" id="key-move"><kbd>← →</kbd><span>move</span></div>
+        <div class="key-row" id="key-rotate"><kbd>↑</kbd><span>rotate</span></div>
+        <div class="key-row" id="key-soft"><kbd>↓</kbd><span>soft drop</span></div>
+        <div class="key-row" id="key-hard"><kbd>SPC</kbd><span>hard drop</span></div>
+        <div class="key-row" id="key-hold"><kbd>C</kbd><span>hold</span></div>
+        <div class="key-row" id="key-pause"><kbd>P</kbd><span>pause</span></div>
+        <div class="key-row" id="key-mute"><kbd>M</kbd><span>mute</span></div>
       </div>
     </div>
   </div>
@@ -532,6 +650,7 @@ let muteAudio=false,das=150,arr=50;
 let comboFlash=0,comboFlashColor='#00c8ff';
 let rainbowBorder=0;
 let dangerPulse=0; // frame counter for danger overlay pulse
+let levelUpScanline=0; // horizontal line sweep position on level up
 
 // ─── Canvas refs ──────────────────────────────────────────────────────────────
 const gc  = document.getElementById('game-canvas');
@@ -614,23 +733,50 @@ window.addEventListener('resize',()=>{
 });
 
 // ─── Background starfield ─────────────────────────────────────────────────────
-let stars=[], bgHue=0;
+let stars=[], nebulae=[], bgHue=0;
 function initStars() {
   stars=[];
   for(let i=0;i<220;i++) stars.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.5+0.2,speed:Math.random()*0.3+0.05,o:Math.random()});
+  
+  // 3 ambient large color-shifting gas nebulae
+  const w = bgc.width, h = bgc.height;
+  nebulae = [
+    { x: w * 0.25, y: h * 0.3, r: Math.min(w, h) * 0.45, vx: 0.15, vy: 0.08, hue: 190 },
+    { x: w * 0.75, y: h * 0.6, r: Math.min(w, h) * 0.55, vx: -0.1, vy: -0.12, hue: 280 },
+    { x: w * 0.5, y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07, vy: -0.07, hue: 330 }
+  ];
 }
 function drawBackground() {
-  bgHue=(bgHue+0.1)%360;
-  bgx.fillStyle='rgba(0,0,8,0.15)'; bgx.fillRect(0,0,bgc.width,bgc.height);
+  bgHue=(bgHue+0.05)%360;
+  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
+  
+  // Draw glowing shifting nebulae in background
+  for(const neb of nebulae) {
+    neb.x += neb.vx; neb.y += neb.vy;
+    if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
+    if(neb.y - neb.r < 0 || neb.y + neb.r > bgc.height) neb.vy *= -1;
+    neb.hue = (neb.hue + 0.02) % 360;
+    
+    bgx.save();
+    const gr = bgx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
+    gr.addColorStop(0, `hsla(${neb.hue}, 85%, 25%, 0.045)`);
+    gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360}, 80%, 15%, 0.02)`);
+    gr.addColorStop(1, 'transparent');
+    bgx.fillStyle = gr;
+    bgx.fillRect(0, 0, bgc.width, bgc.height);
+    bgx.restore();
+  }
+  
   const gr=bgx.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
-  gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.03)`);gr.addColorStop(.5,`hsla(${bgHue+60},80%,5%,0.02)`);gr.addColorStop(1,'transparent');
+  gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
   bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
+  
   const t=Date.now()*.001;
   for(const s of stars){
     s.y+=s.speed; if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}
     s.o=0.3+0.7*Math.abs(Math.sin(t+s.x));
     bgx.beginPath(); bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    bgx.fillStyle=`rgba(180,220,255,${s.o*.6})`; bgx.fill();
+    bgx.fillStyle=`rgba(180,220,255,${s.o*.45})`; bgx.fill();
   }
 }
 
@@ -684,7 +830,14 @@ function lockPiece(){
     // Combo flash
     if(combo>1){comboFlash=15;comboFlashColor=combo>=5?'#ff0080':combo>=3?'#a000ff':'#00c8ff';}
     addScore(pts,cleared.length,tspin);
-    lines+=cleared.length;level=Math.floor(lines/LEVEL_LINES)+1;
+    lines+=cleared.length;
+    const nextLvl=Math.floor(lines/LEVEL_LINES)+1;
+    if(nextLvl > level){
+      level=nextLvl;
+      triggerLevelUpVisuals();
+    } else {
+      level=nextLvl;
+    }
     dropInterval=Math.max(80,800-(level-1)*70);
     updateUI();
     const snap=[...cleared];
@@ -886,6 +1039,24 @@ function drawBoard(){
       dangerPulse=0;
     }
   }
+  
+  // ─── Level-up scanline laser sweep ───
+  if(levelUpScanline > 0){
+    const y = levelUpScanline * gc.height;
+    gctx.save();
+    const gr = gctx.createLinearGradient(0, y - 20, 0, y + 20);
+    gr.addColorStop(0, 'rgba(0, 200, 255, 0)');
+    gr.addColorStop(0.5, 'rgba(0, 200, 255, 0.9)');
+    gr.addColorStop(1, 'rgba(0, 200, 255, 0)');
+    gctx.fillStyle = gr;
+    gctx.shadowColor = '#00c8ff';
+    gctx.shadowBlur = 24;
+    gctx.fillRect(0, y - 10, gc.width, 20);
+    gctx.restore();
+    
+    levelUpScanline += 0.022; // speed
+    if(levelUpScanline >= 1.0) levelUpScanline = 0;
+  }
 }
 
 function drawMiniPiece(ctx,piece,cw,ch){
@@ -920,9 +1091,34 @@ function drawHold(){
 const PAL=['#00c8ff','#a000ff','#ff0080','#ffe600','#00ff88'];
 
 function spawnLineClearParticles(rows){
-  for(const row of rows) for(let c=0;c<COLS;c++) for(let i=0;i<8;i++){
-    const a=Math.random()*Math.PI*2,sp=Math.random()*5+2;
-    particles.push({x:(c+.5)*CELL,y:(row+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,life:1,decay:Math.random()*.02+.015,color:'#00c8ff',size:Math.random()*4+2,type:'spark'});
+  for(const row of rows) {
+    // White core expanding shockwave ring
+    particles.push({
+      x: (COLS / 2) * CELL,
+      y: (row + 0.5) * CELL,
+      vx: 0, vy: 0,
+      life: 1, decay: 0.04,
+      color: '#ffffff',
+      size: 3,
+      maxRadius: (COLS / 2) * CELL * 1.5,
+      type: 'radial-ring'
+    });
+    // Cyan outer blooming shockwave ring
+    particles.push({
+      x: (COLS / 2) * CELL,
+      y: (row + 0.5) * CELL,
+      vx: 0, vy: 0,
+      life: 1, decay: 0.03,
+      color: '#00c8ff',
+      size: 5,
+      maxRadius: (COLS / 2) * CELL * 2.3,
+      type: 'radial-ring'
+    });
+    
+    for(let c=0;c<COLS;c++) for(let i=0;i<8;i++){
+      const a=Math.random()*Math.PI*2,sp=Math.random()*5+2;
+      particles.push({x:(c+.5)*CELL,y:(row+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,life:1,decay:Math.random()*.02+.015,color:'#00c8ff',size:Math.random()*4+2,type:'spark'});
+    }
   }
   for(let i=0;i<40;i++){
     const a=Math.random()*Math.PI*2,sp=Math.random()*8+3;
@@ -940,6 +1136,27 @@ function updateParticles(){
   pctx.clearRect(0,0,pc.width,pc.height);
   particles=particles.filter(p=>p.life>0);
   for(const p of particles){
+    if(p.type==='ring'){
+      p.life-=p.decay;
+      pctx.save();pctx.globalAlpha=Math.max(0,p.life);
+      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;pctx.shadowColor=p.color;pctx.shadowBlur=12;
+      pctx.beginPath();
+      const rx=(1-p.life)*p.maxRadius;
+      const ry=rx*(p.aspectRatio||0.35);
+      pctx.ellipse(p.x,p.y,rx,ry,0,0,Math.PI*2);
+      pctx.stroke();pctx.restore();
+      continue;
+    }
+    if(p.type==='radial-ring'){
+      p.life-=p.decay;
+      pctx.save();pctx.globalAlpha=Math.max(0,p.life);
+      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;pctx.shadowColor=p.color;pctx.shadowBlur=15;
+      pctx.beginPath();
+      const r=(1-p.life)*p.maxRadius;
+      pctx.arc(p.x,p.y,r,0,Math.PI*2);
+      pctx.stroke();pctx.restore();
+      continue;
+    }
     p.x+=p.vx;p.y+=p.vy;p.vy+=.15;p.life-=p.decay;
     pctx.save();pctx.globalAlpha=Math.max(0,p.life);
     const {r,g,b}=hexToRgb(p.color);
@@ -1162,7 +1379,23 @@ function checkTSpin(){
 
 // ─── Keyboard ─────────────────────────────────────────────────────────────────
 const KEYS={};let dasTimer=null;
+function updateKeyGuideState(code, isPressed) {
+  let el = null;
+  if (code === 'ArrowLeft' || code === 'ArrowRight') el = document.getElementById('key-move');
+  else if (code === 'ArrowUp') el = document.getElementById('key-rotate');
+  else if (code === 'ArrowDown') el = document.getElementById('key-soft');
+  else if (code === 'Space') el = document.getElementById('key-hard');
+  else if (code === 'KeyC' || code === 'ShiftLeft') el = document.getElementById('key-hold');
+  else if (code === 'KeyP') el = document.getElementById('key-pause');
+  else if (code === 'KeyM') el = document.getElementById('key-mute');
+  
+  if (el) {
+    if (isPressed) el.classList.add('key-pressed');
+    else el.classList.remove('key-pressed');
+  }
+}
 document.addEventListener('keydown',e=>{
+  updateKeyGuideState(e.code, true);
   if(KEYS[e.code])return;KEYS[e.code]=true;
   if(!gameRunning)return;
   if(e.code==='KeyP'){togglePause();return;}
@@ -1177,7 +1410,10 @@ document.addEventListener('keydown',e=>{
     case'KeyM':toggleMute();break;
   }
 });
-document.addEventListener('keyup',e=>{KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();});
+document.addEventListener('keyup',e=>{
+  updateKeyGuideState(e.code, false);
+  KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
+});
 function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
 
@@ -1189,6 +1425,32 @@ function hardDrop(){
   score+=d*2;updateUI();
   shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;
   for(let i=0;i<22;i++) particles.push({x:(current.x+current.shape[0].length/2)*CELL,y:(current.y+current.shape.length)*CELL,vx:(Math.random()-.5)*9,vy:Math.random()*-7-1,life:1,decay:.05,color:current.color,size:Math.random()*5+2,type:'spark'});
+  
+  // Spawn horizontal shockwave ring on landing
+  particles.push({
+    x: (current.x + current.shape[0].length / 2) * CELL,
+    y: (current.y + current.shape.length) * CELL,
+    vx: 0, vy: 0,
+    life: 1, decay: 0.05,
+    color: current.color,
+    size: 4,
+    maxRadius: CELL * 3.5,
+    aspectRatio: 0.28,
+    type: 'ring'
+  });
+  // White secondary ring
+  particles.push({
+    x: (current.x + current.shape[0].length / 2) * CELL,
+    y: (current.y + current.shape.length) * CELL,
+    vx: 0, vy: 0,
+    life: 1, decay: 0.04,
+    color: '#ffffff',
+    size: 2,
+    maxRadius: CELL * 5.0,
+    aspectRatio: 0.28,
+    type: 'ring'
+  });
+
   sfxHardDrop();
   lockPiece();
 }
@@ -1239,11 +1501,32 @@ function loadSettings(){
   if(masterGain)masterGain.gain.value=muteAudio?0:1;
 }
 
+function triggerLevelUpVisuals() {
+  const targetIds = ['level-display', 'level-display-m', 'bpm-display'];
+  targetIds.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.classList.remove('scale-pop-active');
+      void el.offsetWidth; // force reflow
+      el.classList.add('scale-pop-active');
+      setTimeout(() => el.classList.remove('scale-pop-active'), 600);
+    }
+  });
+  
+  for(let i=0;i<50;i++){
+    const a=Math.random()*Math.PI*2,sp=Math.random()*11+3;
+    particles.push({x:(COLS/2)*CELL,y:(ROWS/2)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.012,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*8+4,type:'star'});
+  }
+  
+  [261, 329, 392, 523, 659, 784].forEach((f, i) => playBeep(f, 'square', 0.16, 0.22, i * 0.05));
+  levelUpScanline = 0.01;
+}
+
 function startGame(){
   loadSettings();
   board=createBoard();score=0;lines=0;level=1;combo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;flashLines=new Set();flashTimer=0;
-  lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;
+  lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
   hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
