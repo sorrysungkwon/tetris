@@ -146,7 +146,7 @@
     background:rgba(0,0,20,0.86);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
     border-radius:4px; z-index:10;
-    overflow-y:auto; padding:12px 8px;
+    padding:12px 8px;
   }
   @media (min-width:600px) {
     #overlay { position:fixed; border-radius:0; }
@@ -267,7 +267,8 @@
   .new-best-badge { font-size:13px; font-weight:900; letter-spacing:4px; color:#ffe600; text-shadow:0 0 18px #ffe600,0 0 36px #ffaa00; margin-bottom:8px; animation:pulse 0.7s ease-in-out infinite; }
   .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:9px; color:rgba(0,200,255,0.38); letter-spacing:1px; }
   .hist-sep { opacity:0.3; }
-  .lb-table { width:100%; max-width:260px; border-collapse:collapse; margin:8px 0 14px; max-height:240px; overflow-y:auto; display:block; }
+  .lb-table { width:100%; max-width:260px; border-collapse:collapse; margin:8px 0 14px; display:block; overflow-y:auto; }
+  @media (max-width:599px) { .lb-table { max-height:130px; } }
   .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.1); }
   .lb-table td { padding:5px 4px; font-size:10px; letter-spacing:1px; }
   .lb-table td:first-child { color:rgba(0,200,255,0.45); width:24px; text-align:center; }

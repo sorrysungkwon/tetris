@@ -2,7 +2,7 @@ const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const KEY_ALL   = 'neon-tetris-lb';
 const KEY_DAILY = () => `neon-tetris-daily-${new Date().toISOString().slice(0,10)}`; // e.g. neon-tetris-daily-2026-05-23
-const TOP = 7;
+const TOP = 10;
 const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
 
 async function redis(cmd) {
