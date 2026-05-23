@@ -55,6 +55,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.2~~ ✅ | **Elegant Polish**: Removed hard-drop shockwaves to keep drops snappy, added sleek vertical alignment lasers, added drop spark trails, and polished pause menu buttons. |
 | ~~v1.0.3~~ ✅ | **Retention & UX Polish**: Username persistence, personal best streak & max combo badges, How To Play collapsible panel. |
 | ~~v1.0.4~~ ✅ | **Profile, UI, & Social Depth**: Full stats screen, personal record badges, UI enhancements (neon grid, floating text, optimized particles), Weekly leaderboard tab, persistent rank display, and canvas share image. |
+| ~~v1.0.5~~ ✅ | **OG Image Redesign**: Logo lockup layout (3×3 block grid mark + GLOW/TRIS neon title), nebula background, neon corner brackets, gradient separator lines. |
 | v1.1 | **New Game Mode — Sprint (Planned)**: Clear 40 lines as fast as possible. Features include a separate time-based Redis leaderboard, live stopwatch UI, mode selection menu (Marathon vs Sprint), and Sprint-specific Canvas Share formatting. |
 
 ## Rules
