@@ -30,7 +30,7 @@
 - [x] Task 1: Persist username across sessions — save the submitted leaderboard name to `localStorage` and pre-fill it on the next game-over submission form so players don't retype it every game.
 - [x] Task 2: Show personal best streak on game over screen — display current win streak or highest combo alongside the last-5-scores history panel.
 - [x] Task 3: Add "HOW TO PLAY" toggle on start screen — a small collapsible rules panel listing controls (keyboard + touch) so new players don't have to guess.
-- [ ] Task 4: Document v1.0.3 changes in `README.md` roadmap and update this file.
+- [x] Task 4: Document v1.0.3 changes in `README.md` roadmap and update this file.
 
 ---
 
