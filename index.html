@@ -505,6 +505,7 @@ let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50;
 let comboFlash=0,comboFlashColor='#00c8ff';
 let tetrisBorder=0;
+let dangerPulse=0; // frame counter for danger overlay pulse
 
 // ─── Canvas refs ──────────────────────────────────────────────────────────────
 const gc  = document.getElementById('game-canvas');
@@ -823,6 +824,32 @@ function drawBoard(){
     gctx.strokeRect(3,3,COLS*CELL-6,ROWS*CELL-6);
     gctx.restore();
     tetrisBorder--;
+  }
+  // Danger overlay — red pulse when stack reaches top ~35% of board
+  if(gameRunning&&!gamePaused){
+    let topRow=ROWS;
+    for(let r=0;r<ROWS;r++){if(board[r].some(v=>v!==null)){topRow=r;break;}}
+    const dangerThreshold=Math.floor(ROWS*0.35); // row 7
+    if(topRow<dangerThreshold){
+      dangerPulse++;
+      const speed=0.06+((dangerThreshold-topRow)/dangerThreshold)*0.1;
+      const intensity=(dangerThreshold-topRow)/dangerThreshold; // 0→1 as stack grows
+      const alpha=(0.12+intensity*0.18)*(0.5+0.5*Math.sin(dangerPulse*speed));
+      gctx.save();
+      gctx.globalAlpha=alpha;
+      gctx.fillStyle='#ff1133';
+      gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
+      // Red border vignette
+      const vg=gctx.createRadialGradient(COLS*CELL/2,ROWS*CELL/2,ROWS*CELL*0.3,COLS*CELL/2,ROWS*CELL/2,ROWS*CELL*0.75);
+      vg.addColorStop(0,'rgba(0,0,0,0)');
+      vg.addColorStop(1,`rgba(255,0,30,${0.3+intensity*0.35})`);
+      gctx.globalAlpha=1;
+      gctx.fillStyle=vg;
+      gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
+      gctx.restore();
+    } else {
+      dangerPulse=0;
+    }
   }
 }
 
@@ -1149,7 +1176,7 @@ function startGame(){
   loadSettings();
   board=createBoard();score=0;lines=0;level=1;combo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;flashLines=new Set();flashTimer=0;
-  lockTimer=0;lockActive=false;lastWasRotate=false;tetrisBorder=0;comboFlash=0;comboFlashColor='#00c8ff';
+  lockTimer=0;lockActive=false;lastWasRotate=false;tetrisBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;
   hiScore=parseInt(localStorage.getItem('neonTetrisHi')||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
@@ -1254,23 +1281,11 @@ async function submitScore(){
       res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
-      res.innerHTML='<div class="sub">저장 실패 — 다시 시도해주세요</div>';
+      res.innerHTML='<div class="sub">Save failed — please try again</div>';
     }
   }catch(e){
     btn.disabled=false;inp.disabled=false;
-    res.innerHTML='<div class="sub">네트워크 오류 — 다시 시도해주세요</div>';
-  }
-}
-
-async function openLeaderboard(){
-  $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1><div class="sub">LOADING...</div>`;
-  $overlay.style.display='flex';
-  try{
-    const r=await fetch('/api/leaderboard');
-    const data=await r.json();
-    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1>${lbHTML(data.board,'')}<div class="btn-row"><button class="action-btn sm" onclick="showStartScreen()">BACK</button></div>`;
-  }catch(e){
-    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1><div class="sub">Load failed</div><button class="action-btn sm ghost" onclick="showStartScreen()">BACK</button>`;
+    res.innerHTML='<div class="sub">Network error — please try again</div>';
   }
 }
 
@@ -1280,7 +1295,7 @@ function shareScore(sc,rank){
   if(navigator.share){
     navigator.share({title:'Neon Tetris',text}).catch(()=>{});
   }else{
-    navigator.clipboard.writeText(text).then(()=>alert('클립보드에 복사됐어요!'));
+    navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard!'));
   }
 }
 
@@ -1312,8 +1327,8 @@ initLayout();
 initStars();
 loadSettings();
 hiScore=parseInt(localStorage.getItem('neonTetrisHi')||'0');
-document.getElementById('hi-score').textContent=hiScore.toLocaleString();
-document.getElementById('hi-score-m').textContent=hiScore.toLocaleString();
+$hiScore.textContent=hiScore.toLocaleString();
+$hiScoreM.textContent=hiScore.toLocaleString();
 animFrame=requestAnimationFrame(function bgOnly(){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 loadStartLeaderboard();
 </script>
