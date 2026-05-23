@@ -253,7 +253,7 @@
   @media (pointer:coarse) {
     #touch-controls {
       width:var(--game-w, 300px);
-      padding-bottom:max(24px, env(safe-area-inset-bottom));
+      padding-bottom:max(16px, env(safe-area-inset-bottom));
       gap:8px;
     }
     #mobile-header { width:calc(100vw - 24px); }
@@ -494,22 +494,27 @@ const bgx = bgc.getContext('2d');
 function initLayout() {
   const W = window.innerWidth, H = window.innerHeight;
   isMobile = W < 600;
+  const isTouch = window.matchMedia('(pointer:coarse)').matches;
 
-  if (isMobile) {
-    // Reserve: header≈50px, controls rows≈121px, ctrl padding-bottom≈16px, gaps≈24px
+  if (isTouch) {
     const safeTop    = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top'))  || 0;
     const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom'))|| 0;
-    const availH = H - 50 - 121 - 16 - 24 - safeTop - safeBottom;
-    const availW = W - 24; // 12px each side
+    // header + controls (sys30/34 + act54/64 + move72/84 + pad24 + 2×gap) + app padding/gaps
+    const headerH  = isMobile ? 52 : 30;
+    const ctrlH    = isMobile ? 210 : 244;
+    const frameH   = 40; // app pad-top + pad-bot + 3 flex gaps
+    const availH   = H - headerH - ctrlH - frameH - safeTop - safeBottom;
+    const availW   = W - (isMobile ? 24 : 48);
     CELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
     const gameW = COLS * CELL;
-    // Sync --game-w so touch-controls and mobile-header match canvas width exactly
     document.documentElement.style.setProperty('--game-w', gameW + 'px');
-    // Resize mobile mini canvases proportionally
-    const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
-    const miniH = Math.round(miniW * 0.8);
-    ncM.width = miniW; ncM.height = miniH;
-    hcM.width = miniW; hcM.height = miniH;
+    if (isMobile) {
+      // Resize mobile mini canvases proportionally
+      const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
+      const miniH = Math.round(miniW * 0.8);
+      ncM.width = miniW; ncM.height = miniH;
+      hcM.width = miniW; hcM.height = miniH;
+    }
   } else {
     CELL = 30;
   }
