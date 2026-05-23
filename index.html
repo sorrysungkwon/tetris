@@ -377,6 +377,19 @@
   .tbtn-mute.pressed { background:rgba(0,200,255,0.12); }
   .tbtn-mute.muted { border-color:rgba(255,0,128,0.4); color:rgba(255,0,128,0.9); }
 
+  /* Streak / combo badges */
+  .streak-badge { font-size:10px; letter-spacing:2px; padding:4px 10px; border-radius:6px; border:1px solid rgba(255,100,0,0.5); color:#ff6400; background:rgba(255,100,0,0.1); text-shadow:0 0 8px #ff6400; }
+  .combo-badge  { font-size:10px; letter-spacing:2px; padding:4px 10px; border-radius:6px; border:1px solid rgba(0,200,255,0.45); color:var(--cyan); background:rgba(0,200,255,0.08); text-shadow:0 0 8px var(--cyan); }
+
+  /* HOW TO PLAY panel */
+  .htp-panel { width:100%; max-width:240px; margin-top:8px; background:rgba(0,0,20,0.6); border:1px solid rgba(0,200,255,0.2); border-radius:10px; padding:12px 16px; }
+  .htp-section { font-size:8px; letter-spacing:2px; color:rgba(0,200,255,0.55); margin:8px 0 6px; text-align:center; }
+  .htp-section:first-child { margin-top:0; }
+  .htp-row { display:flex; justify-content:space-between; align-items:center; padding:3px 0; border-bottom:1px solid rgba(0,200,255,0.07); }
+  .htp-row:last-child { border-bottom:none; }
+  .htp-key { font-size:9px; color:rgba(0,200,255,0.85); letter-spacing:1px; background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.22); border-radius:3px; padding:2px 7px; }
+  .htp-lbl { font-size:8px; color:rgba(255,255,255,0.42); letter-spacing:1px; text-transform:uppercase; }
+
   /* Leaderboard */
   .start-lb-title { font-size:9px; letter-spacing:3px; color:rgba(0,200,255,0.55); margin-bottom:4px; text-align:center; }
   .lb-tabs { display:flex; gap:6px; margin-bottom:6px; }
@@ -649,7 +662,7 @@ const LOCK_MS=500;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let board,current,next,held,canHold;
-let score,lines,level,combo,hiScore;
+let score,lines,level,combo,hiScore,maxCombo;
 let gameRunning,gamePaused,gameOver;
 let dropInterval;
 let particles=[];
@@ -842,7 +855,7 @@ function lockPiece(){
   const cleared=[];
   for(let r=ROWS-1;r>=0;r--){if(board[r].every(v=>v!==null))cleared.push(r);}
   if(cleared.length>0){
-    flashLines=new Set(cleared);flashTimer=12;combo++;
+    flashLines=new Set(cleared);flashTimer=12;combo++;if(combo>maxCombo)maxCombo=combo;
     const mul=combo>1?combo:1;
     const pts=tspin
       ?TSPIN_SCORE[Math.min(cleared.length,3)]*level*mul
@@ -1567,7 +1580,7 @@ function triggerLevelUpVisuals() {
 
 function startGame(){
   loadSettings();
-  board=createBoard();score=0;lines=0;level=1;combo=0;dropInterval=800;
+  board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;flashLines=new Set();flashTimer=0;
   lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
   hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
@@ -1620,6 +1633,12 @@ function endGame(){
   const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
   hist.unshift({score,lines,level,date:Date.now()});
   localStorage.setItem('glowTrisHistory',JSON.stringify(hist.slice(0,5)));
+  const prevStreak=parseInt(localStorage.getItem('glowTrisStreak')||'0');
+  const newStreak=score>=5000?prevStreak+1:0;
+  localStorage.setItem('glowTrisStreak',newStreak);
+  const storedMaxCombo=parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
+  if(maxCombo>storedMaxCombo)localStorage.setItem('glowTrisMaxCombo',maxCombo);
+  const displayMaxCombo=Math.max(maxCombo,storedMaxCombo);
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(!board[r][c])continue;
     const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
@@ -1637,12 +1656,14 @@ function endGame(){
     const savedName=localStorage.getItem('glowTrisName')||'';
     const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
     const histHTML=hist.length>1?`<div class="history-row">${hist.slice(1,4).map(h=>`<span>${h.score.toLocaleString()}</span>`).join('<span class="hist-sep">·</span>')}</div>`:'';
+    const badgesHTML=(newStreak>0||displayMaxCombo>1)?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0;">${newStreak>0?`<div class="streak-badge">🔥 ${newStreak} STREAK</div>`:''} ${displayMaxCombo>1?`<div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>`:''}</div>`:'';
     $overlay.innerHTML=`
       <h1 style="font-size:20px">GAME OVER</h1>
       ${isNewBest?'<div class="new-best-badge">★ NEW BEST ★</div>':''}
       <div class="sub" style="margin-bottom:2px">SCORE: ${score.toLocaleString()}</div>
       <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600;margin-bottom:2px">BEST: ${hiScore.toLocaleString()}</div>
       ${histHTML}
+      ${badgesHTML}
       <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="margin-top:10px">
       <div class="btn-row">
         <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
@@ -1745,11 +1766,36 @@ function showStartScreen(){
       </div>
       <div class="lb-inner"></div>
     </div>
-    <div class="btn-row">
+    <div class="btn-row" style="margin-bottom:6px">
       <button class="action-btn" onclick="startGame()">START GAME</button>
+    </div>
+    <button class="toggle-btn" id="htp-btn" onclick="toggleHowToPlay()" style="max-width:240px">▸ HOW TO PLAY</button>
+    <div class="htp-panel" id="htp-panel" style="display:none">
+      <div class="htp-section">KEYBOARD</div>
+      <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
+      <div class="htp-row"><span class="htp-key">↑</span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-key">↓</span><span class="htp-lbl">Soft Drop</span></div>
+      <div class="htp-row"><span class="htp-key">SPC</span><span class="htp-lbl">Hard Drop</span></div>
+      <div class="htp-row"><span class="htp-key">C</span><span class="htp-lbl">Hold</span></div>
+      <div class="htp-row"><span class="htp-key">P</span><span class="htp-lbl">Pause</span></div>
+      <div class="htp-row"><span class="htp-key">M</span><span class="htp-lbl">Mute</span></div>
+      <div class="htp-section">TOUCH</div>
+      <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
+      <div class="htp-row"><span class="htp-key">↓</span><span class="htp-lbl">Soft Drop</span></div>
+      <div class="htp-row"><span class="htp-key">⚡</span><span class="htp-lbl">Hard Drop</span></div>
+      <div class="htp-row"><span class="htp-key">↺</span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-key">⇄</span><span class="htp-lbl">Hold</span></div>
     </div>`;
   $overlay.style.display='flex';
   loadStartLeaderboard();
+}
+
+function toggleHowToPlay(){
+  const panel=document.getElementById('htp-panel');
+  const btn=document.getElementById('htp-btn');
+  const open=panel.style.display==='none';
+  panel.style.display=open?'block':'none';
+  btn.textContent=(open?'▾':'▸')+' HOW TO PLAY';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
