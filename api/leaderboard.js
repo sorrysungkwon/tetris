@@ -2,7 +2,7 @@ const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const KEY_ALL   = 'neon-glowtris-lb';
 const KEY_DAILY = () => `neon-glowtris-daily-${new Date().toISOString().slice(0,10)}`; // e.g. neon-glowtris-daily-2026-05-23
-const TOP = 10;
+const TOP = 7;
 const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
 
 async function redis(cmd) {
