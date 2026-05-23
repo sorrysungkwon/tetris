@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
+      <stop offset="0%" stop-color="#0a0a2e"/>
+      <stop offset="100%" stop-color="#000008"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow2">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Stars -->
+  <g fill="white" opacity="0.5">
+    <circle cx="80" cy="50" r="1.5"/><circle cx="200" cy="120" r="1"/><circle cx="350" cy="30" r="2"/>
+    <circle cx="500" cy="90" r="1.5"/><circle cx="700" cy="40" r="1"/><circle cx="850" cy="100" r="2"/>
+    <circle cx="1000" cy="60" r="1.5"/><circle cx="1100" cy="140" r="1"/><circle cx="150" cy="200" r="1"/>
+    <circle cx="900" cy="200" r="1.5"/><circle cx="1050" cy="250" r="1"/><circle cx="50" cy="320" r="2"/>
+    <circle cx="1150" cy="350" r="1.5"/><circle cx="250" cy="500" r="1"/><circle cx="1100" cy="500" r="1.5"/>
+    <circle cx="400" cy="580" r="1"/><circle cx="750" cy="590" r="2"/><circle cx="950" cy="560" r="1"/>
+  </g>
+
+  <!-- Glowtris blocks (decorative, left side) -->
+  <g opacity="0.35" filter="url(#glow2)">
+    <!-- I piece cyan -->
+    <rect x="60" y="200" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="60" y="252" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="60" y="304" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="60" y="356" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <!-- T piece purple -->
+    <rect x="112" y="252" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
+    <rect x="112" y="304" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
+    <rect x="164" y="304" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
+    <rect x="112" y="356" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
+    <!-- S piece green -->
+    <rect x="164" y="356" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
+    <rect x="216" y="356" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
+    <rect x="216" y="408" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
+    <!-- L piece orange -->
+    <rect x="60" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+    <rect x="112" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+    <rect x="60" y="460" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+    <rect x="164" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+  </g>
+
+  <!-- Glowtris blocks (decorative, right side) -->
+  <g opacity="0.35" filter="url(#glow2)">
+    <!-- Z piece red -->
+    <rect x="1040" y="200" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
+    <rect x="1088" y="200" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
+    <rect x="988" y="252" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
+    <rect x="1040" y="252" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
+    <!-- O piece yellow -->
+    <rect x="988" y="304" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
+    <rect x="1040" y="304" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
+    <rect x="988" y="356" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
+    <rect x="1040" y="356" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
+    <!-- J piece blue -->
+    <rect x="1088" y="304" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
+    <rect x="1088" y="356" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
+    <rect x="1088" y="408" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
+    <rect x="1040" y="408" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
+    <!-- I piece cyan bottom -->
+    <rect x="988" y="408" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="988" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="1040" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+    <rect x="1088" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
+  </g>
+
+  <!-- Title: NEON GLOWTRIS -->
+  <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
+        text-anchor="middle" letter-spacing="12"
+        fill="none" stroke="#00c8ff" stroke-width="1.5" opacity="0.4" filter="url(#glow)">NEON GLOWTRIS</text>
+  <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
+        text-anchor="middle" letter-spacing="12" fill="#00c8ff" filter="url(#glow)">NEON</text>
+  <text x="600" y="390" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
+        text-anchor="middle" letter-spacing="12" fill="#a000ff" filter="url(#glow)">GLOWTRIS</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="470" font-family="Arial, sans-serif" font-size="26" font-weight="400"
+        text-anchor="middle" letter-spacing="8" fill="rgba(0,200,255,0.65)">COMPETE · SCORE · RANK</text>
+
+  <!-- Bottom border line -->
+  <line x1="300" y1="510" x2="900" y2="510" stroke="url(#bg)" stroke-width="0"/>
+  <rect x="300" y="508" width="600" height="2" rx="1" fill="#00c8ff" opacity="0.3"/>
+
+  <!-- URL -->
+  <text x="600" y="560" font-family="Arial, sans-serif" font-size="22"
+        text-anchor="middle" letter-spacing="3" fill="rgba(0,200,255,0.4)">neon-glowtris-roan.vercel.app</text>
+</svg>
