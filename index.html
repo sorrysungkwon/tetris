@@ -2260,10 +2260,13 @@ function showStartScreen(){
   loadStartLeaderboard();
 }
 
+let _htpOpenTs=0;
 function openHowToPlay(){
+  _htpOpenTs=Date.now();
   document.getElementById('htp-overlay').classList.add('open');
 }
 function closeHowToPlay(){
+  if(Date.now()-_htpOpenTs<350)return;
   document.getElementById('htp-overlay').classList.remove('open');
 }
 
@@ -2289,8 +2292,11 @@ function openStats(){
   const el = document.getElementById('stats-scroll');
   if(el) el.innerHTML = statsHTML;
   document.getElementById('stats-overlay').classList.add('open');
+  _statsOpenTs=Date.now();
 }
+let _statsOpenTs=0;
 function closeStats(){
+  if(Date.now()-_statsOpenTs<350)return;
   document.getElementById('stats-overlay').classList.remove('open');
 }
 
