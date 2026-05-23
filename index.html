@@ -499,9 +499,9 @@ function initLayout() {
   if (isTouch) {
     const safeTop    = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top'))  || 0;
     const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom'))|| 0;
-    // header + controls (sys30/34 + act54/64 + move72/84 + pad24 + 2×gap) + app padding/gaps
+    // header + controls (sys30/34 + act54/64 + move72/84 + pad16 + 2×gap8/10) + app padding/gaps
     const headerH  = isMobile ? 52 : 30;
-    const ctrlH    = isMobile ? 210 : 244;
+    const ctrlH    = isMobile ? 188 : 218;
     const frameH   = 40; // app pad-top + pad-bot + 3 flex gaps
     const availH   = H - headerH - ctrlH - frameH - safeTop - safeBottom;
     const availW   = W - (isMobile ? 24 : 48);

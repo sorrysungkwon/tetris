@@ -25,6 +25,7 @@ A Tetris game with neon aesthetic built as a single HTML file.
 - Tetris full-screen flash + rainbow border glow on 4-line clear
 - Desktop UI redesign: title header, wider panels, BPM display, keyboard shortcuts reference
 - Touch controls shown on tablets (pointer:coarse), hidden only on mouse devices (pointer:fine)
+- Touch canvas sizing fix: corrected ctrlH values (mobile 188px, tablet 218px) to match actual CSS heights, recovering 1 cell (~20–40px) of game area
 
 ## Roadmap
 
