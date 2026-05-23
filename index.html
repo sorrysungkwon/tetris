@@ -410,6 +410,8 @@
   .htp-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,200,255,0.1); }
   .htp-row:last-child { border-bottom:none; }
   .htp-key { font-size:10px; font-weight:700; color:rgba(0,200,255,0.95); letter-spacing:1px; background:rgba(0,200,255,0.1); border:1px solid rgba(0,200,255,0.3); border-radius:4px; padding:4px 9px; box-shadow:0 0 8px rgba(0,200,255,0.2); }
+  .htp-key-alt { font-size:9px; font-weight:700; color:rgba(0,200,255,0.5); letter-spacing:1px; background:rgba(0,200,255,0.05); border:1px solid rgba(0,200,255,0.18); border-radius:4px; padding:3px 7px; margin-left:4px; }
+  .htp-keys { display:flex; align-items:center; flex-wrap:wrap; gap:0; }
   .htp-lbl { font-size:8px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px; text-transform:uppercase; }
 
   /* STATS popup overlay */
@@ -631,13 +633,13 @@
     <button id="htp-close" onclick="closeHowToPlay()">✕</button>
     <div id="htp-scroll">
       <div class="htp-section">KEYBOARD</div>
-      <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
-      <div class="htp-row"><span class="htp-key">↑</span><span class="htp-lbl">Rotate</span></div>
-      <div class="htp-row"><span class="htp-key">↓</span><span class="htp-lbl">Soft Drop</span></div>
-      <div class="htp-row"><span class="htp-key">SPC</span><span class="htp-lbl">Hard Drop</span></div>
-      <div class="htp-row"><span class="htp-key">C</span><span class="htp-lbl">Hold</span></div>
-      <div class="htp-row"><span class="htp-key">P</span><span class="htp-lbl">Pause</span></div>
-      <div class="htp-row"><span class="htp-key">M</span><span class="htp-lbl">Mute</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">← →</span></span><span class="htp-lbl">Move</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">↑</span></span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">↓</span></span><span class="htp-lbl">Soft Drop</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">Space</span></span><span class="htp-lbl">Hard Drop</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">C</span><span class="htp-key-alt">⇧ Shift</span></span><span class="htp-lbl">Hold</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">P</span></span><span class="htp-lbl">Pause / Resume</span></div>
+      <div class="htp-row"><span class="htp-keys"><span class="htp-key">M</span></span><span class="htp-lbl">Mute / Unmute</span></div>
       <div class="htp-section">TOUCH</div>
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_left</span><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_right</span></span><span class="htp-lbl">Move</span></div>
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">keyboard_arrow_down</span></span><span class="htp-lbl">Soft Drop</span></div>
@@ -797,7 +799,7 @@ const PIECES = {
 const SCORE_TABLE=[0,100,300,500,800];
 const TSPIN_SCORE=[400,800,1200,1600];
 const LEVEL_LINES=10;
-const LOCK_MS=500;
+let lockMs=500;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let board,current,next,held,canHold;
@@ -815,7 +817,7 @@ let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
 let lastWasRotate=false;
-let muteAudio=false,das=150,arr=50;
+let muteAudio=false,das=150,arr=50,ghostVisible=true;
 let comboFlash=0,comboFlashColor='#00c8ff';
 let rainbowBorder=0;
 let dangerPulse=0; // frame counter for danger overlay pulse
@@ -1145,7 +1147,7 @@ function drawBoard(){
   if(gameRunning&&!gamePaused&&current){
     // Ghost
     const ghostY=getGhostY();
-    if(ghostY!==current.y){
+    if(ghostVisible&&ghostY!==current.y){
       const {r,g,b}=hexToRgb(current.color);
       for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
         if(!current.shape[row][col])continue;
@@ -1188,7 +1190,7 @@ function drawBoard(){
     }
     // Lock delay indicator
     if(lockActive&&lockTimer>0){
-      const pct=lockTimer/LOCK_MS;
+      const pct=lockTimer/lockMs;
       const {r,g,b}=hexToRgb(current.color);
       // Glow on piece
       for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
@@ -1504,6 +1506,17 @@ function updateARR(v){
   arr=parseInt(v);localStorage.setItem('glowTrisARR',v);
   const el=document.getElementById('ov-arr-val');if(el)el.textContent=v+'ms';
 }
+function updateLockDelay(v){
+  lockMs=parseInt(v);localStorage.setItem('glowTrisLock',v);
+  const el=document.getElementById('ov-lock-val');if(el)el.textContent=v+'ms';
+}
+function updateGhost(){
+  ghostVisible=!ghostVisible;
+  localStorage.setItem('glowTrisGhost',ghostVisible?'1':'0');
+  const btn=document.getElementById('ov-ghost-btn');
+  if(btn)btn.textContent=ghostVisible?'👻 GHOST ON':'👻 GHOST OFF';
+  btn&&btn.classList.toggle('muted',!ghostVisible);
+}
 
 const _n=s=>440*Math.pow(2,s/12);
 const BGM_FREQS=[
@@ -1682,7 +1695,7 @@ function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
 
 function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
-function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{lockActive=true;lockTimer=LOCK_MS;}}
+function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
 function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
@@ -1721,7 +1734,7 @@ function gameLoop(ts){
   drawBackground();
   if(!gamePaused&&gameRunning&&current){
     if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
-    else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1)){current.y++;spawnDropTrail();}else{lockActive=true;lockTimer=LOCK_MS;}}
+    else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1)){current.y++;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
   }
   drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
@@ -1732,6 +1745,8 @@ function loadSettings(){
   muteAudio=localStorage.getItem('glowTrisMute')==='1';
   das=parseInt(localStorage.getItem('glowTrisDAS')||'150');
   arr=parseInt(localStorage.getItem('glowTrisARR')||'50');
+  lockMs=parseInt(localStorage.getItem('glowTrisLock')||'500');
+  ghostVisible=localStorage.getItem('glowTrisGhost')!=='0';
   const icon=document.getElementById('mute-icon');
   const btn=document.getElementById('btn-mute');
   if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
@@ -1787,6 +1802,7 @@ function togglePause(){
         <h1 style="font-size:22px;margin-bottom:14px">PAUSED</h1>
         <div class="settings-box" style="width:100%">
           <button class="toggle-btn${muteAudio?' muted':''}" id="ov-mute-btn" onclick="toggleMute()">${muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON'}</button>
+          <button class="toggle-btn${ghostVisible?'':' muted'}" id="ov-ghost-btn" onclick="updateGhost()">${ghostVisible?'👻 GHOST ON':'👻 GHOST OFF'}</button>
           <div class="settings-row">
             <span class="settings-lbl">DAS</span>
             <input type="range" class="neon-range" min="50" max="300" value="${das}" oninput="updateDAS(this.value)">
@@ -1796,6 +1812,11 @@ function togglePause(){
             <span class="settings-lbl">ARR</span>
             <input type="range" class="neon-range" min="0" max="100" value="${arr}" oninput="updateARR(this.value)">
             <span class="settings-val" id="ov-arr-val">${arr}ms</span>
+          </div>
+          <div class="settings-row">
+            <span class="settings-lbl">LOCK</span>
+            <input type="range" class="neon-range" min="100" max="1000" step="50" value="${lockMs}" oninput="updateLockDelay(this.value)">
+            <span class="settings-val" id="ov-lock-val">${lockMs}ms</span>
           </div>
         </div>
         <div class="sub" style="margin-bottom:12px;font-size:8px">TAP TO RESUME</div>
