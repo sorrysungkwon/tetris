@@ -3,6 +3,8 @@
 
 # Agent Guidelines
 
+> **Naming note:** This project was previously located at `/home/ubuntu/projects/tetris` and called "Neon Tetris". It was renamed to **Glowtris** at v1.0.1. As of 2026-05-23, all "tetris" references have been purged from files, config, and git history. Always use "Glowtris" / "glowtris" — never "tetris".
+
 - Always read README.md first, then TODO.md before starting any task
 - Update TODO.md task progress (`[x]`) and README.md roadmap after each task is completed
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).

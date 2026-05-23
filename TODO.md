@@ -86,6 +86,16 @@
 
 ---
 
+## ✅ Completed: Naming Cleanup — by Claude (2026-05-23)
+
+- [x] Removed two stale permission entries in `.claude/settings.local.json` that referenced the old path `/home/ubuntu/projects/tetris`
+- [x] Rewrote entire git history using `git-filter-repo` to replace all "Tetris"/"tetris" references with "Glowtris"/"glowtris" in both commit messages and file content (e.g. `og.svg` comment strings in old commits)
+- [x] Force-pushed rewritten history to `origin/master` on GitHub
+
+**Background:** The project was originally developed in `/home/ubuntu/projects/tetris` and renamed to Glowtris at v1.0.1. This task ensured no "tetris" string remains anywhere — files, config, or git history. The canonical name is **Glowtris** everywhere.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
