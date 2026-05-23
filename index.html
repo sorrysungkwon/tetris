@@ -1208,7 +1208,7 @@ function endGame(){
       <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
       <div class="btn-row">
         <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
-        <button class="action-btn sm ghost" onclick="startGame()">PLAY AGAIN</button>
+        <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
       </div>
       <div id="lb-result" style="margin-top:10px;width:100%;display:flex;flex-direction:column;align-items:center"></div>`;
     $overlay.style.display='flex';
@@ -1251,7 +1251,7 @@ async function submitScore(){
       // hide input form and show results only
       inp.style.display='none';
       btn.closest('.btn-row').style.display='none';
-      res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="startGame()">PLAY AGAIN</button></div>`;
+      res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">저장 실패 — 다시 시도해주세요</div>';
@@ -1268,9 +1268,9 @@ async function openLeaderboard(){
   try{
     const r=await fetch('/api/leaderboard');
     const data=await r.json();
-    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1>${lbHTML(data.board,'')}<div class="btn-row"><button class="action-btn sm" onclick="startGame()">PLAY</button></div>`;
+    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1>${lbHTML(data.board,'')}<div class="btn-row"><button class="action-btn sm" onclick="showStartScreen()">BACK</button></div>`;
   }catch(e){
-    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1><div class="sub">Load failed</div><button class="action-btn sm ghost" onclick="startGame()">BACK</button>`;
+    $overlay.innerHTML=`<h1 style="font-size:18px">🏆 LEADERBOARD</h1><div class="sub">Load failed</div><button class="action-btn sm ghost" onclick="showStartScreen()">BACK</button>`;
   }
 }
 
@@ -1294,6 +1294,17 @@ async function loadStartLeaderboard(){
       el.innerHTML=`<div class="start-lb-title">🏆 TOP 10</div>${lbHTML(data.board,'')}`;
     }
   }catch(e){}
+}
+
+function showStartScreen(){
+  $overlay.innerHTML=`
+    <h1>NEON TETRIS</h1>
+    <div id="start-lb"></div>
+    <div class="btn-row">
+      <button class="action-btn" onclick="startGame()">START GAME</button>
+    </div>`;
+  $overlay.style.display='flex';
+  loadStartLeaderboard();
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
