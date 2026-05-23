@@ -49,10 +49,23 @@
   ════════════════════════════════ */
   #mobile-header { display:none; }
 
+  /* Desktop title header */
+  #desktop-header {
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    flex:0 0 auto; padding:2px 0;
+  }
+  .dh-title {
+    font-size:20px; font-weight:900; letter-spacing:7px;
+    background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    filter:drop-shadow(0 0 10px rgba(0,200,255,0.35));
+  }
+  .dh-version { font-size:8px; color:rgba(0,200,255,0.32); letter-spacing:2px; align-self:flex-end; padding-bottom:3px; }
+
   #game-row {
     display:flex;
     align-items:flex-start;
-    gap:12px;
+    gap:14px;
     flex:0 0 auto;
   }
 
@@ -61,30 +74,39 @@
     background:var(--panel-bg);
     border:1px solid var(--border);
     border-radius:12px;
-    padding:12px 10px;
+    padding:14px 12px;
     backdrop-filter:blur(10px);
     -webkit-backdrop-filter:blur(10px);
-    box-shadow:0 0 18px rgba(0,200,255,0.12), inset 0 0 16px rgba(0,0,50,0.5);
-    width:112px;
+    box-shadow:0 0 22px rgba(0,200,255,0.13), inset 0 0 20px rgba(0,0,50,0.5);
+    width:132px;
   }
   .panel-title {
-    color:rgba(0,200,255,0.65);
-    font-size:8px; letter-spacing:3px;
+    color:rgba(0,200,255,0.55);
+    font-size:7px; letter-spacing:3px;
     text-transform:uppercase;
-    text-align:center; margin-bottom:6px;
+    text-align:center; margin-bottom:5px;
   }
   .score-val {
-    font-size:17px; font-weight:900; text-align:center;
-    text-shadow:0 0 16px rgba(0,200,255,0.8); letter-spacing:1px;
+    font-size:22px; font-weight:900; text-align:center;
+    text-shadow:0 0 20px rgba(0,200,255,0.9); letter-spacing:1px;
   }
   .score-sub {
-    font-size:7px; letter-spacing:2px; color:rgba(0,200,255,0.45);
+    font-size:7px; letter-spacing:2px; color:rgba(0,200,255,0.4);
     text-align:center; margin-top:2px; margin-bottom:8px;
   }
-  #level-bar-wrap { width:100%; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; margin:5px 0 3px; overflow:hidden; }
-  #level-bar { height:100%; background:linear-gradient(90deg,var(--cyan),var(--purple)); border-radius:2px; transition:width .5s; box-shadow:0 0 6px var(--cyan); }
-  .divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:8px 0; }
+  #level-bar-wrap { width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; margin:6px 0 4px; overflow:hidden; }
+  #level-bar { height:100%; background:linear-gradient(90deg,var(--cyan),var(--purple)); border-radius:3px; transition:width .5s; box-shadow:0 0 8px var(--cyan); }
+  .divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:10px 0; }
   #combo-display { text-align:center; font-size:9px; color:var(--pink); letter-spacing:2px; min-height:14px; text-shadow:0 0 8px var(--pink); }
+
+  /* BPM speed indicator */
+  #bpm-display { font-size:12px; font-weight:900; text-align:center; color:var(--purple); text-shadow:0 0 14px rgba(160,0,255,0.7); letter-spacing:1px; }
+
+  /* Keyboard shortcut map */
+  .key-map { display:flex; flex-direction:column; gap:4px; margin-top:2px; }
+  .key-row { display:flex; align-items:center; justify-content:space-between; }
+  .key-row kbd { font-family:'Orbitron',monospace; font-size:7px; background:rgba(0,200,255,0.07); border:1px solid rgba(0,200,255,0.2); border-radius:3px; padding:2px 5px; color:rgba(0,200,255,0.75); white-space:nowrap; }
+  .key-row span { font-size:7px; color:rgba(255,255,255,0.38); letter-spacing:1px; text-transform:uppercase; }
 
   /* Game wrap */
   .game-wrap { position:relative; flex:0 0 auto; }
@@ -139,6 +161,7 @@
      MOBILE  (< 600 px)
   ════════════════════════════════ */
   @media (max-width:599px) {
+    #desktop-header { display:none; }
     #left-panel, #right-panel { display:none; }
 
     #mobile-header {
@@ -232,7 +255,7 @@
 
   /* ── DESKTOP / TABLET (≥ 600px): fixed-size buttons ── */
   @media (min-width:600px) {
-    #touch-controls { width:auto; max-width:380px; }
+    #touch-controls { display:none; }
     .ctrl-row { justify-content:center; }
     .tbtn-xl  { width:66px; height:66px; font-size:30px; border-radius:12px; }
     .tbtn-lg  { width:56px; height:56px; font-size:26px; }
@@ -285,6 +308,12 @@
 
 <div id="app">
 
+  <!-- Desktop title header -->
+  <div id="desktop-header">
+    <span class="dh-title">NEON TETRIS</span>
+    <span class="dh-version">v0.8.1</span>
+  </div>
+
   <!-- Mobile-only compact header -->
   <div id="mobile-header">
     <div class="mh-preview">
@@ -319,11 +348,13 @@
       <div class="panel-title">LEVEL</div>
       <div class="score-val" id="level-display">1</div>
       <div id="level-bar-wrap"><div id="level-bar" style="width:0%"></div></div>
+      <div class="panel-title" style="margin-top:8px">SPEED</div>
+      <div id="bpm-display">140 BPM</div>
       <div class="divider"></div>
       <div id="combo-display"></div>
       <div class="divider"></div>
       <div class="panel-title">BEST</div>
-      <div class="score-val" id="hi-score" style="font-size:13px">0</div>
+      <div class="score-val" id="hi-score" style="font-size:16px">0</div>
     </div>
 
     <!-- Game canvas -->
@@ -340,10 +371,21 @@
     <!-- Desktop right panel -->
     <div class="panel" id="right-panel" style="margin-top:6px">
       <div class="panel-title">NEXT</div>
-      <canvas id="next-canvas" class="mini-cv" width="92" height="88"></canvas>
+      <canvas id="next-canvas" class="mini-cv" width="108" height="96"></canvas>
       <div class="divider"></div>
       <div class="panel-title">HOLD</div>
-      <canvas id="hold-canvas" class="mini-cv" width="92" height="68"></canvas>
+      <canvas id="hold-canvas" class="mini-cv" width="108" height="80"></canvas>
+      <div class="divider"></div>
+      <div class="panel-title">KEYS</div>
+      <div class="key-map">
+        <div class="key-row"><kbd>← →</kbd><span>move</span></div>
+        <div class="key-row"><kbd>↑</kbd><span>rotate</span></div>
+        <div class="key-row"><kbd>↓</kbd><span>soft drop</span></div>
+        <div class="key-row"><kbd>SPC</kbd><span>hard drop</span></div>
+        <div class="key-row"><kbd>C</kbd><span>hold</span></div>
+        <div class="key-row"><kbd>P</kbd><span>pause</span></div>
+        <div class="key-row"><kbd>M</kbd><span>mute</span></div>
+      </div>
     </div>
   </div>
 
@@ -733,11 +775,11 @@ function drawMiniPiece(ctx,piece,cw,ch){
 }
 
 function drawNext(){
-  drawMiniPiece(ncDx,next,92,88);
+  drawMiniPiece(ncDx,next,108,96);
   drawMiniPiece(ncMx,next,ncM.width,ncM.height);
 }
 function drawHold(){
-  drawMiniPiece(hcDx,held,92,68);
+  drawMiniPiece(hcDx,held,108,80);
   drawMiniPiece(hcMx,held,hcM.width,hcM.height);
 }
 
@@ -803,6 +845,9 @@ function updateUI(){
   const bar=document.getElementById('level-bar');
   bar.style.width=pct+'%';
   bar.style.background=`linear-gradient(90deg,hsl(${190+hue},100%,50%),hsl(${270+hue},100%,50%))`;
+  const bpm=Math.min(200,135+level*5);
+  const bpmEl=document.getElementById('bpm-display');
+  if(bpmEl)bpmEl.textContent=bpm+' BPM';
 }
 
 // ─── Audio ────────────────────────────────────────────────────────────────────
@@ -970,6 +1015,7 @@ document.addEventListener('keydown',e=>{
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
+    case'KeyM':toggleMute();break;
   }
 });
 document.addEventListener('keyup',e=>{KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();});
