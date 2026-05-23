@@ -620,12 +620,52 @@
 
     #tc-move .tbtn { height:84px; font-size:38px; border-radius:14px; }
   }
+
+  /* ─── Performance mode indicator ─── */
+  #perf-indicator {
+    position: fixed;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    right: 12px;
+    z-index: 999;
+    font-family: 'Orbitron', monospace;
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,200,0,0.55);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+
+  /* ─── Low performance mode overrides ─── */
+  html.low-perf .dh-title {
+    filter: none !important;
+    animation: gradient-flow 6s linear infinite !important;
+  }
+  html.low-perf .panel {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+  }
+  html.low-perf .glass-panel,
+  html.low-perf .action-btn,
+  html.low-perf #game-canvas-wrap {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  html.low-perf .score-val,
+  html.low-perf #combo-display,
+  html.low-perf #bpm-display,
+  html.low-perf .panel-title,
+  html.low-perf .mh-score { text-shadow: none !important; }
+  html.low-perf #level-bar { box-shadow: none !important; }
 </style>
 </head>
 <body>
 
 <canvas id="bg-canvas"></canvas>
 <div id="screen-flash"></div>
+<div id="perf-indicator">⚡ PERF MODE</div>
 
 <div id="htp-overlay" onclick="closeHowToPlay()">
   <div id="htp-box" onclick="event.stopPropagation()">
@@ -816,6 +856,23 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
+// ─── Performance detection ────────────────────────────────────────────────────
+let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0;
+function measureFPS(ts){
+  _fpsCnt++;
+  if(ts-_fpsLast>=1000){
+    const fps=_fpsCnt;_fpsCnt=0;_fpsLast=ts;
+    if(_perfHold>0){_perfHold--;return;}
+    if(!lowPerfMode&&fps<30){setLowPerfMode(true);_perfHold=3;}
+    else if(lowPerfMode&&fps>50){setLowPerfMode(false);_perfHold=3;}
+  }
+}
+function setLowPerfMode(on){
+  lowPerfMode=on;
+  document.documentElement.classList.toggle('low-perf',on);
+  const ind=document.getElementById('perf-indicator');
+  if(ind)ind.style.opacity=on?'1':'0';
+}
 let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50,ghostVisible=true;
 let comboFlash=0,comboFlashColor='#00c8ff';
@@ -925,8 +982,14 @@ function initStars() {
 }
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
+  if(lowPerfMode){
+    bgx.fillStyle='rgba(0,0,8,0.25)';bgx.fillRect(0,0,bgc.width,bgc.height);
+    bgx.fillStyle='rgba(180,220,255,0.45)';bgx.beginPath();
+    for(const s of stars){s.y+=s.speed;if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}bgx.moveTo(s.x+s.r,s.y);bgx.arc(s.x,s.y,s.r,0,Math.PI*2);}
+    bgx.fill();return;
+  }
   bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
-  
+
   // Draw glowing shifting nebulae in background
   for(const neb of nebulae) {
     neb.x += neb.vx; neb.y += neb.vy;
@@ -1102,7 +1165,7 @@ function drawCell(ctx,x,y,color,alpha=1,glow=1){
   const s=CELL,px=x*s,py=y*s;
   const {r,g,b}=hexToRgb(color);
   ctx.save();ctx.globalAlpha=alpha;
-  if(glow>0){ctx.shadowColor=color;ctx.shadowBlur=10*glow;}
+  if(glow>0&&!lowPerfMode){ctx.shadowColor=color;ctx.shadowBlur=10*glow;}
   const gr=ctx.createLinearGradient(px,py,px+s,py+s);
   gr.addColorStop(0,`rgba(${r},${g},${b},0.95)`);
   gr.addColorStop(.5,`rgba(${Math.min(255,r+55)},${Math.min(255,g+55)},${Math.min(255,b+55)},0.9)`);
@@ -1140,7 +1203,7 @@ function drawBoard(){
     if(flashLines.has(r)){
       const t=1-flashTimer/12;
       gctx.save();gctx.globalAlpha=0.5+0.5*Math.sin(t*Math.PI*4);
-      gctx.fillStyle='#fff';gctx.shadowColor='#fff';gctx.shadowBlur=28;
+      gctx.fillStyle='#fff';if(!lowPerfMode){gctx.shadowColor='#fff';gctx.shadowBlur=28;}
       gctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);gctx.restore();
     } else drawCell(gctx,c,r,board[r][c]);
   }
@@ -1202,7 +1265,7 @@ function drawBoard(){
       const bY=(current.y+current.shape.length)*CELL-3;
       gctx.save();
       gctx.fillStyle=`rgba(${r},${g},${b},0.75)`;
-      gctx.shadowColor=current.color;gctx.shadowBlur=5;
+      if(!lowPerfMode){gctx.shadowColor=current.color;gctx.shadowBlur=5;}
       gctx.fillRect(current.x*CELL, bY, current.shape[0].length*CELL*pct, 3);
       gctx.restore();
     }
@@ -1213,10 +1276,10 @@ function drawBoard(){
     // Dynamic Border
     const {r,g,b}=hexToRgb(current.color);
     gc.style.borderColor=`rgba(${r},${g},${b},0.6)`;
-    gc.style.boxShadow=`0 0 25px rgba(${r},${g},${b},0.35), 0 0 60px rgba(${r},${g},${b},0.15)`;
+    gc.style.boxShadow=lowPerfMode?'none':`0 0 25px rgba(${r},${g},${b},0.35), 0 0 60px rgba(${r},${g},${b},0.15)`;
   } else {
     gc.style.borderColor='rgba(0,200,255,0.35)';
-    gc.style.boxShadow='0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12)';
+    gc.style.boxShadow=lowPerfMode?'none':'0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12)';
   }
   if(flashTimer>0)flashTimer--;
   // Combo flash overlay
@@ -1344,13 +1407,13 @@ function spawnLineClearParticles(rows){
       type: 'radial-ring'
     });
     
-    const sparkCount = isMobile ? 2 : 4;
+    const sparkCount = lowPerfMode ? 1 : (isMobile ? 2 : 4);
     for(let c=0;c<COLS;c++) for(let i=0;i<sparkCount;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*5+2;
       particles.push({x:(c+.5)*CELL,y:(row+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,life:1,decay:Math.random()*.02+.015,color:'#00c8ff',size:Math.random()*4+2,type:'spark'});
     }
   }
-  const starCount = isMobile ? 12 : 25;
+  const starCount = lowPerfMode ? 5 : (isMobile ? 12 : 25);
   for(let i=0;i<starCount;i++){
     const a=Math.random()*Math.PI*2,sp=Math.random()*8+3;
     particles.push({x:COLS/2*CELL,y:(rows[0]+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.015+.008,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*6+3,type:'star'});
@@ -1358,7 +1421,8 @@ function spawnLineClearParticles(rows){
 }
 function spawnLockParticles(){
   if(!current)return;
-  const pCount = isMobile ? 1 : 2;
+  const pCount = lowPerfMode ? 0 : (isMobile ? 1 : 2);
+  if(pCount===0)return;
   for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
     if(!current.shape[r][c])continue;
     for(let i=0;i<pCount;i++) particles.push({x:(current.x+c+.5)*CELL,y:(current.y+r+.5)*CELL,vx:(Math.random()-.5)*4,vy:Math.random()*-4-1.5,life:1,decay:.04,color:current.color,size:Math.random()*3+1.5,type:'spark'});
@@ -1370,7 +1434,7 @@ function spawnFloatingText(txt, x, y, color, size) {
   });
 }
 function spawnDropTrail() {
-  if(!current) return;
+  if(!current||lowPerfMode) return;
   // Emit 1 tiny faint particle from the active falling piece top
   const w = current.shape[0].length;
   const cx = (current.x + Math.random() * w) * CELL;
@@ -1396,13 +1460,14 @@ function updateParticles(){
       pctx.save();pctx.globalAlpha=Math.max(0,p.life);
       pctx.font=`900 ${p.size}px Orbitron, monospace`;
       pctx.textAlign='center';
-      pctx.shadowColor=p.color;pctx.shadowBlur=12;
+      if(!lowPerfMode){pctx.shadowColor=p.color;pctx.shadowBlur=12;}
       pctx.fillStyle=p.color;
       pctx.fillText(p.text,p.x,p.y);
       pctx.restore();
       continue;
     }
     if(p.type==='ring'||p.type==='radial-ring'){
+      if(lowPerfMode){p.life-=p.decay;continue;}
       p.life-=p.decay;
       pctx.save();pctx.globalAlpha=Math.max(0,p.life);
       pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;pctx.shadowColor=p.color;pctx.shadowBlur=15;
@@ -1730,6 +1795,7 @@ makeTouchBtn('btn-pause', ()=>togglePause(),'any');
 
 // ─── Game loop ────────────────────────────────────────────────────────────────
 function gameLoop(ts){
+  measureFPS(ts);
   const dt=prevTs?Math.min(ts-prevTs,100):16;prevTs=ts;
   drawBackground();
   if(!gamePaused&&gameRunning&&current){
@@ -1766,7 +1832,8 @@ function triggerLevelUpVisuals() {
     }
   });
   
-  for(let i=0;i<50;i++){
+  const lvlPCount=lowPerfMode?15:50;
+  for(let i=0;i<lvlPCount;i++){
     const a=Math.random()*Math.PI*2,sp=Math.random()*11+3;
     particles.push({x:(COLS/2)*CELL,y:(ROWS/2)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.012,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*8+4,type:'star'});
   }
@@ -2234,7 +2301,7 @@ loadSettings();
 hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
 $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
-animFrame=requestAnimationFrame(function bgOnly(){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
+animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();measureFPS(ts);if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 showStartScreen();
 </script>
 </body>
