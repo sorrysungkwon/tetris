@@ -62,11 +62,29 @@
 
 ---
 
-## 🔮 Planned: v1.1 (Sprint Mode & Polish)
+## ✅ Completed: v1.0.5 (OG Image Redesign) — by Claude (2026-05-23)
 
-- [ ] Task 1: **Sprint Mode Engine**: Implement game mode logic — clear 40 lines as fast as possible. The game ends when 40 lines are cleared, recording elapsed time.
-- [ ] Task 2: **Sprint UI**: Display an elapsed stopwatch timer (e.g. `01:23.45`) and remaining lines in the side panels.
-- [ ] Task 3: **Mode Selection**: Add a sleek toggle/button group on the start screen to select between "MARATHON" (endless, score-based) and "SPRINT" (40 lines, time-based).
-- [ ] Task 4: **Sprint Leaderboard**: Create a separate time-based Redis leaderboard (ascending sort, fastest times win) with TODAY / WEEKLY / ALL TIME tabs.
-- [ ] Task 5: **Sprint Stats & Share**: Update `STATS` overlay and Canvas Share to properly format and display Sprint times and ranks.
-- [ ] Task 6: **Settings Polish**: Add a toggle in settings to enable/disable the Ghost Piece.
+- [x] Task 1: Redesign `og.svg` with logo-lockup layout — 3×3 block grid mark on left, GLOW/TRIS neon title on right.
+- [x] Task 2: Add nebula radial gradients, subtle grid lines, and starfield background.
+- [x] Task 3: Add neon corner bracket accents (cyan TL/BL, purple TR/BR) and gradient separator lines.
+- [x] Task 4: Update `README.md` roadmap with v1.0.5 entry.
+
+---
+
+## 🔮 Planned: v1.0.6 (Settings & Accessibility)
+
+- [ ] Task 1: **Ghost Piece Toggle** — add an on/off switch in the pause-menu settings panel; persist choice to `localStorage`.
+- [ ] Task 2: **Lock-Delay Tuning** — expose lock-delay slider in settings alongside existing DAS/ARR controls.
+- [ ] Task 3: **How To Play — Keyboard Hints** — add a keyboard shortcut reference column to the HOW TO PLAY overlay.
+- [ ] Task 4: Update `README.md` roadmap and this file after completion.
+
+---
+
+## 🔮 Planned: v1.1 (Sprint Mode)
+
+- [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
+- [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
+- [ ] Task 3: **Mode Selector** — Marathon vs Sprint toggle on start screen; selection persists to `localStorage`.
+- [ ] Task 4: **Sprint Leaderboard** — separate Redis leaderboard, ascending sort (fastest wins), TODAY / WEEKLY / ALL TIME tabs, rank shown after submission.
+- [ ] Task 5: **Sprint Stats & Canvas Share** — STATS overlay and share image format sprint results (time, lines/min, rank) correctly.
+- [ ] Task 6: Update `README.md` roadmap and this file after completion.
