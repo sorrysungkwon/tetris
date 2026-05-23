@@ -34,6 +34,8 @@ A neon-styled block stacking game built as a single HTML file.
 - Online leaderboard: TODAY and ALL TIME tabs, top 10, submit after game over
 - Daily leaderboard resets each day (Redis TTL)
 - Rank shown after score submission (today rank + all-time rank)
+- Restart button in pause menu (returns to start screen without full reload)
+- HOW TO PLAY popup — full-screen overlay listing keyboard and touch controls
 - Web Share API result sharing (clipboard fallback on desktop)
 - PWA: installable on iOS/Android home screen (manifest + icons)
 - OG image + social meta tags for rich SNS sharing preview

@@ -25,12 +25,22 @@
 
 ---
 
-## 📌 Active Iteration: v1.0.3 (Retention & UX Polish)
+## ✅ Completed: v1.0.3 (Retention & UX Polish)
 
 - [x] Task 1: Persist username across sessions — save the submitted leaderboard name to `localStorage` and pre-fill it on the next game-over submission form so players don't retype it every game.
 - [x] Task 2: Show personal best streak on game over screen — display current win streak or highest combo alongside the last-5-scores history panel.
 - [x] Task 3: Add "HOW TO PLAY" toggle on start screen — a small collapsible rules panel listing controls (keyboard + touch) so new players don't have to guess.
 - [x] Task 4: Document v1.0.3 changes in `README.md` roadmap and update this file.
+
+---
+
+## ✅ Completed: v1.0.3 Post-fixes — by Claude (2026-05-23)
+
+- [x] Hotfix: iOS PWA safe area inset — `getPropertyValue('--safe-bottom')` returned raw token string; replaced with temp element measurement so canvas sizing respects home indicator on iPhone.
+- [x] Feat: Restart button in pause overlay — ghost-styled button below RESUME routes back to start screen.
+- [x] Feat: HOW TO PLAY redesigned as standalone full-screen popup — X button and backdrop tap to close; no longer conflicts with leaderboard layout.
+- [x] Fix: HOW TO PLAY button resized to match START GAME (`action-btn ghost`); touch section icons replaced with Material Icons Round matching actual game buttons.
+- [x] Chore: Bump version label to v1.0.3; configure git identity to `sorrysungkwon <seonqwer@gmail.com>` for proper GitHub attribution.
 
 ---
 
