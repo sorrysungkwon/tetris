@@ -20,13 +20,16 @@ A Tetris game with neon aesthetic built as a single HTML file.
 - Audio mute toggle (🔊/🔇 button, persists across sessions)
 - T-spin detection with bonus scoring (single 800pt / double 1200pt / triple 1600pt per level)
 - DAS/ARR key-repeat tuning (accessible from pause menu, 50–300ms DAS, 0–100ms ARR)
+- BGM tempo auto-scaling with level (140 BPM at L1 → 200 BPM cap at L13+)
+- Combo flash overlay (cyan → purple → pink as combo grows)
+- Tetris full-screen flash + rainbow border glow on 4-line clear
 
 ## Roadmap
 
 | Version | Features |
 |---|---|
 | v0.7 | Audio mute toggle, T-spin detection & bonus, DAS/ARR tuning |
-| v0.8 | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
+| ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
 | v0.9 | Online leaderboard (Vercel + KV), result share screenshot |
 | v1.0 | Polish & release |
 
