@@ -27,6 +27,7 @@ A Tetris game with neon aesthetic built as a single HTML file.
 - Touch controls shown on tablets (pointer:coarse), hidden only on mouse devices (pointer:fine)
 - Touch canvas sizing fix: corrected ctrlH values (mobile 188px, tablet 218px) to match actual CSS heights, recovering 1 cell (~20–40px) of game area
 - Online leaderboard via Upstash Redis: submit score after game over, view Top 10, Web Share API result sharing
+- v0.9.1 code optimisation: DOM caching, hexToRgb memoisation, Set-based flashLines, single-path grid render, BGM node cleanup, debounced resize, fixed togglePause/endGame/openLeaderboard to use cached $overlay, fixed leaderboard overlay on desktop (position:fixed full-viewport)
 
 ## Roadmap
 
@@ -36,6 +37,7 @@ A Tetris game with neon aesthetic built as a single HTML file.
 | ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
 | ~~v0.8.1~~ ✅ | Desktop UI redesign, tablet touch controls fix |
 | ~~v0.9~~ ✅ | Online leaderboard (Upstash Redis), result share (Web Share API) |
+| ~~v0.9.1~~ ✅ | Code optimisation, refactor, bug fixes, desktop leaderboard overlay fix |
 | v1.0 | Polish & release |
 
 ## Rules
