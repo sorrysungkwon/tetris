@@ -1,6 +1,6 @@
-# Neon Tetris
+# Glowtris
 
-A Tetris game with neon aesthetic built as a single HTML file.
+A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://neon-tetris-roan.vercel.app
 
@@ -19,13 +19,13 @@ A Tetris game with neon aesthetic built as a single HTML file.
 - Screen shake + danger red overlay when stack is high
 - Chiptune BGM via Web Audio API (A minor, 140 BPM, 4-phrase looping melody with bass)
 - BGM tempo auto-scaling with level (140 BPM at L1 → 200 BPM cap at L13+)
-- Sound effects: move, rotate, hold, line clear (1–3 lines), Tetris fanfare, game over
+- Sound effects: move, rotate, hold, line clear (1–3 lines), Glowtris fanfare, game over
 - Enhanced screen shake on hard drop (scales with drop distance)
 - Audio mute toggle (persists across sessions)
 - T-spin detection with bonus scoring (single / double / triple)
 - DAS/ARR key-repeat tuning (accessible from pause menu)
 - Combo flash overlay (cyan → purple → pink as combo grows)
-- Tetris full-screen flash + rainbow border glow on 4-line clear
+- Glowtris full-screen flash + rainbow border glow on 4-line clear
 - All-clear bonus: 2000×level pts + gold flash + fanfare + burst particles
 - NEW BEST effect: gold badge + ascending SFX + gold particles on personal record
 - Personal game history: last 5 scores shown on game over screen (localStorage)
@@ -41,7 +41,7 @@ A Tetris game with neon aesthetic built as a single HTML file.
 | Version | Features |
 |---|---|
 | ~~v0.7~~ ✅ | Audio mute toggle, T-spin detection & bonus, DAS/ARR tuning |
-| ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
+| ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Glowtris full-screen effect |
 | ~~v0.8.1~~ ✅ | Desktop UI redesign, tablet touch controls fix |
 | ~~v0.9~~ ✅ | Online leaderboard (Upstash Redis), result share (Web Share API) |
 | ~~v0.9.1~~ ✅ | Code optimisation, refactor, bug fixes, desktop leaderboard overlay fix |
