@@ -1,5 +1,7 @@
 # Glowtris
 
+> **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
+
 A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://glowtris.vercel.app
@@ -48,6 +50,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v0.9.2~~ ✅ | iOS speaker fix, audio resume, danger warning overlay, SFX node cleanup |
 | ~~v1.0~~ ✅ | All-clear bonus, NEW BEST effect, daily leaderboard, PWA, OG image — **LAUNCHED** |
 | ~~v1.0.1~~ ✅ | Rename to Glowtris, variable clean up, and **Premium Visual Upgrade** (Color-shifting nebulae, Glassmorphism 3D panels, landing shockwaves, keyboard press feedback, and level-up sweep). |
+| ~~v1.0.2~~ ✅ | **Elegant Polish**: Removed hard-drop shockwaves to keep drops snappy, added sleek vertical alignment lasers, added drop spark trails, and polished pause menu buttons. |
 
 ## Rules
 
