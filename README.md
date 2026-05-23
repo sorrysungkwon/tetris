@@ -23,6 +23,8 @@ A Tetris game with neon aesthetic built as a single HTML file.
 - BGM tempo auto-scaling with level (140 BPM at L1 → 200 BPM cap at L13+)
 - Combo flash overlay (cyan → purple → pink as combo grows)
 - Tetris full-screen flash + rainbow border glow on 4-line clear
+- Desktop UI redesign: title header, wider panels, BPM display, keyboard shortcuts reference
+- Touch controls shown on tablets (pointer:coarse), hidden only on mouse devices (pointer:fine)
 
 ## Roadmap
 
@@ -30,6 +32,7 @@ A Tetris game with neon aesthetic built as a single HTML file.
 |---|---|
 | v0.7 | Audio mute toggle, T-spin detection & bonus, DAS/ARR tuning |
 | ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
+| ~~v0.8.1~~ ✅ | Desktop UI redesign, tablet touch controls fix |
 | v0.9 | Online leaderboard (Vercel + KV), result share screenshot |
 | v1.0 | Polish & release |
 
