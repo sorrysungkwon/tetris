@@ -2,8 +2,15 @@ const REDIS_URL   = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 const KEY_ALL   = 'glowtris-lb';
 const KEY_DAILY = () => `glowtris-daily-${new Date().toISOString().slice(0,10)}`; // e.g. glowtris-daily-2026-05-23
+const KEY_WEEKLY = () => {
+  const d = new Date();
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() - day + 1);
+  return `glowtris-weekly-${d.toISOString().slice(0,10)}`;
+};
 const TOP = 10;
 const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
+const WEEKLY_TTL = 60 * 60 * 24 * 8; // 8 days
 
 async function redis(cmd) {
   const res = await fetch(`${REDIS_URL}/${cmd}`, {
@@ -37,10 +44,11 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   const daily = KEY_DAILY();
+  const weekly = KEY_WEEKLY();
 
   if (req.method === 'GET') {
-    const [board, dailyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily)]);
-    return res.status(200).json({ board, dailyBoard });
+    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily), getBoard(weekly)]);
+    return res.status(200).json({ board, dailyBoard, weeklyBoard });
   }
 
   if (req.method === 'POST') {
@@ -53,19 +61,21 @@ export default async function handler(req, res) {
 
     const member = encodeURIComponent(`${clean}#${Date.now()}`);
 
-    // Write to both all-time and daily boards in parallel
+    // Write to all boards in parallel
     await Promise.all([
       redis(`zadd/${KEY_ALL}/${score}/${member}`),
       redis(`zadd/${daily}/${score}/${member}`),
+      redis(`zadd/${weekly}/${score}/${member}`),
     ]);
 
-    // Trim all-time to top 100; set TTL on daily key
+    // Trim all-time to top 100; set TTL on daily and weekly keys
     await Promise.all([
       redis(`zremrangebyrank/${KEY_ALL}/0/-101`),
       redis(`expire/${daily}/${DAILY_TTL}`),
+      redis(`expire/${weekly}/${WEEKLY_TTL}`),
     ]);
 
-    const [board, dailyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily)]);
+    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily), getBoard(weekly)]);
 
     // rank on all-time board
     const rankData = await redis(`zcount/${KEY_ALL}/${score + 1}/+inf`);
@@ -75,7 +85,11 @@ export default async function handler(req, res) {
     const dailyRankData = await redis(`zcount/${daily}/${score + 1}/+inf`);
     const dailyRank = (dailyRankData.result || 0) + 1;
 
-    return res.status(200).json({ board, dailyBoard, rank, dailyRank });
+    // weekly rank
+    const weeklyRankData = await redis(`zcount/${weekly}/${score + 1}/+inf`);
+    const weeklyRank = (weeklyRankData.result || 0) + 1;
+
+    return res.status(200).json({ board, dailyBoard, weeklyBoard, rank, dailyRank, weeklyRank });
   }
 
   return res.status(405).json({ error: 'method not allowed' });

@@ -1908,13 +1908,22 @@ function endGame(){
 }
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
-function lbHTML(entries, myName) {
+function lbHTML(entries, myName, myRank, myScore) {
   if(!entries.length) return '<div class="sub" style="margin-top:4px">No records yet</div>';
   const medals=['🥇','🥈','🥉'];
-  return `<table class="lb-table">${entries.map((e,i)=>{
+  let html = `<table class="lb-table">${entries.map((e,i)=>{
     const isMe=myName&&e.name===myName;
     return `<tr class="${isMe?'lb-me':''}"><td>${medals[i]||i+1}</td><td>${e.name}</td><td>${e.score.toLocaleString()}</td></tr>`;
-  }).join('')}</table>`;
+  }).join('')}`;
+  
+  // Persistent rank display
+  if (myRank && myRank > entries.length && myName && myScore !== undefined) {
+    html += `<tr><td colspan="3" style="text-align:center;opacity:0.4;padding:2px 0">...</td></tr>`;
+    html += `<tr class="lb-me"><td>${myRank}</td><td>${myName}</td><td>${myScore.toLocaleString()}</td></tr>`;
+  }
+  
+  html += `</table>`;
+  return html;
 }
 
 async function submitScore(){
@@ -1936,14 +1945,24 @@ async function submitScore(){
     const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score})});
     const data=await r.json();
     if(data.board){
-      _lbCache={board:data.board,dailyBoard:data.dailyBoard||[]};
+      _lbCache = {
+        board: data.board, dailyBoard: data.dailyBoard || [], weeklyBoard: data.weeklyBoard || [],
+        rank: data.rank, dailyRank: data.dailyRank, weeklyRank: data.weeklyRank,
+        myName: name, myScore: score
+      };
+      
       const rankMsg=[
         data.dailyRank?`<div class="sub" style="color:#00ff88;margin-bottom:2px">TODAY: #${data.dailyRank}</div>`:'',
+        data.weeklyRank?`<div class="sub" style="color:#00c8ff;margin-bottom:2px">WEEKLY: #${data.weeklyRank}</div>`:'',
         data.rank?`<div class="sub" style="color:#ffe600;margin-bottom:6px">ALL TIME: #${data.rank}</div>`:'',
       ].join('');
       inp.style.display='none';
       btn.closest('.btn-row').style.display='none';
-      const tabs=`<div class="lb-tabs"><button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button><button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button></div><div class="lb-inner">${lbHTML(data.dailyBoard||[],name)}</div>`;
+      const tabs=`<div class="lb-tabs">
+        <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
+        <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
+        <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
+      </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, score)}</div>`;
       res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
@@ -1955,24 +1974,96 @@ async function submitScore(){
   }
 }
 
-function shareScore(sc,rank){
-  const rankStr=rank?` — Rank #${rank}`:'';
-  const text=`🎮 Glowtris — ${sc.toLocaleString()} pts${rankStr}\n${window.location.origin}`;
-  if(navigator.share){
-    navigator.share({title:'Glowtris',text}).catch(()=>{});
-  }else{
-    navigator.clipboard.writeText(text).then(()=>alert('Copied to clipboard!'));
+async function captureGameImage(sc, rank) {
+  const c = document.createElement('canvas');
+  c.width = 600; c.height = 800;
+  const ctx = c.getContext('2d');
+  
+  ctx.fillStyle = '#04041e';
+  ctx.fillRect(0, 0, 600, 800);
+  
+  const bgi = document.getElementById('bg-canvas');
+  if(bgi) ctx.drawImage(bgi, 0, 0, 600, 800);
+  
+  const gci = document.getElementById('game-canvas');
+  if(gci) {
+    const gw = 360, gh = 720;
+    ctx.drawImage(gci, 120, 40, gw, gh);
+    ctx.strokeStyle = '#00c8ff';
+    ctx.lineWidth = 4;
+    ctx.shadowColor = '#00c8ff';
+    ctx.shadowBlur = 20;
+    ctx.strokeRect(120, 40, gw, gh);
+    ctx.shadowBlur = 0;
   }
+  
+  ctx.fillStyle = 'rgba(4,4,30,0.85)';
+  ctx.shadowColor = 'rgba(0,200,255,0.4)';
+  ctx.shadowBlur = 30;
+  ctx.fillRect(110, 310, 380, 180);
+  ctx.shadowBlur = 0;
+  
+  ctx.textAlign = 'center';
+  ctx.font = '900 44px Orbitron, monospace';
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#00c8ff';
+  ctx.shadowBlur = 15;
+  ctx.fillText('GLOWTRIS', 300, 370);
+  
+  ctx.font = '700 24px Orbitron, monospace';
+  ctx.fillStyle = '#ffe600';
+  ctx.shadowColor = '#ffe600';
+  ctx.fillText('SCORE: ' + sc.toLocaleString(), 300, 420);
+  
+  if (rank) {
+    ctx.fillStyle = '#00ff88';
+    ctx.shadowColor = '#00ff88';
+    ctx.fillText('RANK: #' + rank, 300, 460);
+  }
+  
+  return new Promise(res => c.toBlob(res, 'image/png'));
 }
 
-let _lbCache={board:[],dailyBoard:[]};
+async function shareScore(sc,rank){
+  const btn = event && event.target ? event.target : null;
+  if(btn){btn.disabled=true; btn.textContent='GENERATING...';}
+  try {
+    const rankStr=rank?` — Rank #${rank}`:'';
+    const text=`🎮 Glowtris — ${sc.toLocaleString()} pts${rankStr}\n${window.location.origin}`;
+    const blob = await captureGameImage(sc, rank);
+    const file = new File([blob], 'glowtris-score.png', {type: 'image/png'});
+    
+    if(navigator.canShare && navigator.canShare({files: [file]})) {
+      await navigator.share({title:'Glowtris', text, files: [file]});
+    } else {
+      try {
+        await navigator.clipboard.write([
+          new ClipboardItem({
+            'image/png': blob,
+            'text/plain': new Blob([text], {type: 'text/plain'})
+          })
+        ]);
+        alert('Image & Score copied to clipboard!');
+      } catch(e) {
+        await navigator.clipboard.writeText(text);
+        alert('Score text copied to clipboard!');
+      }
+    }
+  } catch(e) {
+    console.error(e);
+  }
+  if(btn){btn.disabled=false; btn.textContent='SHARE';}
+}
+
+let _lbCache={board:[],dailyBoard:[],weeklyBoard:[]};
 
 async function loadStartLeaderboard(){
   const el=document.getElementById('start-lb');
   if(!el)return;
   try{
     const r=await fetch('/api/leaderboard');
-    _lbCache=await r.json();
+    const data=await r.json();
+    _lbCache={..._lbCache, ...data}; // preserve myRank from previous POST if any
     const activeTab=document.querySelector('.lb-tab.active');
     renderLbTab(activeTab?activeTab.dataset.tab:'daily');
   }catch(e){}
@@ -1981,9 +2072,13 @@ async function loadStartLeaderboard(){
 function renderLbTab(tab){
   const inner=document.querySelector('.lb-inner');
   if(!inner)return;
-  const entries=tab==='daily'?(_lbCache.dailyBoard||[]):(_lbCache.board||[]);
+  let entries, myRank;
+  if(tab==='daily') { entries=_lbCache.dailyBoard||[]; myRank=_lbCache.dailyRank; }
+  else if(tab==='weekly') { entries=_lbCache.weeklyBoard||[]; myRank=_lbCache.weeklyRank; }
+  else { entries=_lbCache.board||[]; myRank=_lbCache.rank; }
+  
   document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  inner.innerHTML=lbHTML(entries,'');
+  inner.innerHTML=lbHTML(entries, _lbCache.myName, myRank, _lbCache.myScore);
 }
 
 function showStartScreen(){
@@ -1993,6 +2088,7 @@ function showStartScreen(){
       <div id="start-lb">
         <div class="lb-tabs">
           <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
+          <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
           <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
         </div>
         <div class="lb-inner"></div>
