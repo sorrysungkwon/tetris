@@ -55,7 +55,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.2~~ ✅ | **Elegant Polish**: Removed hard-drop shockwaves to keep drops snappy, added sleek vertical alignment lasers, added drop spark trails, and polished pause menu buttons. |
 | ~~v1.0.3~~ ✅ | **Retention & UX Polish**: Username persistence, personal best streak & max combo badges, How To Play collapsible panel. |
 | ~~v1.0.4~~ ✅ | **Stats & Profile**: Full stats screen (total games, avg score, best level, total lines), personal record badges. |
-| ~~v1.0.4.1~~ ✅ | **Premium UI**: Neon wireframe grid, dynamic board borders, floating score/level text, enhanced particle physics with trails, and typography polish. |
+| ~~v1.0.4.1~~ ✅ | **UI Enhancements**: Neon wireframe grid, dynamic board borders, floating score/level text, enhanced particle physics with trails, and typography polish. |
 | v1.0.5 | **Leaderboard & Social Depth**: Weekly leaderboard tab, persistent rank display, canvas share image (board snapshot + score). |
 | v1.1 | **New Game Mode — Sprint**: Clear 40 lines as fast as possible. Separate time-based leaderboard. Existing mode renamed "Marathon". |
 

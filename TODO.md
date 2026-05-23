@@ -50,7 +50,7 @@
 
 ---
 
-## ✅ Completed: v1.0.4.1 (Premium UI & UX Enhancements) — by Antigravity (2026-05-23)
+## ✅ Completed: v1.0.4.1 (UI Enhancements) — by Antigravity (2026-05-23)
 
 - [x] Task 1: Neon Wireframe Grid on the game board.
 - [x] Task 2: Floating score and level up text animations on `particle-canvas`.
