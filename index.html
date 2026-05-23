@@ -1274,8 +1274,8 @@ async function openLeaderboard(){
 }
 
 function shareScore(sc,rank){
-  const rankStr=rank?` (전체 ${rank}위)`:'';
-  const text=`🎮 Glowtris에서 ${sc.toLocaleString()}점${rankStr} 달성!\n${window.location.origin}`;
+  const rankStr=rank?` — Rank #${rank}`:'';
+  const text=`🎮 Glowtris — ${sc.toLocaleString()} pts${rankStr}\n${window.location.origin}`;
   if(navigator.share){
     navigator.share({title:'Glowtris',text}).catch(()=>{});
   }else{
