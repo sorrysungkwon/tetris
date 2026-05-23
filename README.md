@@ -14,12 +14,9 @@ A Glowtris game with neon aesthetic built as a single HTML file.
 - Mobile touch support
 - Starfield background animation
 - Screen shake effect
-
-## Planned
-
-- BGM (background music)
-- Sound effects
-- Enhanced screen shake on spacebar hard drop
+- Chiptune BGM via Web Audio API (A minor, 140 BPM, 4-phrase looping melody with bass)
+- Sound effects: move, rotate, hold, line clear (1–3 lines), Glowtris fanfare, game over
+- Enhanced screen shake on hard drop (scales with drop distance, 2.5× stronger magnitude)
 
 ## Rules
 

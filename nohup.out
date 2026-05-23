@@ -3,3 +3,10 @@ time=2026-05-22T23:51:05.281Z level=INFO msg="gateway: listening" listen=127.0.0
 time=2026-05-22T23:51:05.281Z level=INFO msg="socket listening" path=/run/user/1000/moshi-hook.sock
 time=2026-05-22T23:51:05.972Z level=INFO msg="ws bridge connected" hostId=host_50eede2845184cab97afec94fa8b1f8c
 time=2026-05-23T00:14:06.048Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T00:16:32.685Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T00:19:03.400Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T00:19:10.261Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T00:19:53.728Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
+time=2026-05-23T00:21:40.195Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T00:22:17.100Z level=INFO msg="usage poller: synced" count=1
+time=2026-05-23T00:23:18.625Z level=INFO msg="usage poller: synced" count=1
