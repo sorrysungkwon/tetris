@@ -1,6 +1,6 @@
 # Glowtris
 
-A Glowtris game with neon aesthetic built as a single HTML file.
+A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://neon-glowtris-roan.vercel.app
 

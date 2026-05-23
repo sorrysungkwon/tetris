@@ -1,7 +1,7 @@
 {
   "name": "Glowtris",
-  "short_name": "NEON GLOWTRIS",
-  "description": "Neon-styled Glowtris with online leaderboard",
+  "short_name": "GLOWTRIS",
+  "description": "Neon-styled block stacking game with online leaderboard",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

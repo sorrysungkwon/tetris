@@ -74,14 +74,14 @@
     <rect x="1088" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
   </g>
 
-  <!-- Title: NEON GLOWTRIS -->
+  <!-- Title: GLOWTRIS -->
   <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
         text-anchor="middle" letter-spacing="12"
-        fill="none" stroke="#00c8ff" stroke-width="1.5" opacity="0.4" filter="url(#glow)">NEON GLOWTRIS</text>
+        fill="none" stroke="#00c8ff" stroke-width="1.5" opacity="0.4" filter="url(#glow)">GLOWTRIS</text>
   <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
-        text-anchor="middle" letter-spacing="12" fill="#00c8ff" filter="url(#glow)">NEON</text>
+        text-anchor="middle" letter-spacing="12" fill="#00c8ff" filter="url(#glow)">GLOW</text>
   <text x="600" y="390" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
-        text-anchor="middle" letter-spacing="12" fill="#a000ff" filter="url(#glow)">GLOWTRIS</text>
+        text-anchor="middle" letter-spacing="12" fill="#a000ff" filter="url(#glow)">TRIS</text>
 
   <!-- Subtitle -->
   <text x="600" y="470" font-family="Arial, sans-serif" font-size="26" font-weight="400"
