@@ -411,6 +411,44 @@
   .htp-key { font-size:9px; color:rgba(0,200,255,0.85); letter-spacing:1px; background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.22); border-radius:3px; padding:3px 8px; }
   .htp-lbl { font-size:8px; color:rgba(255,255,255,0.42); letter-spacing:1px; text-transform:uppercase; }
 
+  /* STATS popup overlay */
+  #stats-overlay {
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,15,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    align-items:center; justify-content:center;
+  }
+  #stats-overlay.open { display:flex; }
+  #stats-box {
+    position:relative; width:min(300px, 88vw);
+    background:rgba(4,4,30,0.92); border:1px solid rgba(0,200,255,0.28);
+    border-radius:16px; padding:20px 20px 16px;
+    max-height:80vh; display:flex; flex-direction:column;
+    box-shadow:0 0 40px rgba(0,200,255,0.12);
+  }
+  #stats-title { font-size:10px; letter-spacing:4px; color:var(--cyan); text-align:center; margin-bottom:14px; text-shadow:0 0 10px var(--cyan); }
+  #stats-close {
+    position:absolute; top:12px; right:14px;
+    background:none; border:none; color:rgba(0,200,255,0.5); cursor:pointer;
+    font-family:'Orbitron',monospace; font-size:16px; line-height:1;
+    transition:color .2s;
+  }
+  #stats-close:hover { color:var(--cyan); }
+  #stats-scroll { overflow-y:auto; flex:1; }
+  .stats-row { display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(0,200,255,0.07); }
+  .stats-row:last-child { border-bottom:none; }
+  .stats-lbl { font-size:8px; color:rgba(255,255,255,0.42); letter-spacing:1px; text-transform:uppercase; }
+  .stats-val { font-size:11px; color:#ffe600; text-shadow:0 0 8px rgba(255,230,0,0.5); font-weight:bold; letter-spacing:1px; }
+
+  /* Personal Record Badges */
+  .pb-badge {
+    font-size:9px; letter-spacing:1.5px; padding:4px 8px; border-radius:6px; font-weight:700;
+    transition: all 0.3s ease;
+  }
+  .score-pb { border:1px solid rgba(255,230,0,0.5); color:#ffe600; background:rgba(255,230,0,0.08); text-shadow:0 0 8px #ffe600; }
+  .level-pb { border:1px solid rgba(0,255,136,0.5); color:#00ff88; background:rgba(0,255,136,0.08); text-shadow:0 0 8px #00ff88; }
+  .lines-pb { border:1px solid rgba(160,0,255,0.5); color:#c45bfb; background:rgba(160,0,255,0.08); text-shadow:0 0 8px #c45bfb; }
+  .combo-pb { border:1px solid rgba(0,200,255,0.5); color:var(--cyan); background:rgba(0,200,255,0.08); text-shadow:0 0 8px var(--cyan); }
+
   /* Leaderboard */
   .start-lb-title { font-size:9px; letter-spacing:3px; color:rgba(0,200,255,0.55); margin-bottom:4px; text-align:center; }
   .lb-tabs { display:flex; gap:6px; margin-bottom:6px; }
@@ -558,6 +596,14 @@
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">rotate_right</span></span><span class="htp-lbl">Rotate</span></div>
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">swap_horiz</span></span><span class="htp-lbl">Hold</span></div>
     </div>
+  </div>
+</div>
+
+<div id="stats-overlay" onclick="closeStats()">
+  <div id="stats-box" onclick="event.stopPropagation()">
+    <div id="stats-title">PLAYER STATS</div>
+    <button id="stats-close" onclick="closeStats()">✕</button>
+    <div id="stats-scroll"></div>
   </div>
 </div>
 
@@ -1683,6 +1729,33 @@ function endGame(){
   const storedMaxCombo=parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
   if(maxCombo>storedMaxCombo)localStorage.setItem('glowTrisMaxCombo',maxCombo);
   const displayMaxCombo=Math.max(maxCombo,storedMaxCombo);
+
+  // Lifetime & personal record stats update
+  let totalGames=parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
+  let totalScore=parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
+  let bestLevel=parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
+  let totalLines=parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
+  let maxLines=parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
+
+  // Check personal records from this game BEFORE updating the lifetime records
+  const isBestLevel=level>0 && level>=bestLevel;
+  const isBestCombo=maxCombo>0 && maxCombo>=storedMaxCombo;
+  const isBestLines=lines>0 && lines>=maxLines;
+
+  // Now update lifetime stats
+  totalGames+=1;
+  totalScore+=score;
+  if(level>bestLevel) bestLevel=level;
+  totalLines+=lines;
+  if(lines>maxLines) maxLines=lines;
+
+  // Save to localStorage
+  localStorage.setItem('glowTrisTotalGames',totalGames);
+  localStorage.setItem('glowTrisTotalScore',totalScore);
+  localStorage.setItem('glowTrisBestLevel',bestLevel);
+  localStorage.setItem('glowTrisTotalLines',totalLines);
+  localStorage.setItem('glowTrisMaxLines',maxLines);
+
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(!board[r][c])continue;
     const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
@@ -1700,7 +1773,25 @@ function endGame(){
     const savedName=localStorage.getItem('glowTrisName')||'';
     const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
     const histHTML=hist.length>1?`<div class="history-row">${hist.slice(1,4).map(h=>`<span>${h.score.toLocaleString()}</span>`).join('<span class="hist-sep">·</span>')}</div>`:'';
-    const badgesHTML=(newStreak>0||displayMaxCombo>1)?`<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:4px 0;">${newStreak>0?`<div class="streak-badge">🔥 ${newStreak} STREAK</div>`:''} ${displayMaxCombo>1?`<div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>`:''}</div>`:'';
+    
+    let pbBadges = [];
+    if(isNewBest) pbBadges.push(`<div class="pb-badge score-pb">🏆 RECORD SCORE</div>`);
+    if(isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${level}</div>`);
+    if(isBestLines) pbBadges.push(`<div class="pb-badge lines-pb">🎯 RECORD LINES: ${lines}</div>`);
+    if(isBestCombo) pbBadges.push(`<div class="pb-badge combo-pb">⚡ RECORD COMBO: x${maxCombo}</div>`);
+
+    let badgesHTML = '';
+    if(pbBadges.length>0 || newStreak>0){
+      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;">
+        ${newStreak>0?`<div class="streak-badge">🔥 ${newStreak} STREAK</div>`:''}
+        ${pbBadges.join(' ')}
+      </div>`;
+    } else if(displayMaxCombo>1){
+      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;">
+        <div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>
+      </div>`;
+    }
+
     $overlay.innerHTML=`
       <h1 style="font-size:20px">GAME OVER</h1>
       ${isNewBest?'<div class="new-best-badge">★ NEW BEST ★</div>':''}
@@ -1813,8 +1904,9 @@ function showStartScreen(){
     <div class="btn-row" style="margin-bottom:6px">
       <button class="action-btn" onclick="startGame()">START GAME</button>
     </div>
-    <div class="btn-row">
-      <button class="action-btn ghost" onclick="openHowToPlay()">HOW TO PLAY</button>
+    <div class="btn-row" style="gap:6px">
+      <button class="action-btn ghost" style="flex:1" onclick="openHowToPlay()">HOW TO PLAY</button>
+      <button class="action-btn ghost" style="flex:1" onclick="openStats()">STATS</button>
     </div>`;
   $overlay.style.display='flex';
   loadStartLeaderboard();
@@ -1825,6 +1917,33 @@ function openHowToPlay(){
 }
 function closeHowToPlay(){
   document.getElementById('htp-overlay').classList.remove('open');
+}
+
+function openStats(){
+  const totalGames = parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
+  const totalScore = parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
+  const bestLevel = parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
+  const totalLines = parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
+  const maxCombo = parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
+  const maxLines = parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
+  const hiScore = parseInt(localStorage.getItem('glowTrisHi')||'0');
+  const avgScore = totalGames > 0 ? Math.round(totalScore / totalGames) : 0;
+
+  const statsHTML = `
+    <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${totalGames.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${hiScore.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${bestLevel}</span></div>
+    <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${totalLines.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${maxLines.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${maxCombo}</span></div>
+  `;
+  const el = document.getElementById('stats-scroll');
+  if(el) el.innerHTML = statsHTML;
+  document.getElementById('stats-overlay').classList.add('open');
+}
+function closeStats(){
+  document.getElementById('stats-overlay').classList.remove('open');
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

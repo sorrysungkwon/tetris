@@ -42,13 +42,11 @@
 - [x] Fix: HOW TO PLAY button resized to match START GAME (`action-btn ghost`); touch section icons replaced with Material Icons Round matching actual game buttons.
 - [x] Chore: Bump version label to v1.0.3; configure git identity to `sorrysungkwon <seonqwer@gmail.com>` for proper GitHub attribution.
 
----
+## ✅ Completed: v1.0.4 (Stats & Profile) — by Antigravity (2026-05-23)
 
-## 🔮 Planned: v1.0.4 (Stats & Profile)
-
-- [ ] Task 1: Full stats screen — total games played, average score, best level reached, total lines cleared (stored in `localStorage`).
-- [ ] Task 2: Personal record badges on game over screen — highlight best-ever level, longest combo, highest single-game lines.
-- [ ] Task 3: Document v1.0.4 changes in `README.md` roadmap and update this file.
+- [x] Task 1: Full stats screen — total games played, average score, best level reached, total lines cleared (stored in `localStorage`).
+- [x] Task 2: Personal record badges on game over screen — highlight best-ever level, longest combo, highest single-game lines.
+- [x] Task 3: Document v1.0.4 changes in `README.md` roadmap and update this file.
 
 ---
 
