@@ -43,3 +43,6 @@ time=2026-05-23T00:40:33.335Z level=INFO msg="usage poller: synced" count=1
 time=2026-05-23T00:40:43.622Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"
 time=2026-05-23T00:40:45.544Z level=INFO msg="usage poller: synced" count=1
 time=2026-05-23T00:45:14.795Z level=WARN msg="daemon: agent-event publish failed" category=approval_required sessionId=1db6c428-5b35-4950-a0ea-f34a70b7bb75 err="Post \"https://api.getmoshi.app/api/v1/hosts/host_50eede2845184cab97afec94fa8b1f8c/events\": context deadline exceeded"
+time=2026-05-23T00:46:33.449Z level=WARN msg="daemon: agent-event publish failed" category=task_complete sessionId=1db6c428-5b35-4950-a0ea-f34a70b7bb75 err="Post \"https://api.getmoshi.app/api/v1/hosts/host_50eede2845184cab97afec94fa8b1f8c/events\": context deadline exceeded"
+time=2026-05-23T00:47:08.769Z level=WARN msg="daemon: agent-event publish failed" category=task_complete sessionId=1db6c428-5b35-4950-a0ea-f34a70b7bb75 err="Post \"https://api.getmoshi.app/api/v1/hosts/host_50eede2845184cab97afec94fa8b1f8c/events\": context deadline exceeded"
+time=2026-05-23T00:50:33.589Z level=WARN msg="socket write error" err="write unix /run/user/1000/moshi-hook.sock->@: write: broken pipe"

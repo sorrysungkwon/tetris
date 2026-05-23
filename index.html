@@ -211,6 +211,15 @@
   .tbtn-mute.pressed { background:rgba(0,200,255,0.12); }
   .tbtn-mute.muted { border-color:rgba(255,0,128,0.4); color:rgba(255,0,128,0.9); }
 
+  /* System bar */
+  .sys-row {
+    justify-content:space-between;
+    margin-bottom:1px;
+    opacity:0.6;
+    transition:opacity .2s;
+  }
+  .sys-row:hover { opacity:1; }
+
   /* Settings in pause overlay */
   .settings-box { width:100%; max-width:230px; display:flex; flex-direction:column; gap:10px; margin:8px 0 14px; }
   .settings-row { display:flex; align-items:center; gap:10px; }
@@ -228,6 +237,9 @@
     .tbtn-lg  { width:56px; height:56px; font-size:26px; }
     .tbtn-md  { width:54px; height:54px; font-size:24px; }
     .tbtn-sm  { width:68px; height:42px; font-size:13px; letter-spacing:1px; border-radius:8px; font-family:'Orbitron',monospace; font-weight:700; }
+    /* System bar on desktop: compact icon buttons */
+    .sys-row { width:100%; }
+    .sys-row .tbtn { width:46px; height:32px; font-size:20px; border-radius:8px; }
   }
 
   /* ── MOBILE (< 600px): fluid buttons that fill --game-w ── */
@@ -235,19 +247,23 @@
     #touch-controls { width:var(--game-w, 300px); padding-bottom:max(16px, env(safe-area-inset-bottom)); }
     #mobile-header   { width:calc(100vw - 24px); }
 
-    /* Both rows stretch to full container width */
+    /* Game control rows stretch to full width */
     .ctrl-row .tbtn { flex:1; min-width:0; }
 
-    /* Row 1 — secondary (hold / rotate / drop / pause) */
-    .ctrl-row:first-child .tbtn {
+    /* System bar — buttons fixed width, not stretched */
+    .sys-row .tbtn { flex:0 0 auto; height:28px; border-radius:8px; padding:0 18px; font-size:18px; }
+    .sys-row .tbtn .material-icons-round { font-size:18px; }
+
+    /* Action row — hold / rotate / drop */
+    .ctrl-row:nth-child(2) .tbtn {
       height:50px;
       border-radius:9px;
     }
-    .ctrl-row:first-child .tbtn .material-icons-round {
+    .ctrl-row:nth-child(2) .tbtn .material-icons-round {
       font-size:clamp(18px, 5.5vw, 26px);
     }
 
-    /* Row 2 — primary movement (left / soft / right) */
+    /* Movement row — left / soft / right */
     .ctrl-row:last-child .tbtn {
       height:64px;
       border-radius:11px;
@@ -331,7 +347,16 @@
 
   <!-- Touch controls (all screens) -->
   <div id="touch-controls">
-    <!-- Row 1: secondary actions -->
+    <!-- System bar: utility buttons (mute / pause) -->
+    <div class="ctrl-row sys-row">
+      <button class="tbtn tbtn-mute" id="btn-mute" onclick="toggleMute()">
+        <span class="material-icons-round" id="mute-icon">volume_up</span>
+      </button>
+      <button class="tbtn tbtn-pause" id="btn-pause">
+        <span class="material-icons-round">pause</span>
+      </button>
+    </div>
+    <!-- Action row: game piece controls -->
     <div class="ctrl-row">
       <button class="tbtn tbtn-sm tbtn-hold" id="btn-hold">
         <span class="material-icons-round">swap_horiz</span>
@@ -342,14 +367,8 @@
       <button class="tbtn tbtn-md tbtn-drop" id="btn-drop">
         <span class="material-icons-round">keyboard_double_arrow_down</span>
       </button>
-      <button class="tbtn tbtn-sm tbtn-mute" id="btn-mute" onclick="toggleMute()">
-        <span class="material-icons-round" id="mute-icon">volume_up</span>
-      </button>
-      <button class="tbtn tbtn-sm tbtn-pause" id="btn-pause">
-        <span class="material-icons-round">pause</span>
-      </button>
     </div>
-    <!-- Row 2: primary movement -->
+    <!-- Movement row: directional controls -->
     <div class="ctrl-row">
       <button class="tbtn tbtn-xl" id="btn-left">
         <span class="material-icons-round">chevron_left</span>
