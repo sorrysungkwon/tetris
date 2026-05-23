@@ -1601,7 +1601,9 @@ function togglePause(){
     <span class="settings-val" id="ov-arr-val">${arr}ms</span>
   </div>
 </div>
-<div class="sub">TAP TO RESUME</div><button class="action-btn" onclick="togglePause()">RESUME</button>`;
+<div class="sub">TAP TO RESUME</div>
+<button class="action-btn" onclick="togglePause()">RESUME</button>
+<button class="action-btn ghost" style="margin-top:8px" onclick="showStartScreen()">RESTART</button>`;
     $overlay.style.display='flex';
   } else {
     resumeBGM();
