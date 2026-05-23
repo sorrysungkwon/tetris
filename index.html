@@ -253,9 +253,13 @@
   .toggle-btn { font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; padding:7px 12px; border-radius:5px; cursor:pointer; border:1px solid rgba(0,200,255,0.4); background:rgba(0,200,255,0.12); color:var(--cyan); width:100%; transition:all .2s; }
   .toggle-btn.muted { border-color:rgba(255,0,128,0.45); background:rgba(255,0,128,0.12); color:var(--pink); }
 
+  /* ── Hide touch controls only on mouse/trackpad devices ── */
+  @media (pointer:fine) {
+    #touch-controls { display:none; }
+  }
+
   /* ── DESKTOP / TABLET (≥ 600px): fixed-size buttons ── */
   @media (min-width:600px) {
-    #touch-controls { display:none; }
     .ctrl-row { justify-content:center; }
     .tbtn-xl  { width:66px; height:66px; font-size:30px; border-radius:12px; }
     .tbtn-lg  { width:56px; height:56px; font-size:26px; }
