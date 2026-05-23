@@ -530,7 +530,7 @@ let isMobile=false;
 let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50;
 let comboFlash=0,comboFlashColor='#00c8ff';
-let glowBorder=0;
+let rainbowBorder=0;
 let dangerPulse=0; // frame counter for danger overlay pulse
 
 // ─── Canvas refs ──────────────────────────────────────────────────────────────
@@ -692,7 +692,7 @@ function lockPiece(){
       for(const r of snap.slice().sort((a,b)=>a-b)){board.splice(r,1);board.unshift(Array(COLS).fill(null));}
       spawnLineClearParticles(snap);
       if(snap.length>=4&&!tspin){shakeFrames=25;shakeMag=0.7;}
-      if(snap.length>=4){triggerGlowtrisFlash();glowBorder=45;}
+      if(snap.length>=4){triggerScreenFlash();rainbowBorder=45;}
       // All-clear bonus: board completely empty
       if(board.every(row=>row.every(v=>v===null))){
         const bonus=2000*level;
@@ -846,10 +846,10 @@ function drawBoard(){
     gctx.restore();
     comboFlash--;
   }
-  // Glowtris border glow
-  if(glowBorder>0){
+  // rainbow border countdown after 4-line clear or all-clear
+  if(rainbowBorder>0){
     const hue=(Date.now()/4)%360;
-    const a=(glowBorder/45)*0.9;
+    const a=(rainbowBorder/45)*0.9;
     gctx.save();
     gctx.globalAlpha=a;
     gctx.strokeStyle=`hsl(${hue},100%,65%)`;
@@ -858,7 +858,7 @@ function drawBoard(){
     gctx.lineWidth=5;
     gctx.strokeRect(3,3,COLS*CELL-6,ROWS*CELL-6);
     gctx.restore();
-    glowBorder--;
+    rainbowBorder--;
   }
   // Danger overlay — red pulse when stack reaches top ~35% of board
   if(gameRunning&&!gamePaused){
@@ -1119,7 +1119,7 @@ function sfxGameOver(){
   [392,349,329,261].forEach((f,i)=>playBeep(f,'sawtooth',.28,.38,i*.18));
   playBeep(130,'sawtooth',.6,.3,.75);
 }
-function triggerGlowtrisFlash(){
+function triggerScreenFlash(){
   $flash.style.transition='none';
   $flash.style.opacity='1';
   requestAnimationFrame(()=>{
@@ -1136,7 +1136,7 @@ function triggerAllClearFlash(){
     $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
     setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
   });
-  glowBorder=90;shakeFrames=30;shakeMag=0.9;
+  rainbowBorder=90;shakeFrames=30;shakeMag=0.9;
   // All-clear SFX: ascending fanfare
   [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
   // Burst particles from centre
@@ -1243,7 +1243,7 @@ function startGame(){
   loadSettings();
   board=createBoard();score=0;lines=0;level=1;combo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;flashLines=new Set();flashTimer=0;
-  lockTimer=0;lockActive=false;lastWasRotate=false;glowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;
+  lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;
   hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
