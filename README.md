@@ -2,46 +2,53 @@
 
 A Tetris game with neon aesthetic built as a single HTML file.
 
+**Live:** https://neon-tetris-roan.vercel.app
+
 ## Stack
 
 - HTML, CSS, JavaScript (single file: `index.html`)
-- No external libraries
+- Vercel serverless function (`api/leaderboard.js`)
+- Upstash Redis (online leaderboard)
+- No external frontend libraries
 
-## Current Features
+## Features
 
 - Neon glow effect on pieces and UI
-- Responsive layout
-- Mobile touch support
+- Responsive layout — desktop 3-panel, mobile touch controls, tablet support
 - Starfield background animation
-- Screen shake effect
+- Screen shake + danger red overlay when stack is high
 - Chiptune BGM via Web Audio API (A minor, 140 BPM, 4-phrase looping melody with bass)
-- Sound effects: move, rotate, hold, line clear (1–3 lines), Tetris fanfare, game over
-- Enhanced screen shake on hard drop (scales with drop distance, 2.5× stronger magnitude)
-- Audio mute toggle (🔊/🔇 button, persists across sessions)
-- T-spin detection with bonus scoring (single 800pt / double 1200pt / triple 1600pt per level)
-- DAS/ARR key-repeat tuning (accessible from pause menu, 50–300ms DAS, 0–100ms ARR)
 - BGM tempo auto-scaling with level (140 BPM at L1 → 200 BPM cap at L13+)
+- Sound effects: move, rotate, hold, line clear (1–3 lines), Tetris fanfare, game over
+- Enhanced screen shake on hard drop (scales with drop distance)
+- Audio mute toggle (persists across sessions)
+- T-spin detection with bonus scoring (single / double / triple)
+- DAS/ARR key-repeat tuning (accessible from pause menu)
 - Combo flash overlay (cyan → purple → pink as combo grows)
 - Tetris full-screen flash + rainbow border glow on 4-line clear
-- Desktop UI redesign: title header, wider panels, BPM display, keyboard shortcuts reference
-- Touch controls shown on tablets (pointer:coarse), hidden only on mouse devices (pointer:fine)
-- Touch canvas sizing fix: corrected ctrlH values (mobile 188px, tablet 218px) to match actual CSS heights, recovering 1 cell (~20–40px) of game area
-- Online leaderboard via Upstash Redis: submit score after game over, view Top 10, Web Share API result sharing
-- v0.9.1 code optimisation: DOM caching, hexToRgb memoisation, Set-based flashLines, single-path grid render, BGM node cleanup, debounced resize, fixed togglePause/endGame/openLeaderboard to use cached $overlay, fixed leaderboard overlay on desktop (position:fixed full-viewport)
+- All-clear bonus: 2000×level pts + gold flash + fanfare + burst particles
+- NEW BEST effect: gold badge + ascending SFX + gold particles on personal record
+- Personal game history: last 5 scores shown on game over screen (localStorage)
+- Online leaderboard: TODAY and ALL TIME tabs, top 10, submit after game over
+- Daily leaderboard resets each day (Redis TTL)
+- Rank shown after score submission (today rank + all-time rank)
+- Web Share API result sharing (clipboard fallback on desktop)
+- PWA: installable on iOS/Android home screen (manifest + icons)
+- OG image + social meta tags for rich SNS sharing preview
 
 ## Roadmap
 
 | Version | Features |
 |---|---|
-| v0.7 | Audio mute toggle, T-spin detection & bonus, DAS/ARR tuning |
+| ~~v0.7~~ ✅ | Audio mute toggle, T-spin detection & bonus, DAS/ARR tuning |
 | ~~v0.8~~ ✅ | Multi-track BGM (speeds up with level), combo flash, Tetris full-screen effect |
 | ~~v0.8.1~~ ✅ | Desktop UI redesign, tablet touch controls fix |
 | ~~v0.9~~ ✅ | Online leaderboard (Upstash Redis), result share (Web Share API) |
 | ~~v0.9.1~~ ✅ | Code optimisation, refactor, bug fixes, desktop leaderboard overlay fix |
-| ~~v0.9.2~~ ✅ | iOS speaker fix (silent audio unlock), startBGM async resume, danger threshold 25%, SFX node cleanup |
-| ~~v1.0~~ ✅ | OG image + social meta, PWA manifest + favicon, all-clear bonus, NEW BEST effect + gold particles, daily leaderboard (TODAY/ALL TIME tabs), personal game history |
+| ~~v0.9.2~~ ✅ | iOS speaker fix, audio resume, danger warning overlay, SFX node cleanup |
+| ~~v1.0~~ ✅ | All-clear bonus, NEW BEST effect, daily leaderboard, PWA, OG image — **LAUNCHED** |
 
 ## Rules
 
 - Maintain single `index.html` file structure
-- No external libraries allowed
+- No external frontend libraries allowed
