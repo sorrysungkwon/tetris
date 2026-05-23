@@ -112,6 +112,20 @@
 
 ---
 
+## ✅ Completed: Refactor & Clean Code Pass — by Claude (2026-05-23)
+
+- [x] Consolidated duplicate `#htp-overlay` / `#stats-overlay` CSS into shared selectors
+- [x] Extracted `spawnHardDropParticles()` from `hardDrop()` for single-responsibility
+- [x] Fixed `openStats()` local variable shadowing (`sCombo`/`sMaxLn` instead of `maxCombo`/`hiScore`)
+- [x] Fixed `_statsOpenTs` declaration hoisting (moved before `openStats` definition)
+- [x] Moved `_lbCache` to state section alongside other state variables
+- [x] Added `.footer-link` CSS class; removed inline `onclick` handlers on footer links
+- [x] Removed unused `const t=Date.now()*.001` from `drawBackground()`
+- [x] Removed dead low-perf CSS selectors (`.action-btn`, `#game-canvas-wrap` overrides)
+- [x] Removed WHAT comments throughout; kept only WHY comments
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
