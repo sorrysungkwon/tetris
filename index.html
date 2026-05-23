@@ -383,13 +383,11 @@
   .combo-badge  { font-size:10px; letter-spacing:2px; padding:4px 10px; border-radius:6px; border:1px solid rgba(0,200,255,0.45); color:var(--cyan); background:rgba(0,200,255,0.08); text-shadow:0 0 8px var(--cyan); }
 
   /* HOW TO PLAY popup overlay */
-  @keyframes overlay-in { from{opacity:0} to{opacity:1} }
   #htp-overlay {
     display:none; position:fixed; inset:0; z-index:200;
-    background:rgba(0,0,15,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    background:rgba(0,0,12,0.96);
     align-items:center; justify-content:center;
   }
-  #htp-overlay.open { display:flex; animation:overlay-in 0.12s ease forwards; }
   #htp-box {
     position:relative; width:min(300px, 88vw);
     background:rgba(4,4,30,0.92); border:1px solid rgba(0,200,255,0.28);
@@ -411,17 +409,14 @@
   .htp-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,200,255,0.1); }
   .htp-row:last-child { border-bottom:none; }
   .htp-key { font-size:10px; font-weight:700; color:rgba(0,200,255,0.95); letter-spacing:1px; background:rgba(0,200,255,0.1); border:1px solid rgba(0,200,255,0.3); border-radius:4px; padding:4px 9px; box-shadow:0 0 8px rgba(0,200,255,0.2); }
-  .htp-key-alt { font-size:9px; font-weight:700; color:rgba(0,200,255,0.5); letter-spacing:1px; background:rgba(0,200,255,0.05); border:1px solid rgba(0,200,255,0.18); border-radius:4px; padding:3px 7px; margin-left:4px; }
-  .htp-keys { display:flex; align-items:center; flex-wrap:wrap; gap:0; }
   .htp-lbl { font-size:8px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px; text-transform:uppercase; }
 
   /* STATS popup overlay */
   #stats-overlay {
     display:none; position:fixed; inset:0; z-index:200;
-    background:rgba(0,0,15,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    background:rgba(0,0,12,0.96);
     align-items:center; justify-content:center;
   }
-  #stats-overlay.open { display:flex; animation:overlay-in 0.12s ease forwards; }
   #stats-box {
     position:relative; width:min(300px, 88vw);
     background:rgba(4,4,30,0.92); border:1px solid rgba(0,200,255,0.28);
@@ -668,19 +663,19 @@
 <div id="screen-flash"></div>
 <div id="perf-indicator">⚡ PERF MODE</div>
 
-<div id="htp-overlay" onclick="closeHowToPlay()">
+<div id="htp-overlay" style="display:none" onclick="closeHowToPlay()">
   <div id="htp-box" onclick="event.stopPropagation()">
     <div id="htp-title">HOW TO PLAY</div>
     <button id="htp-close" onclick="closeHowToPlay()">✕</button>
     <div id="htp-scroll">
       <div class="htp-section">KEYBOARD</div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">← →</span></span><span class="htp-lbl">Move</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">↑</span></span><span class="htp-lbl">Rotate</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">↓</span></span><span class="htp-lbl">Soft Drop</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">Space</span></span><span class="htp-lbl">Hard Drop</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">C</span><span class="htp-key-alt">⇧ Shift</span></span><span class="htp-lbl">Hold</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">P</span></span><span class="htp-lbl">Pause / Resume</span></div>
-      <div class="htp-row"><span class="htp-keys"><span class="htp-key">M</span></span><span class="htp-lbl">Mute / Unmute</span></div>
+      <div class="htp-row"><span class="htp-key">← →</span><span class="htp-lbl">Move</span></div>
+      <div class="htp-row"><span class="htp-key">↑</span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-key">↓</span><span class="htp-lbl">Soft Drop</span></div>
+      <div class="htp-row"><span class="htp-key">SPC</span><span class="htp-lbl">Hard Drop</span></div>
+      <div class="htp-row"><span class="htp-key">C</span><span class="htp-lbl">Hold</span></div>
+      <div class="htp-row"><span class="htp-key">P</span><span class="htp-lbl">Pause</span></div>
+      <div class="htp-row"><span class="htp-key">M</span><span class="htp-lbl">Mute</span></div>
       <div class="htp-section">TOUCH</div>
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_left</span><span class="material-icons-round" style="font-size:13px;vertical-align:middle">chevron_right</span></span><span class="htp-lbl">Move</span></div>
       <div class="htp-row"><span class="htp-key"><span class="material-icons-round" style="font-size:13px;vertical-align:middle">keyboard_arrow_down</span></span><span class="htp-lbl">Soft Drop</span></div>
@@ -691,7 +686,7 @@
   </div>
 </div>
 
-<div id="stats-overlay" onclick="closeStats()">
+<div id="stats-overlay" style="display:none" onclick="closeStats()">
   <div id="stats-box" onclick="event.stopPropagation()">
     <div id="stats-title">PLAYER STATS</div>
     <button id="stats-close" onclick="closeStats()">✕</button>
@@ -2264,11 +2259,12 @@ function showStartScreen(){
 let _htpOpenTs=0;
 function openHowToPlay(){
   _htpOpenTs=Date.now();
-  document.getElementById('htp-overlay').classList.add('open');
+  const ov=document.getElementById('htp-overlay');
+  ov.style.display='flex';
 }
 function closeHowToPlay(){
   if(Date.now()-_htpOpenTs<350)return;
-  document.getElementById('htp-overlay').classList.remove('open');
+  document.getElementById('htp-overlay').style.display='none';
 }
 
 function openStats(){
@@ -2292,13 +2288,13 @@ function openStats(){
   `;
   const el = document.getElementById('stats-scroll');
   if(el) el.innerHTML = statsHTML;
-  document.getElementById('stats-overlay').classList.add('open');
+  document.getElementById('stats-overlay').style.display='flex';
   _statsOpenTs=Date.now();
 }
 let _statsOpenTs=0;
 function closeStats(){
   if(Date.now()-_statsOpenTs<350)return;
-  document.getElementById('stats-overlay').classList.remove('open');
+  document.getElementById('stats-overlay').style.display='none';
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────

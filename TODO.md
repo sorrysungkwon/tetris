@@ -81,7 +81,7 @@
 
 - [x] Task 1: **Ghost Piece Toggle** — toggle button in pause menu; hides ghost piece + alignment lasers when off; persisted to `localStorage` (glowTrisGhost).
 - [x] Task 2: **Lock-Delay Tuning** — LOCK slider (100–1000ms, step 50) added to pause menu alongside DAS/ARR; persisted to `localStorage` (glowTrisLock).
-- [x] Task 3: **How To Play — Keyboard Hints** — Hold row shows `C` + `⇧ Shift` alt key badge; Hard Drop label updated from SPC→Space; Pause/Mute descriptions clarified.
+- [x] Task 3: ~~**How To Play — Keyboard Hints**~~ — Reverted: `.htp-keys` wrapper and `⇧ Shift` badge caused FOUC flash on page load; HTP KEYBOARD section restored to v1.0.5 state.
 - [x] Task 4: Update `README.md` roadmap and this file after completion.
 
 ---
@@ -93,6 +93,13 @@
 - [x] Force-pushed rewritten history to `origin/master` on GitHub
 
 **Background:** The project was originally developed in `/home/ubuntu/projects/tetris` and renamed to Glowtris at v1.0.1. This task ensured no "tetris" string remains anywhere — files, config, or git history. The canonical name is **Glowtris** everywhere.
+
+---
+
+## ✅ Completed: v1.0.6 HTP Flash Fix — by Claude (2026-05-23)
+
+- [x] Fix: **HTP overlay FOUC** — `#htp-overlay` and `#stats-overlay` lacked inline `style="display:none"`, causing content to flash for ~0.1s on page load before CSS applied. Added inline style and switched JS to direct `style.display` control instead of CSS class toggling.
+- [x] Revert: **HTP keyboard hints** — `.htp-keys` wrapper + `.htp-key-alt` badge removed; KEYBOARD section restored to v1.0.5 (SPC, C, Pause, Mute labels).
 
 ---
 
