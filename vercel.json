@@ -1,5 +1,8 @@
 {
   "version": 2,
   "name": "neon-glowtris",
-  "builds": [{ "src": "*.html", "use": "@vercel/static" }]
+  "builds": [
+    { "src": "api/**/*.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" }
+  ]
 }
