@@ -1,0 +1,14 @@
+{
+  "name": "Neon Tetris",
+  "short_name": "NEON TETRIS",
+  "description": "Neon-styled Tetris with online leaderboard",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#000008",
+  "theme_color": "#00c8ff",
+  "icons": [
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" }
+  ]
+}

@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>NEON TETRIS</title>
 <meta name="description" content="Neon-styled Tetris with online leaderboard. Compete for the top rank!">
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#00c8ff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Neon Tetris">
 <meta property="og:title" content="NEON TETRIS">
 <meta property="og:description" content="Neon-styled Tetris with online leaderboard. Compete for the top rank!">
 <meta property="og:image" content="https://neon-tetris-roan.vercel.app/og.svg">
@@ -254,6 +260,12 @@
 
   /* Leaderboard */
   .start-lb-title { font-size:9px; letter-spacing:3px; color:rgba(0,200,255,0.55); margin-bottom:4px; text-align:center; }
+  .lb-tabs { display:flex; gap:6px; margin-bottom:6px; }
+  .lb-tab { font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; padding:4px 10px; border-radius:4px; border:1px solid rgba(0,200,255,0.3); background:transparent; color:rgba(0,200,255,0.45); cursor:pointer; transition:all .2s; }
+  .lb-tab.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,200,255,0.1); text-shadow:0 0 8px var(--cyan); }
+  .new-best-badge { font-size:13px; font-weight:900; letter-spacing:4px; color:#ffe600; text-shadow:0 0 18px #ffe600,0 0 36px #ffaa00; margin-bottom:8px; animation:pulse 0.7s ease-in-out infinite; }
+  .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:9px; color:rgba(0,200,255,0.38); letter-spacing:1px; }
+  .hist-sep { opacity:0.3; }
   .lb-table { width:100%; max-width:260px; border-collapse:collapse; margin:8px 0 14px; max-height:240px; overflow-y:auto; display:block; }
   .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.1); }
   .lb-table td { padding:5px 4px; font-size:10px; letter-spacing:1px; }
@@ -354,7 +366,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">NEON TETRIS</span>
-    <span class="dh-version">v0.9.2</span>
+    <span class="dh-version">v1.0</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -679,6 +691,13 @@ function lockPiece(){
       spawnLineClearParticles(snap);
       if(snap.length>=4&&!tspin){shakeFrames=25;shakeMag=0.7;}
       if(snap.length>=4){triggerTetrisFlash();tetrisBorder=45;}
+      // All-clear bonus: board completely empty
+      if(board.every(row=>row.every(v=>v===null))){
+        const bonus=2000*level;
+        addScore(bonus,0,false);
+        showScorePopup(bonus,-1,false); // -1 signals all-clear
+        triggerAllClearFlash();
+      }
       flashLines=new Set();
     },120);
   } else {
@@ -700,7 +719,9 @@ function showScorePopup(pts,n,tspin=false){
   const tspinLabels=['T-SPIN!','T-SPIN SINGLE','T-SPIN DOUBLE!!','T-SPIN TRIPLE!!!'];
   const labels=['','','DOUBLE!','TRIPLE!','TETRIS!!'];
   let txt,color,sz,glow;
-  if(tspin){
+  if(n===-1){
+    txt=`✦ ALL CLEAR ✦ +${pts}`;color='#ffe600';sz='22px';glow='0 0 32px #ffe600';
+  } else if(tspin){
     txt=`${tspinLabels[Math.min(n,3)]} +${pts}`;color='#a000ff';sz=n>=2?'19px':'14px';glow='0 0 24px #a000ff';
   } else if(n>=4){
     txt=`★ TETRIS ★ +${pts}`;color='#ff0080';sz='24px';glow='0 0 28px #ff0080';
@@ -1105,6 +1126,24 @@ function triggerTetrisFlash(){
   });
 }
 
+function triggerAllClearFlash(){
+  // Gold flash + extra particles
+  $flash.style.background='rgba(255,230,0,0.55)';
+  $flash.style.transition='none';$flash.style.opacity='1';
+  requestAnimationFrame(()=>{
+    $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
+    setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
+  });
+  tetrisBorder=90;shakeFrames=30;shakeMag=0.9;
+  // All-clear SFX: ascending fanfare
+  [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
+  // Burst particles from centre
+  for(let i=0;i<80;i++){
+    const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
+    particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
+  }
+}
+
 function sfxTSpin(){
   playBeep(880,'square',.07,.22);
   playBeep(1046,'square',.06,.18,.06);
@@ -1245,20 +1284,36 @@ function togglePause(){
 function endGame(){
   gameRunning=false;gameOver=true;
   stopBGM();sfxGameOver();
-  if(score>hiScore){hiScore=score;localStorage.setItem('neonTetrisHi',hiScore);}
+  const isNewBest=score>hiScore;
+  if(isNewBest){hiScore=score;localStorage.setItem('neonTetrisHi',hiScore);}
+  // Save personal history (last 5 games)
+  const hist=JSON.parse(localStorage.getItem('neonTetrisHistory')||'[]');
+  hist.unshift({score,lines,level,date:Date.now()});
+  localStorage.setItem('neonTetrisHistory',JSON.stringify(hist.slice(0,5)));
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(!board[r][c])continue;
     const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
     particles.push({x:(c+.5)*CELL,y:(r+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:board[r][c],size:Math.random()*5+3,type:'spark'});
   }
   shakeFrames=40;shakeMag=0.7;
+  if(isNewBest){
+    [523,659,784,1047].forEach((f,i)=>playBeep(f,'sawtooth',.18,.28,i*.06+.3));
+    for(let i=0;i<60;i++){
+      const a=Math.random()*Math.PI*2,sp=Math.random()*10+3;
+      particles.push({x:(Math.random()*COLS)*CELL,y:(Math.random()*ROWS*0.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#ffe600','#ffaa00','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+2,type:'star'});
+    }
+  }
   setTimeout(()=>{
     const savedName=localStorage.getItem('neonTetrisName')||'';
+    const hist=JSON.parse(localStorage.getItem('neonTetrisHistory')||'[]');
+    const histHTML=hist.length>1?`<div class="history-row">${hist.slice(1,4).map(h=>`<span>${h.score.toLocaleString()}</span>`).join('<span class="hist-sep">·</span>')}</div>`:'';
     $overlay.innerHTML=`
       <h1 style="font-size:20px">GAME OVER</h1>
+      ${isNewBest?'<div class="new-best-badge">★ NEW BEST ★</div>':''}
       <div class="sub" style="margin-bottom:2px">SCORE: ${score.toLocaleString()}</div>
-      <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600;margin-bottom:14px">BEST: ${hiScore.toLocaleString()}</div>
-      <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
+      <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600;margin-bottom:2px">BEST: ${hiScore.toLocaleString()}</div>
+      ${histHTML}
+      <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="margin-top:10px">
       <div class="btn-row">
         <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
         <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
@@ -1300,11 +1355,15 @@ async function submitScore(){
     const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score})});
     const data=await r.json();
     if(data.board){
-      const rankMsg=data.rank?`<div class="sub" style="color:#ffe600;margin-bottom:4px">🏆 YOUR RANK: #${data.rank}</div>`:'';
-      // hide input form and show results only
+      _lbCache={board:data.board,dailyBoard:data.dailyBoard||[]};
+      const rankMsg=[
+        data.dailyRank?`<div class="sub" style="color:#00ff88;margin-bottom:2px">TODAY: #${data.dailyRank}</div>`:'',
+        data.rank?`<div class="sub" style="color:#ffe600;margin-bottom:6px">ALL TIME: #${data.rank}</div>`:'',
+      ].join('');
       inp.style.display='none';
       btn.closest('.btn-row').style.display='none';
-      res.innerHTML=rankMsg+lbHTML(data.board,name)+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
+      const tabs=`<div class="lb-tabs"><button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button><button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button></div><div class="lb-inner">${lbHTML(data.dailyBoard||[],name)}</div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
@@ -1325,22 +1384,37 @@ function shareScore(sc,rank){
   }
 }
 
+let _lbCache={board:[],dailyBoard:[]};
+
 async function loadStartLeaderboard(){
   const el=document.getElementById('start-lb');
   if(!el)return;
   try{
     const r=await fetch('/api/leaderboard');
-    const data=await r.json();
-    if(data.board&&data.board.length){
-      el.innerHTML=`<div class="start-lb-title">🏆 TOP 10</div>${lbHTML(data.board,'')}`;
-    }
+    _lbCache=await r.json();
+    renderLbTab(document.querySelector('.lb-tab.active')?document.querySelector('.lb-tab.active').dataset.tab:'daily');
   }catch(e){}
+}
+
+function renderLbTab(tab){
+  const el=document.getElementById('start-lb');
+  if(!el)return;
+  const entries=tab==='daily'?(_lbCache.dailyBoard||[]):(_lbCache.board||[]);
+  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  const inner=el.querySelector('.lb-inner');
+  if(inner)inner.innerHTML=lbHTML(entries,'');
 }
 
 function showStartScreen(){
   $overlay.innerHTML=`
     <h1>NEON TETRIS</h1>
-    <div id="start-lb"></div>
+    <div id="start-lb">
+      <div class="lb-tabs">
+        <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
+        <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
+      </div>
+      <div class="lb-inner"></div>
+    </div>
     <div class="btn-row">
       <button class="action-btn" onclick="startGame()">START GAME</button>
     </div>`;
