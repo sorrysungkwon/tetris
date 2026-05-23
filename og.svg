@@ -1,97 +1,227 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <radialGradient id="bg" cx="50%" cy="50%" r="70%">
-      <stop offset="0%" stop-color="#0a0a2e"/>
+    <radialGradient id="bg" cx="40%" cy="50%" r="75%">
+      <stop offset="0%" stop-color="#0c0c32"/>
       <stop offset="100%" stop-color="#000008"/>
     </radialGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <radialGradient id="nebula-l" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#00c8ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebula-r" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#a000ff" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#a000ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nebula-rb" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#00c8ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="vsep" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0"/>
+      <stop offset="25%" stop-color="#00c8ff" stop-opacity="0.45"/>
+      <stop offset="75%" stop-color="#a000ff" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#a000ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="hsep" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#00c8ff" stop-opacity="0"/>
+      <stop offset="30%" stop-color="#00c8ff" stop-opacity="0.55"/>
+      <stop offset="70%" stop-color="#a000ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#a000ff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="block-hi" x1="0%" y1="0%" x2="70%" y2="70%">
+      <stop offset="0%" stop-color="white" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="11" result="b1"/>
+      <feGaussianBlur stdDeviation="4" result="b2" in="SourceGraphic"/>
+      <feMerge>
+        <feMergeNode in="b1"/>
+        <feMergeNode in="b2"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
-    <filter id="glow2">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="glow-med" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-soft" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-text" x="-15%" y="-70%" width="130%" height="240%">
+      <feGaussianBlur stdDeviation="14" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
 
   <!-- Background -->
   <rect width="1200" height="630" fill="url(#bg)"/>
 
+  <!-- Nebula blobs -->
+  <ellipse cx="285" cy="315" rx="310" ry="230" fill="url(#nebula-l)"/>
+  <ellipse cx="870" cy="210" rx="290" ry="210" fill="url(#nebula-r)"/>
+  <ellipse cx="960" cy="470" rx="210" ry="160" fill="url(#nebula-rb)"/>
+
+  <!-- Grid lines -->
+  <g stroke="#00c8ff" stroke-width="0.6" opacity="0.042">
+    <line x1="120" y1="0" x2="120" y2="630"/>
+    <line x1="240" y1="0" x2="240" y2="630"/>
+    <line x1="360" y1="0" x2="360" y2="630"/>
+    <line x1="480" y1="0" x2="480" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="720" y1="0" x2="720" y2="630"/>
+    <line x1="840" y1="0" x2="840" y2="630"/>
+    <line x1="960" y1="0" x2="960" y2="630"/>
+    <line x1="1080" y1="0" x2="1080" y2="630"/>
+    <line x1="0" y1="105" x2="1200" y2="105"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="0" y1="525" x2="1200" y2="525"/>
+  </g>
+
   <!-- Stars -->
-  <g fill="white" opacity="0.5">
-    <circle cx="80" cy="50" r="1.5"/><circle cx="200" cy="120" r="1"/><circle cx="350" cy="30" r="2"/>
-    <circle cx="500" cy="90" r="1.5"/><circle cx="700" cy="40" r="1"/><circle cx="850" cy="100" r="2"/>
-    <circle cx="1000" cy="60" r="1.5"/><circle cx="1100" cy="140" r="1"/><circle cx="150" cy="200" r="1"/>
-    <circle cx="900" cy="200" r="1.5"/><circle cx="1050" cy="250" r="1"/><circle cx="50" cy="320" r="2"/>
-    <circle cx="1150" cy="350" r="1.5"/><circle cx="250" cy="500" r="1"/><circle cx="1100" cy="500" r="1.5"/>
-    <circle cx="400" cy="580" r="1"/><circle cx="750" cy="590" r="2"/><circle cx="950" cy="560" r="1"/>
+  <g fill="white">
+    <circle cx="72"  cy="41"  r="1.5" opacity="0.55"/>
+    <circle cx="192" cy="113" r="1"   opacity="0.38"/>
+    <circle cx="348" cy="26"  r="1.8" opacity="0.48"/>
+    <circle cx="514" cy="84"  r="1"   opacity="0.32"/>
+    <circle cx="692" cy="35"  r="1.5" opacity="0.44"/>
+    <circle cx="838" cy="90"  r="1"   opacity="0.36"/>
+    <circle cx="1018" cy="51" r="1.5" opacity="0.50"/>
+    <circle cx="1115" cy="130" r="1"  opacity="0.34"/>
+    <circle cx="140" cy="195" r="1"   opacity="0.28"/>
+    <circle cx="922" cy="180" r="1.5" opacity="0.38"/>
+    <circle cx="1068" cy="246" r="1"  opacity="0.30"/>
+    <circle cx="50"  cy="316" r="1.5" opacity="0.46"/>
+    <circle cx="1152" cy="340" r="1"  opacity="0.36"/>
+    <circle cx="246" cy="494" r="1"   opacity="0.30"/>
+    <circle cx="1110" cy="490" r="1.5" opacity="0.40"/>
+    <circle cx="394" cy="574" r="1"   opacity="0.26"/>
+    <circle cx="756" cy="580" r="1.5" opacity="0.46"/>
+    <circle cx="960" cy="553" r="1"   opacity="0.36"/>
+    <circle cx="448" cy="152" r="1"   opacity="0.28"/>
+    <circle cx="1048" cy="384" r="1.2" opacity="0.32"/>
   </g>
 
-  <!-- Glowtris blocks (decorative, left side) -->
-  <g opacity="0.35" filter="url(#glow2)">
-    <!-- I piece cyan -->
-    <rect x="60" y="200" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="60" y="252" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="60" y="304" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="60" y="356" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <!-- T piece purple -->
-    <rect x="112" y="252" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
-    <rect x="112" y="304" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
-    <rect x="164" y="304" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
-    <rect x="112" y="356" width="44" height="44" rx="4" fill="#bf00ff" stroke="#bf00ff" stroke-width="1"/>
-    <!-- S piece green -->
-    <rect x="164" y="356" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
-    <rect x="216" y="356" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
-    <rect x="216" y="408" width="44" height="44" rx="4" fill="#00ff88" stroke="#00ff88" stroke-width="1"/>
-    <!-- L piece orange -->
-    <rect x="60" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
-    <rect x="112" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
-    <rect x="60" y="460" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
-    <rect x="164" y="408" width="44" height="44" rx="4" fill="#ff8800" stroke="#ff8800" stroke-width="1"/>
+  <!-- Frame border -->
+  <rect x="18" y="18" width="1164" height="594" rx="14"
+        fill="none" stroke="#00c8ff" stroke-width="1" opacity="0.16"/>
+
+  <!-- Corner accents -->
+  <polyline points="18,76 18,18 76,18"   fill="none" stroke="#00c8ff" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow-soft)"/>
+  <polyline points="1124,18 1182,18 1182,76" fill="none" stroke="#a000ff" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow-soft)"/>
+  <polyline points="18,554 18,612 76,612"  fill="none" stroke="#00c8ff" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow-soft)"/>
+  <polyline points="1124,612 1182,612 1182,554" fill="none" stroke="#a000ff" stroke-width="2.8" stroke-linecap="round" opacity="0.8" filter="url(#glow-soft)"/>
+
+  <!-- ===== LOGO BLOCK GRID ===== -->
+  <!-- 3×3, block=74px gap=8px, total=238px, centered at x=270 y=315 -->
+  <!-- start x=151 y=196 -->
+
+  <!-- Soft halo behind grid -->
+  <rect x="138" y="183" width="264" height="264" rx="22" fill="#001833" opacity="0.55"/>
+  <rect x="138" y="183" width="264" height="264" rx="22" fill="none" stroke="#00c8ff" stroke-width="1" opacity="0.12"/>
+
+  <g filter="url(#glow-med)">
+    <!-- Row 1: cyan cyan cyan -->
+    <rect x="151" y="196" width="74" height="74" rx="10" fill="#00e5ff"/>
+    <rect x="151" y="196" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="151" y="196" width="74" height="74" rx="10" fill="none" stroke="#00f5ff" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="233" y="196" width="74" height="74" rx="10" fill="#00e5ff"/>
+    <rect x="233" y="196" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="233" y="196" width="74" height="74" rx="10" fill="none" stroke="#00f5ff" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="315" y="196" width="74" height="74" rx="10" fill="#00e5ff"/>
+    <rect x="315" y="196" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="315" y="196" width="74" height="74" rx="10" fill="none" stroke="#00f5ff" stroke-width="1.8" opacity="0.65"/>
+
+    <!-- Row 2: purple purple cyan -->
+    <rect x="151" y="278" width="74" height="74" rx="10" fill="#bf00ff"/>
+    <rect x="151" y="278" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="151" y="278" width="74" height="74" rx="10" fill="none" stroke="#d040ff" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="233" y="278" width="74" height="74" rx="10" fill="#bf00ff"/>
+    <rect x="233" y="278" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="233" y="278" width="74" height="74" rx="10" fill="none" stroke="#d040ff" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="315" y="278" width="74" height="74" rx="10" fill="#00e5ff"/>
+    <rect x="315" y="278" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="315" y="278" width="74" height="74" rx="10" fill="none" stroke="#00f5ff" stroke-width="1.8" opacity="0.65"/>
+
+    <!-- Row 3: orange orange yellow -->
+    <rect x="151" y="360" width="74" height="74" rx="10" fill="#ff8800"/>
+    <rect x="151" y="360" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="151" y="360" width="74" height="74" rx="10" fill="none" stroke="#ff9922" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="233" y="360" width="74" height="74" rx="10" fill="#ff8800"/>
+    <rect x="233" y="360" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="233" y="360" width="74" height="74" rx="10" fill="none" stroke="#ff9922" stroke-width="1.8" opacity="0.65"/>
+
+    <rect x="315" y="360" width="74" height="74" rx="10" fill="#ffe600"/>
+    <rect x="315" y="360" width="74" height="74" rx="10" fill="url(#block-hi)"/>
+    <rect x="315" y="360" width="74" height="74" rx="10" fill="none" stroke="#ffe600" stroke-width="1.8" opacity="0.65"/>
   </g>
 
-  <!-- Glowtris blocks (decorative, right side) -->
-  <g opacity="0.35" filter="url(#glow2)">
-    <!-- Z piece red -->
-    <rect x="1040" y="200" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
-    <rect x="1088" y="200" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
-    <rect x="988" y="252" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
-    <rect x="1040" y="252" width="44" height="44" rx="4" fill="#ff2255" stroke="#ff2255" stroke-width="1"/>
-    <!-- O piece yellow -->
-    <rect x="988" y="304" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
-    <rect x="1040" y="304" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
-    <rect x="988" y="356" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
-    <rect x="1040" y="356" width="44" height="44" rx="4" fill="#ffe600" stroke="#ffe600" stroke-width="1"/>
-    <!-- J piece blue -->
-    <rect x="1088" y="304" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
-    <rect x="1088" y="356" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
-    <rect x="1088" y="408" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
-    <rect x="1040" y="408" width="44" height="44" rx="4" fill="#0055ff" stroke="#0055ff" stroke-width="1"/>
-    <!-- I piece cyan bottom -->
-    <rect x="988" y="408" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="988" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="1040" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-    <rect x="1088" y="460" width="44" height="44" rx="4" fill="#00f5ff" stroke="#00f5ff" stroke-width="1"/>
-  </g>
+  <!-- Vertical separator -->
+  <rect x="455" y="108" width="1.5" height="414" fill="url(#vsep)"/>
+  <circle cx="456" cy="108" r="3" fill="#00c8ff" opacity="0.5" filter="url(#glow-soft)"/>
+  <circle cx="456" cy="522" r="3" fill="#a000ff" opacity="0.5" filter="url(#glow-soft)"/>
 
-  <!-- Title: GLOWTRIS -->
-  <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
+  <!-- ===== TEXT SECTION ===== -->
+  <!-- Center of right panel: x = (455+1182)/2 = 818 -->
+
+  <!-- GLOW -->
+  <text x="822" y="300"
+        font-family="Arial Black, Impact, sans-serif"
+        font-size="132" font-weight="900"
         text-anchor="middle" letter-spacing="12"
-        fill="none" stroke="#00c8ff" stroke-width="1.5" opacity="0.4" filter="url(#glow)">GLOWTRIS</text>
-  <text x="600" y="270" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
-        text-anchor="middle" letter-spacing="12" fill="#00c8ff" filter="url(#glow)">GLOW</text>
-  <text x="600" y="390" font-family="Arial Black, sans-serif" font-size="110" font-weight="900"
-        text-anchor="middle" letter-spacing="12" fill="#a000ff" filter="url(#glow)">TRIS</text>
+        fill="#00c8ff" filter="url(#glow-text)">GLOW</text>
 
-  <!-- Subtitle -->
-  <text x="600" y="470" font-family="Arial, sans-serif" font-size="26" font-weight="400"
-        text-anchor="middle" letter-spacing="8" fill="rgba(0,200,255,0.65)">COMPETE · SCORE · RANK</text>
+  <!-- Horizontal divider between GLOW and TRIS -->
+  <rect x="538" y="318" width="568" height="1.5" rx="1" fill="url(#hsep)"/>
+  <circle cx="538" cy="319" r="3.5" fill="#00c8ff" opacity="0.6" filter="url(#glow-soft)"/>
+  <circle cx="1106" cy="319" r="3.5" fill="#a000ff" opacity="0.6" filter="url(#glow-soft)"/>
 
-  <!-- Bottom border line -->
-  <line x1="300" y1="510" x2="900" y2="510" stroke="url(#bg)" stroke-width="0"/>
-  <rect x="300" y="508" width="600" height="2" rx="1" fill="#00c8ff" opacity="0.3"/>
+  <!-- TRIS -->
+  <text x="822" y="448"
+        font-family="Arial Black, Impact, sans-serif"
+        font-size="132" font-weight="900"
+        text-anchor="middle" letter-spacing="18"
+        fill="#a000ff" filter="url(#glow-text)">TRIS</text>
+
+  <!-- Tagline -->
+  <text x="822" y="510"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="19" font-weight="400"
+        text-anchor="middle" letter-spacing="8"
+        fill="#00c8ff" opacity="0.52">COMPETE · SCORE · RANK</text>
+
+  <!-- Bottom separator -->
+  <rect x="620" y="532" width="404" height="1" rx="0.5" fill="#00c8ff" opacity="0.18"/>
 
   <!-- URL -->
-  <text x="600" y="560" font-family="Arial, sans-serif" font-size="22"
-        text-anchor="middle" letter-spacing="3" fill="rgba(0,200,255,0.4)">glowtris.vercel.app</text>
+  <text x="822" y="562"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="17" text-anchor="middle"
+        letter-spacing="3" fill="#00c8ff" opacity="0.30">glowtris.vercel.app</text>
+
+  <!-- Subtle decorative blocks — top-right -->
+  <g opacity="0.18" filter="url(#glow-soft)">
+    <rect x="1062" y="56" width="26" height="26" rx="4" fill="#ff0080"/>
+    <rect x="1096" y="56" width="26" height="26" rx="4" fill="#ff0080"/>
+    <rect x="1130" y="56" width="26" height="26" rx="4" fill="#a000ff"/>
+    <rect x="1096" y="90" width="26" height="26" rx="4" fill="#a000ff"/>
+    <rect x="1130" y="90" width="26" height="26" rx="4" fill="#a000ff"/>
+  </g>
+
+  <!-- Subtle decorative blocks — bottom-left -->
+  <g opacity="0.18" filter="url(#glow-soft)">
+    <rect x="56" y="510" width="26" height="26" rx="4" fill="#00f5ff"/>
+    <rect x="90" y="510" width="26" height="26" rx="4" fill="#00f5ff"/>
+    <rect x="56" y="544" width="26" height="26" rx="4" fill="#ffe600"/>
+    <rect x="90" y="544" width="26" height="26" rx="4" fill="#ff8800"/>
+  </g>
 </svg>
