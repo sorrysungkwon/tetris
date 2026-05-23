@@ -56,7 +56,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.3~~ ✅ | **Retention & UX Polish**: Username persistence, personal best streak & max combo badges, How To Play collapsible panel. |
 | ~~v1.0.4~~ ✅ | **Profile, UI, & Social Depth**: Full stats screen, personal record badges, UI enhancements (neon grid, floating text, optimized particles), Weekly leaderboard tab, persistent rank display, and canvas share image. |
 | ~~v1.0.5~~ ✅ | **OG Image Redesign**: Logo lockup layout (3×3 block grid mark + GLOW/TRIS neon title), nebula background, neon corner brackets, gradient separator lines. |
-| v1.0.6 | **Settings & Accessibility**: Ghost piece on/off toggle, lock-delay tuning in pause menu, keyboard shortcut hints on How To Play overlay. |
+| ~~v1.0.6~~ ✅ | **Settings & Accessibility**: Ghost piece on/off toggle, lock-delay tuning in pause menu, keyboard shortcut hints on How To Play overlay. |
 | v1.1 | **Sprint Mode**: Clear 40 lines as fast as possible. Stopwatch timer + remaining-lines HUD, Marathon vs Sprint mode selector on start screen, dedicated time-based Redis leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint stats & Canvas Share image. |
 
 ## Rules

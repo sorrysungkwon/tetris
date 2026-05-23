@@ -77,12 +77,12 @@
 
 ---
 
-## 🔮 Planned: v1.0.6 (Settings & Accessibility)
+## ✅ Completed: v1.0.6 (Settings & Accessibility) — by Claude (2026-05-23)
 
-- [ ] Task 1: **Ghost Piece Toggle** — add an on/off switch in the pause-menu settings panel; persist choice to `localStorage`.
-- [ ] Task 2: **Lock-Delay Tuning** — expose lock-delay slider in settings alongside existing DAS/ARR controls.
-- [ ] Task 3: **How To Play — Keyboard Hints** — add a keyboard shortcut reference column to the HOW TO PLAY overlay.
-- [ ] Task 4: Update `README.md` roadmap and this file after completion.
+- [x] Task 1: **Ghost Piece Toggle** — toggle button in pause menu; hides ghost piece + alignment lasers when off; persisted to `localStorage` (glowTrisGhost).
+- [x] Task 2: **Lock-Delay Tuning** — LOCK slider (100–1000ms, step 50) added to pause menu alongside DAS/ARR; persisted to `localStorage` (glowTrisLock).
+- [x] Task 3: **How To Play — Keyboard Hints** — Hold row shows `C` + `⇧ Shift` alt key badge; Hard Drop label updated from SPC→Space; Pause/Mute descriptions clarified.
+- [x] Task 4: Update `README.md` roadmap and this file after completion.
 
 ---
 
