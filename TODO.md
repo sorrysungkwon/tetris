@@ -42,31 +42,16 @@
 - [x] Fix: HOW TO PLAY button resized to match START GAME (`action-btn ghost`); touch section icons replaced with Material Icons Round matching actual game buttons.
 - [x] Chore: Bump version label to v1.0.3; configure git identity to `sorrysungkwon <seonqwer@gmail.com>` for proper GitHub attribution.
 
-## ✅ Completed: v1.0.4 (Stats & Profile) — by Antigravity (2026-05-23)
+## 🟢 In Progress: v1.0.4 (Profile, UI, & Social Depth)
 
-- [x] Task 1: Full stats screen — total games played, average score, best level reached, total lines cleared (stored in `localStorage`).
-- [x] Task 2: Personal record badges on game over screen — highlight best-ever level, longest combo, highest single-game lines.
-- [x] Task 3: Document v1.0.4 changes in `README.md` roadmap and update this file.
-
----
-
-## ✅ Completed: v1.0.4.1 (UI Enhancements) — by Antigravity (2026-05-23)
-
-- [x] Task 1: Neon Wireframe Grid on the game board.
-- [x] Task 2: Floating score and level up text animations on `particle-canvas`.
-- [x] Task 3: Dynamic board borders that sync with the active piece's color.
-- [x] Task 4: Enhanced particle physics (gravity, friction) and visual trails.
-- [x] Task 5: Polished typography, contrast, and text-shadows for buttons and overlays.
-- [x] Task 6: Document changes and push to GitHub.
-
----
-
-## 🔮 Planned: v1.0.5 (Leaderboard & Social Depth)
-
-- [ ] Task 1: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
-- [ ] Task 2: Persistent personal rank display — always show the player's own rank even when not in top 10.
-- [ ] Task 3: Canvas share image — capture final board state + score as a PNG and offer it via Web Share API / clipboard.
-- [ ] Task 4: Document v1.0.5 changes in `README.md` roadmap and update this file.
+- [x] Task 1: Full stats screen (stored in `localStorage`) and personal record badges.
+- [x] Task 2: UI Enhancements (Neon Wireframe Grid, Floating score/level text, Dynamic board borders).
+- [x] Task 3: Enhanced particle physics (gravity, friction) with optimized rendering.
+- [x] Task 4: Polished typography, contrast, and text-shadows for buttons and overlays.
+- [ ] Task 5: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
+- [ ] Task 6: Persistent personal rank display — always show the player's own rank even when not in top 10.
+- [ ] Task 7: Canvas share image — capture final board state + score as a PNG and offer it via Web Share API / clipboard.
+- [ ] Task 8: Document v1.0.4 completion in `README.md` and `TODO.md`.
 
 ---
 
