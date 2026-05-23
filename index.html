@@ -382,57 +382,34 @@
   .streak-badge { font-size:10px; letter-spacing:2px; padding:4px 10px; border-radius:6px; border:1px solid rgba(255,100,0,0.5); color:#ff6400; background:rgba(255,100,0,0.1); text-shadow:0 0 8px #ff6400; }
   .combo-badge  { font-size:10px; letter-spacing:2px; padding:4px 10px; border-radius:6px; border:1px solid rgba(0,200,255,0.45); color:var(--cyan); background:rgba(0,200,255,0.08); text-shadow:0 0 8px var(--cyan); }
 
-  /* HOW TO PLAY popup overlay */
-  #htp-overlay {
+  /* Popup overlays */
+  #htp-overlay, #stats-overlay {
     display:none; position:fixed; inset:0; z-index:200;
     background:rgba(0,0,12,0.96);
     align-items:center; justify-content:center;
   }
-  #htp-box {
+  #htp-box, #stats-box {
     position:relative; width:min(300px, 88vw);
     background:rgba(4,4,30,0.92); border:1px solid rgba(0,200,255,0.28);
     border-radius:16px; padding:20px 20px 16px;
     max-height:80vh; display:flex; flex-direction:column;
     box-shadow:0 0 40px rgba(0,200,255,0.12);
   }
-  #htp-title { font-size:10px; letter-spacing:4px; color:var(--cyan); text-align:center; margin-bottom:14px; text-shadow:0 0 10px var(--cyan); }
-  #htp-close {
+  #htp-title, #stats-title { font-size:10px; letter-spacing:4px; color:var(--cyan); text-align:center; margin-bottom:14px; text-shadow:0 0 10px var(--cyan); }
+  #htp-close, #stats-close {
     position:absolute; top:12px; right:14px;
     background:none; border:none; color:rgba(0,200,255,0.5); cursor:pointer;
     font-family:'Orbitron',monospace; font-size:16px; line-height:1;
     transition:color .2s;
   }
-  #htp-close:hover { color:var(--cyan); }
-  #htp-scroll { overflow-y:auto; flex:1; }
+  #htp-close:hover, #stats-close:hover { color:var(--cyan); }
+  #htp-scroll, #stats-scroll { overflow-y:auto; flex:1; }
   .htp-section { font-size:9px; font-weight:700; letter-spacing:3px; color:rgba(0,200,255,0.85); margin:12px 0 8px; text-align:center; text-shadow:0 0 6px rgba(0,200,255,0.4); }
   .htp-section:first-child { margin-top:0; }
   .htp-row { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid rgba(0,200,255,0.1); }
   .htp-row:last-child { border-bottom:none; }
   .htp-key { font-size:10px; font-weight:700; color:rgba(0,200,255,0.95); letter-spacing:1px; background:rgba(0,200,255,0.1); border:1px solid rgba(0,200,255,0.3); border-radius:4px; padding:4px 9px; box-shadow:0 0 8px rgba(0,200,255,0.2); }
   .htp-lbl { font-size:8px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px; text-transform:uppercase; }
-
-  /* STATS popup overlay */
-  #stats-overlay {
-    display:none; position:fixed; inset:0; z-index:200;
-    background:rgba(0,0,12,0.96);
-    align-items:center; justify-content:center;
-  }
-  #stats-box {
-    position:relative; width:min(300px, 88vw);
-    background:rgba(4,4,30,0.92); border:1px solid rgba(0,200,255,0.28);
-    border-radius:16px; padding:20px 20px 16px;
-    max-height:80vh; display:flex; flex-direction:column;
-    box-shadow:0 0 40px rgba(0,200,255,0.12);
-  }
-  #stats-title { font-size:10px; letter-spacing:4px; color:var(--cyan); text-align:center; margin-bottom:14px; text-shadow:0 0 10px var(--cyan); }
-  #stats-close {
-    position:absolute; top:12px; right:14px;
-    background:none; border:none; color:rgba(0,200,255,0.5); cursor:pointer;
-    font-family:'Orbitron',monospace; font-size:16px; line-height:1;
-    transition:color .2s;
-  }
-  #stats-close:hover { color:var(--cyan); }
-  #stats-scroll { overflow-y:auto; flex:1; }
   .stats-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid rgba(0,200,255,0.1); }
   .stats-row:last-child { border-bottom:none; }
   .stats-lbl { font-size:9px; font-weight:700; color:rgba(255,255,255,0.6); letter-spacing:1px; text-transform:uppercase; }
@@ -643,9 +620,7 @@
     -webkit-backdrop-filter: none !important;
     box-shadow: none !important;
   }
-  html.low-perf .glass-panel,
-  html.low-perf .action-btn,
-  html.low-perf #game-canvas-wrap {
+  html.low-perf .glass-panel {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
@@ -655,6 +630,12 @@
   html.low-perf .panel-title,
   html.low-perf .mh-score { text-shadow: none !important; }
   html.low-perf #level-bar { box-shadow: none !important; }
+
+  .footer-link {
+    color:rgba(0,200,255,0.3); text-decoration:none; margin:0 6px;
+    transition:color .2s;
+  }
+  .footer-link:hover { color:var(--cyan); }
 </style>
 </head>
 <body>
@@ -699,7 +680,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.0.4</span>
+    <span class="dh-version">v1.0.6</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -814,7 +795,6 @@
 </div><!-- #app -->
 
 <script>
-// Prevent pinch-zoom and double-tap zoom on touch devices
 document.addEventListener('gesturestart',  e=>e.preventDefault(), {passive:false});
 document.addEventListener('gesturechange', e=>e.preventDefault(), {passive:false});
 document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
@@ -852,6 +832,7 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
+let _lbCache={board:[],dailyBoard:[],weeklyBoard:[]};
 // ─── Performance detection ────────────────────────────────────────────────────
 let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0;
 function measureFPS(ts){
@@ -873,8 +854,8 @@ let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50,ghostVisible=true;
 let comboFlash=0,comboFlashColor='#00c8ff';
 let rainbowBorder=0;
-let dangerPulse=0; // frame counter for danger overlay pulse
-let levelUpScanline=0; // horizontal line sweep position on level up
+let dangerPulse=0;
+let levelUpScanline=0;
 
 // ─── Canvas refs ──────────────────────────────────────────────────────────────
 const gc  = document.getElementById('game-canvas');
@@ -986,7 +967,6 @@ function drawBackground() {
   }
   bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
 
-  // Draw glowing shifting nebulae in background
   for(const neb of nebulae) {
     neb.x += neb.vx; neb.y += neb.vy;
     if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
@@ -1007,7 +987,6 @@ function drawBackground() {
   gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
   bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
   
-  const t=Date.now()*.001;
   bgx.fillStyle='rgba(180,220,255,0.5)';
   bgx.beginPath();
   for(const s of stars){
@@ -1065,7 +1044,6 @@ function lockPiece(){
       :SCORE_TABLE[Math.min(cleared.length,4)]*level*mul;
     sfxLineClear(cleared.length);
     if(tspin){sfxTSpin();shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}
-    // Combo flash
     if(combo>1){comboFlash=15;comboFlashColor=combo>=5?'#ff0080':combo>=3?'#a000ff':'#00c8ff';}
     addScore(pts,cleared.length,tspin);
     lines+=cleared.length;
@@ -1180,7 +1158,6 @@ function drawBoard(){
   const W=COLS*CELL,H=ROWS*CELL;
   gctx.clearRect(0,0,W,H);
   gctx.fillStyle='rgba(0,0,15,0.88)';gctx.fillRect(0,0,W,H);
-  // Grid — pulsating neon wireframe
   const gridGlow = 0.05 + 0.03 * Math.sin(Date.now() / 400);
   gctx.save();
   gctx.strokeStyle=`rgba(0,200,255,${gridGlow})`;
@@ -1189,11 +1166,9 @@ function drawBoard(){
   for(let r=0;r<=ROWS;r++){gctx.moveTo(0,r*CELL);gctx.lineTo(W,r*CELL);}
   for(let c=0;c<=COLS;c++){gctx.moveTo(c*CELL,0);gctx.lineTo(c*CELL,H);}
   gctx.stroke();
-  // Intersection dots
   gctx.fillStyle=`rgba(0,255,255,${gridGlow * 3})`;
   for(let r=1;r<ROWS;r++) for(let c=1;c<COLS;c++) gctx.fillRect(c*CELL-0.5, r*CELL-0.5, 1, 1);
   gctx.restore();
-  // Locked cells
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(!board[r][c])continue;
     if(flashLines.has(r)){
@@ -1204,7 +1179,6 @@ function drawBoard(){
     } else drawCell(gctx,c,r,board[r][c]);
   }
   if(gameRunning&&!gamePaused&&current){
-    // Ghost
     const ghostY=getGhostY();
     if(ghostVisible&&ghostY!==current.y){
       const {r,g,b}=hexToRgb(current.color);
@@ -1217,8 +1191,6 @@ function drawBoard(){
         gctx.fillRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
         gctx.restore();
       }
-      
-      // Sleek vertical neon lasers to guide block alignment
       let minCol = COLS, maxCol = -1;
       for(let r=0; r<current.shape.length; r++) {
         for(let c=0; c<current.shape[r].length; c++) {
@@ -1247,17 +1219,14 @@ function drawBoard(){
       
       gctx.restore();
     }
-    // Lock delay indicator
     if(lockActive&&lockTimer>0){
       const pct=lockTimer/lockMs;
       const {r,g,b}=hexToRgb(current.color);
-      // Glow on piece
       for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
         if(!current.shape[row][col])continue;
         gctx.save();gctx.fillStyle=`rgba(${r},${g},${b},${0.18*pct})`;
         gctx.fillRect((current.x+col)*CELL+1,(current.y+row)*CELL+1,CELL-2,CELL-2);gctx.restore();
       }
-      // Lock progress bar below piece
       const bY=(current.y+current.shape.length)*CELL-3;
       gctx.save();
       gctx.fillStyle=`rgba(${r},${g},${b},0.75)`;
@@ -1265,11 +1234,9 @@ function drawBoard(){
       gctx.fillRect(current.x*CELL, bY, current.shape[0].length*CELL*pct, 3);
       gctx.restore();
     }
-    // Active piece
     for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
       if(current.shape[row][col]) drawCell(gctx,current.x+col,current.y+row,current.color,1,1.5);
     }
-    // Dynamic Border
     const {r,g,b}=hexToRgb(current.color);
     gc.style.borderColor=`rgba(${r},${g},${b},0.6)`;
     gc.style.boxShadow=lowPerfMode?'none':`0 0 25px rgba(${r},${g},${b},0.35), 0 0 60px rgba(${r},${g},${b},0.15)`;
@@ -1278,7 +1245,6 @@ function drawBoard(){
     gc.style.boxShadow=lowPerfMode?'none':'0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12)';
   }
   if(flashTimer>0)flashTimer--;
-  // Combo flash overlay
   if(comboFlash>0){
     gctx.save();
     gctx.globalAlpha=(comboFlash/15)*0.28;
@@ -1287,7 +1253,6 @@ function drawBoard(){
     gctx.restore();
     comboFlash--;
   }
-  // rainbow border countdown after 4-line clear or all-clear
   if(rainbowBorder>0){
     const hue=(Date.now()/4)%360;
     const a=(rainbowBorder/45)*0.9;
@@ -1301,7 +1266,6 @@ function drawBoard(){
     gctx.restore();
     rainbowBorder--;
   }
-  // Danger overlay — red pulse when stack reaches top ~35% of board
   if(gameRunning&&!gamePaused){
     let topRow=ROWS;
     for(let r=0;r<ROWS;r++){if(board[r].some(v=>v!==null)){topRow=r;break;}}
@@ -1327,8 +1291,6 @@ function drawBoard(){
       dangerPulse=0;
     }
   }
-  
-  // ─── Level-up scanline laser sweep ───
   if(levelUpScanline > 0){
     const y = levelUpScanline * gc.height;
     gctx.save();
@@ -1380,28 +1342,8 @@ const PAL=['#00c8ff','#a000ff','#ff0080','#ffe600','#00ff88'];
 
 function spawnLineClearParticles(rows){
   for(const row of rows) {
-    // White core expanding shockwave ring
-    particles.push({
-      x: (COLS / 2) * CELL,
-      y: (row + 0.5) * CELL,
-      vx: 0, vy: 0,
-      life: 1, decay: 0.04,
-      color: '#ffffff',
-      size: 3,
-      maxRadius: (COLS / 2) * CELL * 1.5,
-      type: 'radial-ring'
-    });
-    // Cyan outer blooming shockwave ring
-    particles.push({
-      x: (COLS / 2) * CELL,
-      y: (row + 0.5) * CELL,
-      vx: 0, vy: 0,
-      life: 1, decay: 0.03,
-      color: '#00c8ff',
-      size: 5,
-      maxRadius: (COLS / 2) * CELL * 2.3,
-      type: 'radial-ring'
-    });
+    particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*CELL*1.5,type:'radial-ring'});
+    particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*CELL*2.3,type:'radial-ring'});
     
     const sparkCount = lowPerfMode ? 1 : (isMobile ? 2 : 4);
     for(let c=0;c<COLS;c++) for(let i=0;i<sparkCount;i++){
@@ -1431,7 +1373,6 @@ function spawnFloatingText(txt, x, y, color, size) {
 }
 function spawnDropTrail() {
   if(!current||lowPerfMode) return;
-  // Emit 1 tiny faint particle from the active falling piece top
   const w = current.shape[0].length;
   const cx = (current.x + Math.random() * w) * CELL;
   const cy = current.y * CELL;
@@ -1498,6 +1439,13 @@ function updateParticles(){
     }
     pctx.restore();
   }
+}
+
+function spawnHardDropParticles(){
+  const cx=(current.x+current.shape[0].length/2)*CELL;
+  const cy=(current.y+current.shape.length)*CELL;
+  for(let i=0;i<22;i++)
+    particles.push({x:cx,y:cy,vx:(Math.random()-.5)*9,vy:Math.random()*-7-1,life:1,decay:.05,color:current.color,size:Math.random()*5+2,type:'spark'});
 }
 
 function applyShake(){
@@ -1684,7 +1632,6 @@ function triggerScreenFlash(){
 }
 
 function triggerAllClearFlash(){
-  // Gold flash + extra particles
   $flash.style.background='rgba(255,230,0,0.55)';
   $flash.style.transition='none';$flash.style.opacity='1';
   requestAnimationFrame(()=>{
@@ -1692,9 +1639,7 @@ function triggerAllClearFlash(){
     setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
   });
   rainbowBorder=90;shakeFrames=30;shakeMag=0.9;
-  // All-clear SFX: ascending fanfare
   [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
-  // Burst particles from centre
   for(let i=0;i<80;i++){
     const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
     particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
@@ -1762,7 +1707,7 @@ function hardDrop(){
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
   score+=d*2;updateUI();
   shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;
-  for(let i=0;i<22;i++) particles.push({x:(current.x+current.shape[0].length/2)*CELL,y:(current.y+current.shape.length)*CELL,vx:(Math.random()-.5)*9,vy:Math.random()*-7-1,life:1,decay:.05,color:current.color,size:Math.random()*5+2,type:'spark'});
+  spawnHardDropParticles();
   sfxHardDrop();
   lockPiece();
 }
@@ -1898,7 +1843,6 @@ function endGame(){
   stopBGM();sfxGameOver();
   const isNewBest=score>hiScore;
   if(isNewBest){hiScore=score;localStorage.setItem('glowTrisHi',hiScore);}
-  // Save personal history (last 5 games)
   const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
   hist.unshift({score,lines,level,date:Date.now()});
   localStorage.setItem('glowTrisHistory',JSON.stringify(hist.slice(0,5)));
@@ -1909,26 +1853,23 @@ function endGame(){
   if(maxCombo>storedMaxCombo)localStorage.setItem('glowTrisMaxCombo',maxCombo);
   const displayMaxCombo=Math.max(maxCombo,storedMaxCombo);
 
-  // Lifetime & personal record stats update
   let totalGames=parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
   let totalScore=parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
   let bestLevel=parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
   let totalLines=parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
   let maxLines=parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
 
-  // Check personal records from this game BEFORE updating the lifetime records
+  // record checks must happen before updating lifetime totals
   const isBestLevel=level>0 && level>=bestLevel;
   const isBestCombo=maxCombo>0 && maxCombo>=storedMaxCombo;
   const isBestLines=lines>0 && lines>=maxLines;
 
-  // Now update lifetime stats
   totalGames+=1;
   totalScore+=score;
   if(level>bestLevel) bestLevel=level;
   totalLines+=lines;
   if(lines>maxLines) maxLines=lines;
 
-  // Save to localStorage
   localStorage.setItem('glowTrisTotalGames',totalGames);
   localStorage.setItem('glowTrisTotalScore',totalScore);
   localStorage.setItem('glowTrisBestLevel',bestLevel);
@@ -2002,7 +1943,6 @@ function lbHTML(entries, myName, myRank, myScore) {
     return `<tr class="${isMe?'lb-me':''}"><td>${medals[i]||i+1}</td><td>${e.name}</td><td>${e.score.toLocaleString()}</td></tr>`;
   }).join('')}`;
   
-  // Persistent rank display
   if (myRank && myRank > entries.length && myName && myScore !== undefined) {
     html += `<tr><td colspan="3" style="text-align:center;opacity:0.4;padding:2px 0">...</td></tr>`;
     html += `<tr class="lb-me"><td>${myRank}</td><td>${myName}</td><td>${myScore.toLocaleString()}</td></tr>`;
@@ -2023,8 +1963,7 @@ async function submitScore(){
   localStorage.setItem('glowTrisName',name);
 
   // disable form immediately to prevent duplicate submissions
-  btn.disabled=true;
-  inp.disabled=true;
+  btn.disabled=true; inp.disabled=true;
   res.innerHTML='<div class="sub">SUBMITTING...</div>';
 
   try{
@@ -2201,8 +2140,6 @@ async function shareScore(sc,rank){
   if(btn){btn.disabled=false; btn.textContent='SHARE';}
 }
 
-let _lbCache={board:[],dailyBoard:[],weeklyBoard:[]};
-
 async function loadStartLeaderboard(){
   const el=document.getElementById('start-lb');
   if(!el)return;
@@ -2247,9 +2184,9 @@ function showStartScreen(){
         <button class="action-btn ghost" style="flex:1" onclick="openStats()">STATS</button>
       </div>
       <div style="margin-top:10px;text-align:center;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.18)">
-        <a href="/privacy.html" style="color:rgba(0,200,255,0.3);text-decoration:none;margin:0 6px" onmouseover="this.style.color='#00c8ff'" onmouseout="this.style.color='rgba(0,200,255,0.3)'">PRIVACY</a>
+        <a href="/privacy.html" class="footer-link">PRIVACY</a>
         <span style="color:rgba(255,255,255,0.12)">·</span>
-        <a href="/terms.html" style="color:rgba(0,200,255,0.3);text-decoration:none;margin:0 6px" onmouseover="this.style.color='#00c8ff'" onmouseout="this.style.color='rgba(0,200,255,0.3)'">TERMS</a>
+        <a href="/terms.html" class="footer-link">TERMS</a>
       </div>
     </div>`;
   $overlay.style.display='flex';
@@ -2267,31 +2204,30 @@ function closeHowToPlay(){
   document.getElementById('htp-overlay').style.display='none';
 }
 
+let _statsOpenTs=0;
 function openStats(){
-  const totalGames = parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
-  const totalScore = parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
-  const bestLevel = parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
-  const totalLines = parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
-  const maxCombo = parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
-  const maxLines = parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
-  const hiScore = parseInt(localStorage.getItem('glowTrisHi')||'0');
-  const avgScore = totalGames > 0 ? Math.round(totalScore / totalGames) : 0;
+  const sGames  = parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
+  const sScore  = parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
+  const sLevel  = parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
+  const sLines  = parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
+  const sCombo  = parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
+  const sMaxLn  = parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
+  const sHi     = parseInt(localStorage.getItem('glowTrisHi')||'0');
+  const avgScore = sGames > 0 ? Math.round(sScore / sGames) : 0;
 
-  const statsHTML = `
-    <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${totalGames.toLocaleString()}</span></div>
-    <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${hiScore.toLocaleString()}</span></div>
-    <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
-    <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${bestLevel}</span></div>
-    <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${totalLines.toLocaleString()}</span></div>
-    <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${maxLines.toLocaleString()}</span></div>
-    <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${maxCombo}</span></div>
-  `;
   const el = document.getElementById('stats-scroll');
-  if(el) el.innerHTML = statsHTML;
+  if(el) el.innerHTML = `
+    <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${sGames.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${sHi.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${sLevel}</span></div>
+    <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${sLines.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${sMaxLn.toLocaleString()}</span></div>
+    <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${sCombo}</span></div>
+  `;
   document.getElementById('stats-overlay').style.display='flex';
   _statsOpenTs=Date.now();
 }
-let _statsOpenTs=0;
 function closeStats(){
   if(Date.now()-_statsOpenTs<350)return;
   document.getElementById('stats-overlay').style.display='none';
