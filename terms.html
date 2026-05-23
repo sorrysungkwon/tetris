@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — GLOWTRIS</title>
+<meta name="description" content="Glowtris Terms of Service — usage terms for the free browser-based neon block game.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#00c8ff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --cyan: #00c8ff;
+    --purple: #a000ff;
+    --pink: #ff0080;
+    --panel-bg: rgba(4,4,30,0.72);
+    --border: rgba(0,200,255,0.28);
+  }
+
+  html, body {
+    min-height: 100%;
+    background: #000;
+    font-family: 'Orbitron', monospace;
+    color: #fff;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 80% 20%, rgba(160,0,255,0.07) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 80% at 20% 80%, rgba(0,200,255,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 30% 55%, rgba(0,200,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 50% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 65% 75%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 80% 40%, rgba(160,0,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 90% 90%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 8%  60%, rgba(255,0,128,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 45% 85%, rgba(0,200,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 72% 15%, rgba(255,255,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,200,255,0.6);
+    text-decoration: none;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    transition: color 0.2s, text-shadow 0.2s;
+  }
+  .back-link:hover {
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan);
+  }
+  .back-link svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none; stroke-width: 2;
+  }
+
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .page-header .logo {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink), var(--cyan));
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 14px rgba(0,200,255,0.4));
+    animation: gradient-flow 6s linear infinite;
+  }
+  @keyframes gradient-flow {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  .page-header h2 {
+    margin-top: 10px;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(160,0,255,0.65);
+    text-transform: uppercase;
+  }
+  .page-header .updated {
+    margin-top: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  .card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 30px rgba(160,0,255,0.06),
+      inset 0 0 20px rgba(0,0,40,0.4),
+      0 4px 40px rgba(0,0,0,0.5);
+    margin-bottom: 16px;
+  }
+
+  .section { margin-bottom: 28px; }
+  .section:last-child { margin-bottom: 0; }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #c45bfb;
+    text-shadow: 0 0 10px rgba(160,0,255,0.5);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(160,0,255,0.15);
+  }
+
+  .section-body {
+    font-size: 12px;
+    line-height: 1.9;
+    color: rgba(255,255,255,0.68);
+    letter-spacing: 0.5px;
+  }
+  .section-body p { margin-bottom: 10px; }
+  .section-body p:last-child { margin-bottom: 0; }
+  .section-body ul {
+    list-style: none;
+    margin: 8px 0;
+  }
+  .section-body ul li {
+    padding: 4px 0 4px 16px;
+    position: relative;
+  }
+  .section-body ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: #c45bfb;
+    font-size: 10px;
+  }
+
+  .highlight {
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0,200,255,0.4);
+  }
+  .highlight-purple {
+    color: #c45bfb;
+    text-shadow: 0 0 8px rgba(160,0,255,0.4);
+  }
+  .highlight-warn {
+    color: var(--pink);
+    text-shadow: 0 0 8px rgba(255,0,128,0.4);
+  }
+
+  a.inline-link {
+    color: var(--cyan);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,200,255,0.3);
+    transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+  }
+  a.inline-link:hover {
+    color: #fff;
+    border-color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+  }
+
+  .disclaimer-box {
+    background: rgba(255,0,128,0.05);
+    border: 1px solid rgba(255,0,128,0.2);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 12px 0;
+    font-size: 11px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.5px;
+  }
+  .disclaimer-box strong {
+    display: block;
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--pink);
+    text-shadow: 0 0 8px rgba(255,0,128,0.5);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(160,0,255,0.2), transparent);
+    margin: 20px 0;
+  }
+
+  /* Play button */
+  .play-btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 24px;
+    background: linear-gradient(135deg, rgba(0,200,255,0.1), rgba(160,0,255,0.1));
+    border: 1px solid rgba(0,200,255,0.4);
+    border-radius: 10px;
+    color: var(--cyan);
+    font-family: 'Orbitron', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-align: center;
+    text-decoration: none;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(0,200,255,0.5);
+    box-shadow: 0 0 20px rgba(0,200,255,0.08);
+    transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .play-btn:hover {
+    background: linear-gradient(135deg, rgba(0,200,255,0.18), rgba(160,0,255,0.18));
+    border-color: var(--cyan);
+    box-shadow: 0 0 30px rgba(0,200,255,0.25);
+    transform: translateY(-2px);
+  }
+
+  .page-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.18);
+    text-transform: uppercase;
+  }
+  .page-footer a {
+    color: rgba(0,200,255,0.35);
+    text-decoration: none;
+    margin: 0 8px;
+    transition: color 0.2s;
+  }
+  .page-footer a:hover { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <a href="/" class="back-link">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Glowtris
+  </a>
+
+  <header class="page-header">
+    <div class="logo">GLOWTRIS</div>
+    <h2>Terms of Service</h2>
+    <div class="updated">Last updated: May 2026</div>
+  </header>
+
+  <div class="card">
+
+    <div class="section">
+      <div class="section-title">Acceptance of Terms</div>
+      <div class="section-body">
+        <p>By accessing or playing <span class="highlight">Glowtris</span> at <span class="highlight">glowtris.vercel.app</span>, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the game.</p>
+        <p>We reserve the right to update these Terms at any time. Continued use of Glowtris after changes are posted constitutes acceptance of the revised Terms.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Use of the Game</div>
+      <div class="section-body">
+        <p>Glowtris is provided as a <span class="highlight">free, browser-based game</span> for personal, non-commercial entertainment. You may:</p>
+        <ul>
+          <li>Play the game for personal enjoyment.</li>
+          <li>Share your score using the built-in share feature.</li>
+          <li>Install the PWA on your device for offline or home-screen access.</li>
+        </ul>
+        <p>You may not:</p>
+        <ul>
+          <li>Reverse-engineer, decompile, or redistribute the game code without permission.</li>
+          <li>Use automated bots, scripts, or tools to manipulate leaderboard scores.</li>
+          <li>Attempt to interfere with or disrupt the game servers or leaderboard service.</li>
+          <li>Use the game in any way that violates applicable laws or regulations.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Leaderboard</div>
+      <div class="section-body">
+        <p>The online leaderboard is provided as a community feature. By submitting a score you confirm the display name and score are genuine. We reserve the right to remove any entry that appears to be the result of cheating, automation, or abuse — without notice.</p>
+        <p>Leaderboard display names must not contain offensive, hateful, or illegal content. We may remove or modify any such name at our discretion.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Intellectual Property</div>
+      <div class="section-body">
+        <p>All game assets, code, audio, and visual design of Glowtris are the property of the developer. The name <span class="highlight">Glowtris</span> and associated branding are proprietary.</p>
+        <p>The game uses <span class="highlight-purple">Google Fonts</span> (Orbitron, Material Icons Round) under the SIL Open Font License and Apache License respectively.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Advertising</div>
+      <div class="section-body">
+        <p>Glowtris may display advertisements served by third-party ad networks including <span class="highlight">Google AdSense</span>. These advertisements help support the free availability of the game. We are not responsible for the content of third-party advertisements.</p>
+        <p>By using Glowtris you acknowledge and agree that advertisements may be displayed during gameplay.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Disclaimer of Warranties</div>
+      <div class="section-body">
+        <div class="disclaimer-box">
+          <strong>⚠ No Warranty</strong>
+          Glowtris is provided <span class="highlight-warn">"AS IS"</span> and <span class="highlight-warn">"AS AVAILABLE"</span> without warranty of any kind, express or implied. We make no warranties regarding uptime, availability, accuracy, fitness for a particular purpose, or freedom from bugs or errors. The game may be unavailable, interrupted, or modified at any time without notice.
+        </div>
+        <p>We do not guarantee that the game will be free of errors, viruses, or other harmful components. Your use of Glowtris is entirely at your own risk.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Limitation of Liability</div>
+      <div class="section-body">
+        <p>To the maximum extent permitted by applicable law, the developer of Glowtris shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of — or inability to use — the game, including but not limited to lost data, lost scores, or interruption of service.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Privacy</div>
+      <div class="section-body">
+        <p>Your use of Glowtris is also governed by our <a class="inline-link" href="/privacy.html">Privacy Policy</a>, which is incorporated into these Terms by reference. Please review it to understand our data practices.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Governing Law</div>
+      <div class="section-body">
+        <p>These Terms are governed by and construed in accordance with applicable law. Any disputes arising under these Terms shall be resolved in the appropriate jurisdiction.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Contact</div>
+      <div class="section-body">
+        <p>Questions about these Terms of Service? Contact us at <span class="highlight">seonqwer@gmail.com</span>.</p>
+      </div>
+    </div>
+
+    <a href="/" class="play-btn">▶ Play Glowtris</a>
+
+  </div><!-- /.card -->
+
+  <footer class="page-footer">
+    <a href="/">Play Glowtris</a>
+    <a href="/privacy.html">Privacy Policy</a>
+    <span style="margin:0 4px">·</span>
+    © 2026 Glowtris
+  </footer>
+
+</div>
+</body>
+</html>

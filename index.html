@@ -2183,6 +2183,11 @@ function showStartScreen(){
         <button class="action-btn ghost" style="flex:1" onclick="openHowToPlay()">HOW TO PLAY</button>
         <button class="action-btn ghost" style="flex:1" onclick="openStats()">STATS</button>
       </div>
+      <div style="margin-top:10px;text-align:center;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.18)">
+        <a href="/privacy.html" style="color:rgba(0,200,255,0.3);text-decoration:none;margin:0 6px" onmouseover="this.style.color='#00c8ff'" onmouseout="this.style.color='rgba(0,200,255,0.3)'">PRIVACY</a>
+        <span style="color:rgba(255,255,255,0.12)">·</span>
+        <a href="/terms.html" style="color:rgba(0,200,255,0.3);text-decoration:none;margin:0 6px" onmouseover="this.style.color='#00c8ff'" onmouseout="this.style.color='rgba(0,200,255,0.3)'">TERMS</a>
+      </div>
     </div>`;
   $overlay.style.display='flex';
   loadStartLeaderboard();

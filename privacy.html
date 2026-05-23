@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — GLOWTRIS</title>
+<meta name="description" content="Glowtris Privacy Policy — cookie usage, advertising, and data practices.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#00c8ff">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --cyan: #00c8ff;
+    --purple: #a000ff;
+    --pink: #ff0080;
+    --panel-bg: rgba(4,4,30,0.72);
+    --border: rgba(0,200,255,0.28);
+  }
+
+  html, body {
+    min-height: 100%;
+    background: #000;
+    font-family: 'Orbitron', monospace;
+    color: #fff;
+  }
+
+  /* ─── Starfield ─── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(0,200,255,0.06) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 80% at 80% 70%, rgba(160,0,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Static star dots via box-shadow trick */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 25% 40%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 55% 20%, rgba(0,200,255,0.5) 0%, transparent 100%),
+      radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 85%, rgba(160,0,255,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 5%  90%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 92% 10%, rgba(255,0,128,0.4) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 95%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1px 1px at 33% 60%, rgba(0,200,255,0.3) 0%, transparent 100%);
+    pointer-events: none;
+  }
+
+  /* ─── Layout ─── */
+  .page-wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 20px 60px;
+  }
+
+  /* ─── Back link ─── */
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: rgba(0,200,255,0.6);
+    text-decoration: none;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+    transition: color 0.2s, text-shadow 0.2s;
+  }
+  .back-link:hover {
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan);
+  }
+  .back-link svg {
+    width: 14px; height: 14px;
+    stroke: currentColor; fill: none; stroke-width: 2;
+  }
+
+  /* ─── Header ─── */
+  .page-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .page-header .logo {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: 8px;
+    background: linear-gradient(90deg, var(--cyan), var(--purple), var(--pink), var(--cyan));
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 14px rgba(0,200,255,0.4));
+    animation: gradient-flow 6s linear infinite;
+  }
+  @keyframes gradient-flow {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  .page-header h2 {
+    margin-top: 10px;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: rgba(0,200,255,0.55);
+    text-transform: uppercase;
+  }
+  .page-header .updated {
+    margin-top: 6px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.25);
+  }
+
+  /* ─── Glass card ─── */
+  .card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 28px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 30px rgba(0,200,255,0.06),
+      inset 0 0 20px rgba(0,0,40,0.4),
+      0 4px 40px rgba(0,0,0,0.5);
+    margin-bottom: 16px;
+  }
+
+  /* ─── Section ─── */
+  .section { margin-bottom: 28px; }
+  .section:last-child { margin-bottom: 0; }
+
+  .section-title {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,200,255,0.5);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(0,200,255,0.15);
+  }
+
+  .section-body {
+    font-size: 12px;
+    line-height: 1.9;
+    color: rgba(255,255,255,0.68);
+    letter-spacing: 0.5px;
+  }
+  .section-body p { margin-bottom: 10px; }
+  .section-body p:last-child { margin-bottom: 0; }
+
+  .section-body ul {
+    list-style: none;
+    margin: 8px 0;
+  }
+  .section-body ul li {
+    padding: 4px 0 4px 16px;
+    position: relative;
+  }
+  .section-body ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--cyan);
+    font-size: 10px;
+  }
+
+  .highlight {
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(0,200,255,0.4);
+  }
+  .highlight-purple {
+    color: #c45bfb;
+    text-shadow: 0 0 8px rgba(160,0,255,0.4);
+  }
+
+  a.inline-link {
+    color: var(--cyan);
+    text-decoration: none;
+    border-bottom: 1px solid rgba(0,200,255,0.3);
+    transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+  }
+  a.inline-link:hover {
+    color: #fff;
+    border-color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* ─── Divider ─── */
+  .divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 20px 0;
+  }
+
+  /* ─── Footer ─── */
+  .page-footer {
+    margin-top: 32px;
+    text-align: center;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(255,255,255,0.18);
+    text-transform: uppercase;
+  }
+  .page-footer a {
+    color: rgba(0,200,255,0.35);
+    text-decoration: none;
+    margin: 0 8px;
+    transition: color 0.2s;
+  }
+  .page-footer a:hover { color: var(--cyan); }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <a href="/" class="back-link">
+    <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Glowtris
+  </a>
+
+  <header class="page-header">
+    <div class="logo">GLOWTRIS</div>
+    <h2>Privacy Policy</h2>
+    <div class="updated">Last updated: May 2026</div>
+  </header>
+
+  <div class="card">
+
+    <div class="section">
+      <div class="section-title">Overview</div>
+      <div class="section-body">
+        <p>Glowtris (<span class="highlight">glowtris.vercel.app</span>) is a free browser-based game. This page explains what data is collected, how it is used, and your choices regarding that data.</p>
+        <p>By playing Glowtris you agree to the practices described here.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Data We Collect</div>
+      <div class="section-body">
+        <p><span class="highlight">We do not collect any personal information.</span> No account registration is required. No email addresses, real names, or device identifiers are stored on our servers.</p>
+        <ul>
+          <li>Leaderboard submissions store only the display name you choose and your score.</li>
+          <li>Game preferences (sound, ghost piece, DAS/ARR, lock delay) are saved locally in your browser via <span class="highlight-purple">localStorage</span> and never sent to any server.</li>
+          <li>Personal game history (last 5 scores, high score, stats) is stored locally in your browser only.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Cookies &amp; Local Storage</div>
+      <div class="section-body">
+        <p>Glowtris itself does not set first-party cookies. All game state is persisted through <span class="highlight-purple">localStorage</span>, which you can clear at any time through your browser settings.</p>
+        <p>Third-party services integrated into Glowtris (advertising and analytics, described below) may set their own cookies on your device. These cookies are governed by those third parties' privacy policies.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Advertising — Google AdSense</div>
+      <div class="section-body">
+        <p>Glowtris displays advertisements served by <span class="highlight">Google AdSense</span>. Google and its advertising partners may use cookies and similar tracking technologies to serve ads based on your prior visits to this and other websites.</p>
+        <ul>
+          <li>Google's use of advertising cookies enables it and its partners to serve ads based on your visit to Glowtris and other sites on the Internet.</li>
+          <li>You may opt out of personalised advertising by visiting <a class="inline-link" href="https://www.google.com/settings/ads" target="_blank" rel="noopener">Google Ads Settings</a>.</li>
+          <li>You may also opt out via the <a class="inline-link" href="https://optout.aboutads.info/" target="_blank" rel="noopener">NAI opt-out page</a> or the <a class="inline-link" href="https://optout.networkadvertising.org/" target="_blank" rel="noopener">Network Advertising Initiative opt-out</a>.</li>
+          <li>For more information, see <a class="inline-link" href="https://policies.google.com/technologies/ads" target="_blank" rel="noopener">Google's advertising policies</a>.</li>
+        </ul>
+        <p>We do not control the cookies set by Google AdSense. Google's <a class="inline-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> governs how that data is handled.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Analytics</div>
+      <div class="section-body">
+        <p>Glowtris may use <span class="highlight">Google Analytics</span> to collect aggregated, anonymised data about how players interact with the game (page views, session duration, device type). This data does not identify individual users.</p>
+        <p>You can opt out of Google Analytics tracking by installing the <a class="inline-link" href="https://tools.google.com/dlpage/gaoptout" target="_blank" rel="noopener">Google Analytics Opt-out Browser Add-on</a>.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Third-Party Services</div>
+      <div class="section-body">
+        <p>The following third-party services are used to operate Glowtris:</p>
+        <ul>
+          <li><span class="highlight">Vercel</span> — hosting and serverless functions. See <a class="inline-link" href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Vercel Privacy Policy</a>.</li>
+          <li><span class="highlight">Upstash Redis</span> — leaderboard score storage. See <a class="inline-link" href="https://upstash.com/trust/privacy.pdf" target="_blank" rel="noopener">Upstash Privacy Policy</a>.</li>
+          <li><span class="highlight">Google AdSense</span> — advertising. See <a class="inline-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</li>
+          <li><span class="highlight">Google Analytics</span> — analytics (if enabled). See <a class="inline-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</li>
+          <li><span class="highlight">Google Fonts</span> — font loading (Orbitron, Material Icons). Google may log font requests; see <a class="inline-link" href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Children's Privacy</div>
+      <div class="section-body">
+        <p>Glowtris is not directed at children under the age of 13. We do not knowingly collect personal information from children. If you believe a child has submitted personal information, please contact us and we will remove it.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Changes to This Policy</div>
+      <div class="section-body">
+        <p>We may update this Privacy Policy from time to time. The "Last updated" date at the top of this page reflects the most recent revision. Continued use of Glowtris after any changes constitutes acceptance of the updated policy.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section">
+      <div class="section-title">Contact</div>
+      <div class="section-body">
+        <p>If you have questions or concerns about this Privacy Policy, please contact us at:</p>
+        <p><span class="highlight">seonqwer@gmail.com</span></p>
+      </div>
+    </div>
+
+  </div><!-- /.card -->
+
+  <footer class="page-footer">
+    <a href="/">Play Glowtris</a>
+    <a href="/terms.html">Terms of Service</a>
+    <span style="margin:0 4px">·</span>
+    © 2026 Glowtris
+  </footer>
+
+</div>
+</body>
+</html>
