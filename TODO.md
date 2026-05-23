@@ -29,6 +29,32 @@
 
 - [ ] Task 1: Persist username across sessions — save the submitted leaderboard name to `localStorage` and pre-fill it on the next game-over submission form so players don't retype it every game.
 - [ ] Task 2: Show personal best streak on game over screen — display current win streak or highest combo alongside the last-5-scores history panel.
-- [ ] Task 3: Improve mobile swipe gestures — add left/right swipe for move, down swipe for soft drop, and up swipe for hard drop as an alternative to the current tap buttons (use `touchstart`/`touchend` delta detection on the canvas).
-- [ ] Task 4: Add "HOW TO PLAY" toggle on start screen — a small collapsible rules panel listing controls (keyboard + touch) so new players don't have to guess.
-- [ ] Task 5: Document v1.0.3 changes in `README.md` roadmap and update this file.
+- [ ] Task 3: Add "HOW TO PLAY" toggle on start screen — a small collapsible rules panel listing controls (keyboard + touch) so new players don't have to guess.
+- [ ] Task 4: Document v1.0.3 changes in `README.md` roadmap and update this file.
+
+---
+
+## 🔮 Planned: v1.0.4 (Stats & Profile)
+
+- [ ] Task 1: Full stats screen — total games played, average score, best level reached, total lines cleared (stored in `localStorage`).
+- [ ] Task 2: Personal record badges on game over screen — highlight best-ever level, longest combo, highest single-game lines.
+- [ ] Task 3: Document v1.0.4 changes in `README.md` roadmap and update this file.
+
+---
+
+## 🔮 Planned: v1.0.5 (Leaderboard & Social Depth)
+
+- [ ] Task 1: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
+- [ ] Task 2: Persistent personal rank display — always show the player's own rank even when not in top 10.
+- [ ] Task 3: Canvas share image — capture final board state + score as a PNG and offer it via Web Share API / clipboard.
+- [ ] Task 4: Document v1.0.5 changes in `README.md` roadmap and update this file.
+
+---
+
+## 🔮 Planned: v1.1 (Sprint Mode)
+
+- [ ] Task 1: Implement Sprint mode — clear 40 lines as fast as possible; show elapsed time instead of score.
+- [ ] Task 2: Separate Sprint leaderboard (time-based, TODAY / ALL TIME tabs).
+- [ ] Task 3: Mode selection on start screen — Marathon vs Sprint.
+- [ ] Task 4: Rename existing endless mode to "Marathon" across all UI labels.
+- [ ] Task 5: Document v1.1 changes in `README.md` roadmap and update this file.
