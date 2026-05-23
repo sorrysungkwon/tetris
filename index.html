@@ -714,8 +714,13 @@ function initLayout() {
   const isTouch = window.matchMedia('(pointer:coarse)').matches;
 
   if (isTouch) {
-    const safeTop    = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-top'))  || 0;
-    const safeBottom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom'))|| 0;
+    const _safeEl = document.createElement('div');
+    _safeEl.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
+    document.body.appendChild(_safeEl);
+    const _safeCs = getComputedStyle(_safeEl);
+    const safeTop    = parseFloat(_safeCs.paddingTop)    || 0;
+    const safeBottom = parseFloat(_safeCs.paddingBottom) || 0;
+    document.body.removeChild(_safeEl);
     // header + controls (sys30/34 + act54/64 + move72/84 + pad16 + 2×gap8/10) + app padding/gaps
     const headerH  = isMobile ? 52 : 30;
     const ctrlH    = isMobile ? 188 : 218;
