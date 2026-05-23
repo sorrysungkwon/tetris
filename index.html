@@ -258,47 +258,78 @@
     #touch-controls { display:none; }
   }
 
-  /* ── DESKTOP / TABLET (≥ 600px): fixed-size buttons ── */
-  @media (min-width:600px) {
-    .ctrl-row { justify-content:center; }
-    .tbtn-xl  { width:66px; height:66px; font-size:30px; border-radius:12px; }
-    .tbtn-lg  { width:56px; height:56px; font-size:26px; }
-    .tbtn-md  { width:54px; height:54px; font-size:24px; }
-    .tbtn-sm  { width:68px; height:42px; font-size:13px; letter-spacing:1px; border-radius:8px; font-family:'Orbitron',monospace; font-weight:700; }
-    /* System bar on desktop: compact icon buttons */
-    .sys-row { width:100%; }
-    .sys-row .tbtn { width:46px; height:32px; font-size:20px; border-radius:8px; }
+  /* ── TABLET (≥ 600px, touch): 2-zone side-by-side layout ── */
+  @media (min-width:600px) and (pointer:coarse) {
+    #touch-controls {
+      flex-direction:row;
+      flex-wrap:wrap;
+      justify-content:center;
+      align-items:center;
+      gap:16px;
+      padding:10px 16px;
+    }
+
+    /* Movement zone — left thumb, directional row */
+    #tc-move {
+      order:1;
+      flex:0 0 auto;
+      gap:8px;
+      width:auto;
+    }
+    #tc-move .tbtn-xl { width:72px; height:72px; font-size:32px; border-radius:14px; }
+    #tc-move .tbtn-lg { width:62px; height:72px; font-size:28px; }
+
+    /* Action zone — right thumb, vertical stack */
+    #tc-act {
+      order:2;
+      flex:0 0 auto;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    #tc-act .tbtn-md { width:68px; height:68px; font-size:30px; border-radius:14px; }
+    #tc-act .tbtn-sm { width:68px; height:38px; font-size:11px; letter-spacing:1px; border-radius:9px; font-family:'Orbitron',monospace; font-weight:700; }
+
+    /* System zone — full-width bottom bar */
+    #tc-sys {
+      order:3;
+      width:100%;
+      justify-content:space-between;
+      margin-top:2px;
+    }
+    #tc-sys .tbtn { width:48px; height:34px; font-size:20px; border-radius:9px; }
   }
 
-  /* ── MOBILE (< 600px): fluid buttons that fill --game-w ── */
+  /* ── MOBILE (< 600px): stacked rows, fluid width ── */
   @media (max-width:599px) {
     #touch-controls { width:var(--game-w, 300px); padding-bottom:max(16px, env(safe-area-inset-bottom)); }
-    #mobile-header   { width:calc(100vw - 24px); }
+    #mobile-header  { width:calc(100vw - 24px); }
 
-    /* Game control rows stretch to full width */
-    .ctrl-row .tbtn { flex:1; min-width:0; }
+    /* Mobile stacking order: sys top → act → move bottom */
+    #tc-sys  { order:1; }
+    #tc-act  { order:2; }
+    #tc-move { order:3; }
 
-    /* System bar — buttons fixed width, not stretched */
-    .sys-row .tbtn { flex:0 0 auto; height:28px; border-radius:8px; padding:0 18px; font-size:18px; }
-    .sys-row .tbtn .material-icons-round { font-size:18px; }
-
-    /* Action row — hold / rotate / drop */
-    .ctrl-row:nth-child(2) .tbtn {
-      height:50px;
-      border-radius:9px;
-    }
-    .ctrl-row:nth-child(2) .tbtn .material-icons-round {
-      font-size:clamp(18px, 5.5vw, 26px);
+    /* tc-act becomes a horizontal ctrl-row on mobile */
+    #tc-act {
+      display:flex; flex-direction:row;
+      gap:6px; width:100%;
     }
 
-    /* Movement row — left / soft / right */
-    .ctrl-row:last-child .tbtn {
-      height:64px;
-      border-radius:11px;
-    }
-    .ctrl-row:last-child .tbtn .material-icons-round {
-      font-size:clamp(24px, 8vw, 36px);
-    }
+    /* All zone rows stretch to full width */
+    #tc-move .tbtn, #tc-act .tbtn { flex:1; min-width:0; }
+
+    /* System bar — fixed-width buttons, not stretched */
+    #tc-sys .tbtn { flex:0 0 auto; height:28px; border-radius:8px; padding:0 18px; font-size:18px; }
+    #tc-sys .tbtn .material-icons-round { font-size:18px; }
+
+    /* Action row */
+    #tc-act .tbtn { height:50px; border-radius:9px; }
+    #tc-act .tbtn .material-icons-round { font-size:clamp(18px, 5.5vw, 26px); }
+
+    /* Movement row */
+    #tc-move .tbtn { height:64px; border-radius:11px; }
+    #tc-move .tbtn .material-icons-round { font-size:clamp(24px, 8vw, 36px); }
 
     /* Left / right slightly wider than center */
     #btn-left, #btn-right { flex:1.4; }
@@ -395,29 +426,8 @@
 
   <!-- Touch controls (all screens) -->
   <div id="touch-controls">
-    <!-- System bar: utility buttons (mute / pause) -->
-    <div class="ctrl-row sys-row">
-      <button class="tbtn tbtn-mute" id="btn-mute" onclick="toggleMute()">
-        <span class="material-icons-round" id="mute-icon">volume_up</span>
-      </button>
-      <button class="tbtn tbtn-pause" id="btn-pause">
-        <span class="material-icons-round">pause</span>
-      </button>
-    </div>
-    <!-- Action row: game piece controls -->
-    <div class="ctrl-row">
-      <button class="tbtn tbtn-sm tbtn-hold" id="btn-hold">
-        <span class="material-icons-round">swap_horiz</span>
-      </button>
-      <button class="tbtn tbtn-md tbtn-rotate" id="btn-rotate">
-        <span class="material-icons-round">rotate_right</span>
-      </button>
-      <button class="tbtn tbtn-md tbtn-drop" id="btn-drop">
-        <span class="material-icons-round">keyboard_double_arrow_down</span>
-      </button>
-    </div>
-    <!-- Movement row: directional controls -->
-    <div class="ctrl-row">
+    <!-- Movement zone: directional controls (left thumb) -->
+    <div id="tc-move" class="ctrl-row">
       <button class="tbtn tbtn-xl" id="btn-left">
         <span class="material-icons-round">chevron_left</span>
       </button>
@@ -426,6 +436,27 @@
       </button>
       <button class="tbtn tbtn-xl" id="btn-right">
         <span class="material-icons-round">chevron_right</span>
+      </button>
+    </div>
+    <!-- Action zone: piece manipulation (right thumb) -->
+    <div id="tc-act">
+      <button class="tbtn tbtn-md tbtn-rotate" id="btn-rotate">
+        <span class="material-icons-round">rotate_right</span>
+      </button>
+      <button class="tbtn tbtn-md tbtn-drop" id="btn-drop">
+        <span class="material-icons-round">keyboard_double_arrow_down</span>
+      </button>
+      <button class="tbtn tbtn-sm tbtn-hold" id="btn-hold">
+        <span class="material-icons-round">swap_horiz</span>
+      </button>
+    </div>
+    <!-- System zone: utility (mute / pause) -->
+    <div id="tc-sys" class="ctrl-row sys-row">
+      <button class="tbtn tbtn-mute" id="btn-mute" onclick="toggleMute()">
+        <span class="material-icons-round" id="mute-icon">volume_up</span>
+      </button>
+      <button class="tbtn tbtn-pause" id="btn-pause">
+        <span class="material-icons-round">pause</span>
       </button>
     </div>
   </div>
