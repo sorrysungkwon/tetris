@@ -241,6 +241,7 @@
   .tbtn-mute.muted { border-color:rgba(255,0,128,0.4); color:rgba(255,0,128,0.9); }
 
   /* Leaderboard */
+  .start-lb-title { font-size:9px; letter-spacing:3px; color:rgba(0,200,255,0.55); margin-bottom:4px; text-align:center; }
   .lb-table { width:100%; max-width:260px; border-collapse:collapse; margin:8px 0 14px; max-height:240px; overflow-y:auto; display:block; }
   .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.1); }
   .lb-table td { padding:5px 4px; font-size:10px; letter-spacing:1px; }
@@ -393,9 +394,9 @@
       <canvas id="particle-canvas"></canvas>
       <div id="overlay">
         <h1>NEON TETRIS</h1>
+        <div id="start-lb"></div>
         <div class="btn-row">
           <button class="action-btn" onclick="startGame()">START GAME</button>
-          <button class="action-btn ghost sm" onclick="openLeaderboard()">🏆 RANKS</button>
         </div>
       </div>
       <div id="score-popup"></div>
@@ -1283,6 +1284,18 @@ function shareScore(sc,rank){
   }
 }
 
+async function loadStartLeaderboard(){
+  const el=document.getElementById('start-lb');
+  if(!el)return;
+  try{
+    const r=await fetch('/api/leaderboard');
+    const data=await r.json();
+    if(data.board&&data.board.length){
+      el.innerHTML=`<div class="start-lb-title">🏆 TOP 10</div>${lbHTML(data.board,'')}`;
+    }
+  }catch(e){}
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 initLayout();
 initStars();
@@ -1291,6 +1304,7 @@ hiScore=parseInt(localStorage.getItem('neonTetrisHi')||'0');
 document.getElementById('hi-score').textContent=hiScore.toLocaleString();
 document.getElementById('hi-score-m').textContent=hiScore.toLocaleString();
 animFrame=requestAnimationFrame(function bgOnly(){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
+loadStartLeaderboard();
 </script>
 </body>
 </html>
