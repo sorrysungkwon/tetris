@@ -42,16 +42,16 @@
 - [x] Fix: HOW TO PLAY button resized to match START GAME (`action-btn ghost`); touch section icons replaced with Material Icons Round matching actual game buttons.
 - [x] Chore: Bump version label to v1.0.3; configure git identity to `sorrysungkwon <seonqwer@gmail.com>` for proper GitHub attribution.
 
-## 🟢 In Progress: v1.0.4 (Profile, UI, & Social Depth)
+## ✅ Completed: v1.0.4 (Profile, UI, & Social Depth) — by Antigravity (2026-05-23)
 
 - [x] Task 1: Full stats screen (stored in `localStorage`) and personal record badges.
 - [x] Task 2: UI Enhancements (Neon Wireframe Grid, Floating score/level text, Dynamic board borders).
 - [x] Task 3: Enhanced particle physics (gravity, friction) with optimized rendering.
 - [x] Task 4: Polished typography, contrast, and text-shadows for buttons and overlays.
-- [ ] Task 5: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
-- [ ] Task 6: Persistent personal rank display — always show the player's own rank even when not in top 10.
-- [ ] Task 7: Canvas share image — capture final board state + score as a PNG and offer it via Web Share API / clipboard.
-- [ ] Task 8: Document v1.0.4 completion in `README.md` and `TODO.md`.
+- [x] Task 5: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
+- [x] Task 6: Persistent personal rank display — always show the player's own rank even when not in top 10.
+- [x] Task 7: Canvas share image — capture final board state + score as a PNG and offer it via Web Share API / clipboard.
+- [x] Task 8: Document v1.0.4 completion in `README.md` and `TODO.md`.
 
 ---
 
