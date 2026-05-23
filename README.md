@@ -2,7 +2,7 @@
 
 A neon-styled block stacking game built as a single HTML file.
 
-**Live:** https://neon-tetris-roan.vercel.app
+**Live:** https://glowtris-seonqwer-3337s-projects.vercel.app
 
 ## Stack
 
