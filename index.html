@@ -908,7 +908,8 @@ window.addEventListener('resize',()=>{
 let stars=[], nebulae=[], bgHue=0;
 function initStars() {
   stars=[];
-  for(let i=0;i<220;i++) stars.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.5+0.2,speed:Math.random()*0.3+0.05,o:Math.random()});
+  const numStars = isMobile ? 80 : 150;
+  for(let i=0;i<numStars;i++) stars.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.5+0.2,speed:Math.random()*0.3+0.05});
   
   // 3 ambient large color-shifting gas nebulae
   const w = bgc.width, h = bgc.height;
@@ -944,12 +945,14 @@ function drawBackground() {
   bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
   
   const t=Date.now()*.001;
+  bgx.fillStyle='rgba(180,220,255,0.5)';
+  bgx.beginPath();
   for(const s of stars){
     s.y+=s.speed; if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}
-    s.o=0.3+0.7*Math.abs(Math.sin(t+s.x));
-    bgx.beginPath(); bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
-    bgx.fillStyle=`rgba(180,220,255,${s.o*.45})`; bgx.fill();
+    bgx.moveTo(s.x+s.r,s.y);
+    bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
   }
+  bgx.fill();
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
@@ -1337,21 +1340,24 @@ function spawnLineClearParticles(rows){
       type: 'radial-ring'
     });
     
-    for(let c=0;c<COLS;c++) for(let i=0;i<8;i++){
+    const sparkCount = isMobile ? 2 : 4;
+    for(let c=0;c<COLS;c++) for(let i=0;i<sparkCount;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*5+2;
       particles.push({x:(c+.5)*CELL,y:(row+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,life:1,decay:Math.random()*.02+.015,color:'#00c8ff',size:Math.random()*4+2,type:'spark'});
     }
   }
-  for(let i=0;i<40;i++){
+  const starCount = isMobile ? 12 : 25;
+  for(let i=0;i<starCount;i++){
     const a=Math.random()*Math.PI*2,sp=Math.random()*8+3;
     particles.push({x:COLS/2*CELL,y:(rows[0]+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.015+.008,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*6+3,type:'star'});
   }
 }
 function spawnLockParticles(){
   if(!current)return;
+  const pCount = isMobile ? 1 : 2;
   for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
     if(!current.shape[r][c])continue;
-    for(let i=0;i<3;i++) particles.push({x:(current.x+c+.5)*CELL,y:(current.y+r+.5)*CELL,vx:(Math.random()-.5)*4,vy:Math.random()*-4-1.5,life:1,decay:.04,color:current.color,size:Math.random()*3+1.5,type:'spark'});
+    for(let i=0;i<pCount;i++) particles.push({x:(current.x+c+.5)*CELL,y:(current.y+r+.5)*CELL,vx:(Math.random()-.5)*4,vy:Math.random()*-4-1.5,life:1,decay:.04,color:current.color,size:Math.random()*3+1.5,type:'spark'});
   }
 }
 function spawnFloatingText(txt, x, y, color, size) {
@@ -1409,7 +1415,7 @@ function updateParticles(){
     
     pctx.save();pctx.globalAlpha=Math.max(0,p.life);
     const {r,g,b}=hexToRgb(p.color);
-    pctx.shadowColor=p.color;pctx.shadowBlur=8;
+    
     if(p.type==='star'){
       pctx.fillStyle=p.color;pctx.beginPath();
       const spikes=4,outer=p.size,inner=p.size*.4;
