@@ -50,6 +50,17 @@
 
 ---
 
+## ✅ Completed: v1.0.4.1 (Premium UI & UX Enhancements) — by Antigravity (2026-05-23)
+
+- [x] Task 1: Neon Wireframe Grid on the game board.
+- [x] Task 2: Floating score and level up text animations on `particle-canvas`.
+- [x] Task 3: Dynamic board borders that sync with the active piece's color.
+- [x] Task 4: Enhanced particle physics (gravity, friction) and visual trails.
+- [x] Task 5: Polished typography, contrast, and text-shadows for buttons and overlays.
+- [x] Task 6: Document changes and push to GitHub.
+
+---
+
 ## 🔮 Planned: v1.0.5 (Leaderboard & Social Depth)
 
 - [ ] Task 1: Add WEEKLY tab to leaderboard (TODAY / WEEKLY / ALL TIME) with Redis weekly TTL.
