@@ -1093,6 +1093,11 @@ const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
+let _touchLayoutTimer   = null;
+// Detect PWA standalone mode — navigator.standalone is iOS-only;
+// (display-mode: standalone) covers Android/desktop PWA installs.
+const _isPWA = navigator.standalone === true ||
+               window.matchMedia('(display-mode: standalone)').matches;
 
 function _applyTouchCELL() {
   // Compute availH from #app height minus the heights of the fixed header and controls.
@@ -1147,12 +1152,21 @@ function initLayout() {
   bgc.width = W; bgc.height = H;
 
   if (window.matchMedia('(pointer:coarse)').matches) {
-    // Observe #app (the stable viewport container) instead of #game-row.
-    // Observing #game-row caused a feedback loop on iOS Safari: setting gc.style.height
-    // changed .game-wrap → #game-row height → ResizeObserver fired again → infinite loop.
     if (!_touchLayoutObserver) {
-      _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
-      _touchLayoutObserver.observe(document.getElementById('app'));
+      if (_isPWA && window.visualViewport) {
+        // PWA standalone: 100dvh fluctuates as the iOS home-indicator shows/hides,
+        // making ResizeObserver on #app fire in a tight loop. Use visualViewport
+        // instead — it only fires on true orientation/window-size changes.
+        window.visualViewport.addEventListener('resize', () => {
+          clearTimeout(_touchLayoutTimer);
+          _touchLayoutTimer = setTimeout(_applyTouchCELL, 100);
+        });
+        _touchLayoutObserver = 'pwa'; // truthy sentinel so we don't re-register
+      } else {
+        // Safari browser: #app is stable; ResizeObserver is safe here.
+        _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
+        _touchLayoutObserver.observe(document.getElementById('app'));
+      }
     }
     _applyTouchCELL();
   } else {
