@@ -920,6 +920,9 @@ function setLowPerfMode(on){
   document.documentElement.classList.toggle('low-perf',on);
   const ind=document.getElementById('perf-indicator');
   if(ind)ind.style.opacity=on?'1':'0';
+  // Persist so the next game (and next session) starts in the right mode immediately.
+  if(on) localStorage.setItem('glowTrisLowPerf','1');
+  else   localStorage.removeItem('glowTrisLowPerf');
 }
 let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50,ghostVisible=true;
@@ -2045,9 +2048,14 @@ function triggerLevelUpVisuals() {
 
 function startGame(){
   loadSettings();
-  // Reset perf lock each new game so fresh hardware measurement starts clean
-  _perfLocked=false;setLowPerfMode(false);_fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
-  _perfHold=3; // Skip first 3s — JIT warmup + sprite creation spikes don't count
+  // Restore perf mode from localStorage (persists across games + sessions).
+  // If _perfLocked was set mid-game, honour it — don't reset just because a new game started.
+  // A device that couldn't hit 28fps won't suddenly become faster next round.
+  const savedPerf = localStorage.getItem('glowTrisLowPerf')==='1';
+  if(!_perfLocked && !savedPerf){ setLowPerfMode(false); }
+  else { setLowPerfMode(true); }
+  _fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
+  _perfHold=_perfLocked||savedPerf?0:3; // Already confirmed slow? Skip hold-off.
   _lastBorderColor=null; // Force border refresh on first piece
   // Pre-warm all 7 piece sprites now so first-frame creation doesn't spike FPS
   for(const k of Object.keys(PIECES))getCellSprite(PIECES[k].color);
