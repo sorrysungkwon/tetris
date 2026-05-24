@@ -1100,10 +1100,23 @@ const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 // Option A: hardcoded arithmetic — deterministic, no timing/loop issues.
-// env(safe-area-inset-*) is NOT subtracted in JS because parseFloat("env(...)") = NaN.
-// CSS handles safe areas via #app padding, so canvas edges are naturally hidden under
-// notch / home indicator. Constants must be updated if CSS button heights change.
-// headerH: #mobile-header height | ctrlH: #touch-controls total height | frameH: #app padding + gaps
+// env(safe-area-inset-*) does NOT resolve synchronously in JS on iOS PWA cold start.
+// CSS handles safe areas via #app padding for all platforms; this function replicates
+// those values in JS so the canvas is sized correctly before CSS env() resolves.
+//
+// Safe area reference (portrait, PWA/standalone):
+//   iOS iPhone — navigator.standalone === true, detected by screen portrait height (CSS px):
+//     Dynamic Island  (iPhone 14 Pro / 15 / 16 / 17 series)     ph >= 852 → top 59  bottom 34
+//     Large notch     (iPhone 12 / 13 / 14 standard & Plus)      ph >= 844 → top 47  bottom 34
+//     Small notch     (iPhone X/XS/XR/11/11 Pro / 12-13 mini)    ph >= 780 → top 44  bottom 34
+//     No notch        (iPhone SE 1st/2nd/3rd, iPhone 8 & older)  ph <  780 → top 20  bottom  0
+//   iOS iPad — navigator.standalone === true, detected by screen portrait height:
+//     Face ID  (iPad Pro all / Air 4-5 / mini 6-7 / iPad 10th+)  ph >= 1100 → top 24  bottom 20
+//     Home btn (iPad 9th gen and older)                           ph <  1100 → top 20  bottom  0
+//   Android PWA (Galaxy S/Z Fold / Pixel Fold / etc.) — navigator.standalone is false;
+//     env() resolves correctly in Android Chrome, so JS uses 0 and CSS #app handles it.
+//   Desktop / PC / laptop — no safe areas; CSS #app padding falls back to 8px.
+// headerH: #mobile-header rendered height | ctrlH: #touch-controls rendered height
 function _applyTouchCELL() {
   const W = window.innerWidth, H = window.innerHeight;
   isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
@@ -1111,10 +1124,25 @@ function _applyTouchCELL() {
   const headerH = isMobile ? 52 : 30;   // #mobile-header rendered height
   const ctrlH   = isMobile ? 188 : 218; // #touch-controls rendered height
 
-  // Estimate safe area padding on PWAs (where env() resolves late after JS 기동)
-  const isPWA = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
-  const safeTop = isPWA ? 47 : 0;
-  const safeBottom = isPWA ? 34 : 0;
+  // iOS PWA only: env() doesn't resolve at cold start — estimate from screen dimensions.
+  // Android PWA / browser / desktop: env() works correctly; CSS handles padding, JS reads 0.
+  const isIOSPWA = navigator.standalone === true;
+  let safeTop = 0, safeBottom = 0;
+  if (isIOSPWA) {
+    const isIPad = /iPad/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    const ph = Math.max(screen.width, screen.height); // portrait height in CSS px
+    if (isIPad) {
+      safeTop    = ph >= 1100 ? 24 : 20; // Face ID iPad : Home button iPad
+      safeBottom = ph >= 1100 ? 20 :  0;
+    } else {
+      // iPhone — keyed on portrait CSS px height
+      if      (ph >= 852) { safeTop = 59; safeBottom = 34; } // Dynamic Island
+      else if (ph >= 844) { safeTop = 47; safeBottom = 34; } // Large notch
+      else if (ph >= 780) { safeTop = 44; safeBottom = 34; } // Small notch / mini
+      else                { safeTop = 20; safeBottom =  0; } // No notch (SE / 8)
+    }
+  }
 
   // #app vertical padding is max(8px, safe-area-inset)
   const padTop = Math.max(8, safeTop);
