@@ -2314,19 +2314,18 @@ function startDailyChallenge(){
     <div class="glass-panel" style="width: min(300px, 90vw);">
       <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600;letter-spacing:2px">🏆 DAILY CHALLENGE</h1>
       <div style="font-size:36px;margin:10px 0;animation:pulse 1.5s infinite">🛰️</div>
-      <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SYSTEM SEEDED // SYNCHRONIZED</div>
+      <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SAME BLOCKS FOR EVERYONE!</div>
       
       <div id="briefing-scroll" style="font-size:10px;line-height:1.6;color:rgba(255,255,255,0.8);text-align:left;margin-bottom:18px;padding:12px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.15);border-radius:8px;max-height:180px;overflow-y:auto">
-        <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[ACCESS GRANTED: SEED SYNCHRONIZED]</p>
-        <p style="margin:0 0 8px 0">All players across the globe are now bound to the identical cosmic PRNG Seed <strong>#${todayStr}</strong>.</p>
-        <p style="margin:0 0 8px 0">Today's sequence of falling neon debris drops <strong>100% identically</strong> for every single challenger.</p>
-        <p style="margin:0 0 8px 0;color:var(--cyan)">The veil of randomness has dissolved. Only your tactical line construction and reflexes will prove your supremacy on the global leaderboard today.</p>
-        <p style="margin:0;color:#ff5b5b;font-weight:700">⚠️ Single entry attempt per day. Once initiated, there are no restarts or second chances. Are you ready, Runner?</p>
+        <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
+        <p style="margin:0 0 8px 0">Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
+        <p style="margin:0 0 8px 0;color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
+        <p style="margin:0;color:#ff5b5b;font-weight:700">⚠️ Warning: You can only play today's challenge ONCE. Once you start, there are no restarts or second chances! Are you ready?</p>
       </div>
       
       <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
-        <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">LAUNCH MISSION</button>
-        <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">ABORT</button>
+        <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">START CHALLENGE</button>
+        <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">GO BACK</button>
       </div>
     </div>
   `;
