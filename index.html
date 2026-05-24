@@ -2406,7 +2406,7 @@ loadSettings();
 hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
 $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
-animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();measureFPS(ts);if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
+animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 showStartScreen();
 </script>
 </body>
