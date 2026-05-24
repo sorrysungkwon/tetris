@@ -772,12 +772,14 @@
 </div>
 
 <div id="stats-overlay" style="display:none" onclick="closeStats()">
-  <div id="stats-box" onclick="event.stopPropagation()">
+  <div id="stats-box" onclick="hideAchTooltip(); event.stopPropagation()">
     <div id="stats-title">PLAYER STATS</div>
     <button id="stats-close" onclick="closeStats()">✕</button>
-    <div id="stats-scroll"></div>
+    <div id="stats-scroll" onscroll="hideAchTooltip()"></div>
   </div>
 </div>
+
+<div id="ach-tooltip" style="position:fixed;display:none;pointer-events:none;background:rgba(4,4,30,0.96);border:1px solid var(--cyan);box-shadow:0 0 15px rgba(0,200,255,0.45);padding:8px 10px;border-radius:8px;z-index:9999;font-family:'Orbitron',monospace;width:max-content;max-width:200px;font-size:8px;line-height:1.4;transition:opacity 0.15s ease,transform 0.15s ease;transform:translate(-50%, -105%);opacity:0"></div>
 
 <div id="app">
 
@@ -2890,9 +2892,13 @@ function openStats(){
           const entry = achieved.find(a => (typeof a === 'string' ? a === ach.id : a.id === ach.id));
           const isUnlocked = !!entry;
           const dateStr = entry && typeof entry === 'object' && entry.date ? entry.date : '';
-          const tooltip = `${ach.label}: ${ach.description}${isUnlocked ? ` (Unlocked ${dateStr})` : ' (Locked)'}`;
+          const cleanLabel = ach.label.replace(/'/g, "\\'");
+          const cleanDesc = ach.description.replace(/'/g, "\\'");
           return `
-            <div class="ach-badge-wrap" style="position:relative;cursor:pointer" title="${tooltip}">
+            <div class="ach-badge-wrap" style="position:relative;cursor:pointer" 
+                 onmouseenter="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')" 
+                 onmouseleave="hideAchTooltip()" 
+                 onclick="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')">
               <div class="ach-badge ${isUnlocked ? 'unlocked' : 'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked ? 'rgba(0,200,255,0.1)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked ? '0 0 10px rgba(0,200,255,0.3)' : 'none'};opacity:${isUnlocked ? 1 : 0.25}">
                 ${ach.icon}
               </div>
@@ -2910,6 +2916,40 @@ function openStats(){
 function closeStats(){
   if(Date.now()-_statsOpenTs<350)return;
   document.getElementById('stats-overlay').style.display='none';
+  hideAchTooltip();
+}
+
+function showAchTooltip(elem, label, desc, isUnlocked, dateStr) {
+  const tooltip = document.getElementById('ach-tooltip');
+  if (!tooltip) return;
+  
+  const statusText = isUnlocked ? `<span style="color:#00ff88;font-weight:900">UNLOCKED${dateStr ? ` (${dateStr})` : ''}</span>` : `<span style="color:#ff5b5b;font-weight:900">LOCKED</span>`;
+  tooltip.innerHTML = `
+    <div style="color:#ffe600;font-weight:900;margin-bottom:3px;letter-spacing:1px;font-size:9px">${label}</div>
+    <div style="color:rgba(255,255,255,0.85);margin-bottom:4px;font-size:8px">${desc}</div>
+    <div style="font-size:7px;letter-spacing:0.5px">${statusText}</div>
+  `;
+  
+  const rect = elem.getBoundingClientRect();
+  tooltip.style.left = `${rect.left + rect.width / 2}px`;
+  tooltip.style.top = `${rect.top - 6}px`;
+  tooltip.style.display = 'block';
+  setTimeout(() => {
+    tooltip.style.opacity = '1';
+    tooltip.style.transform = 'translate(-50%, -100%)';
+  }, 10);
+}
+
+function hideAchTooltip() {
+  const tooltip = document.getElementById('ach-tooltip');
+  if (!tooltip) return;
+  tooltip.style.opacity = '0';
+  tooltip.style.transform = 'translate(-50%, -105%)';
+  setTimeout(() => {
+    if (tooltip.style.opacity === '0') {
+      tooltip.style.display = 'none';
+    }
+  }, 150);
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
