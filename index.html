@@ -1127,7 +1127,7 @@ function _applyTouchCELL() {
   const availH  = H - appPaddingV - headerH - ctrlH - gapsAndBreathing;
   if (availH <= 0) return;
 
-  const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
+  const newCELL = Math.max(10, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
   const gameW = COLS * newCELL;
   const gameH = ROWS * newCELL;
 
