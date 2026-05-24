@@ -1800,7 +1800,7 @@ function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
   score+=d*2;updateUI();
-  if(animIntensity==='full'){shakeFrames=Math.min(18,6+Math.floor(d*0.7));shakeMag=0.75;shakeAllDir=true;}
+  if(animIntensity==='full'){shakeFrames=Math.min(8,3+Math.floor(d*0.3));shakeMag=1.2;shakeAllDir=true;}
   spawnHardDropParticles();
   sfxHardDrop();
   lockPiece();
