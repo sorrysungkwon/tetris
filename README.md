@@ -1,5 +1,7 @@
 # Glowtris
 
+> **DEPLOY RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production.
+
 > **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
 
 A neon-styled block stacking game built as a single HTML file.
