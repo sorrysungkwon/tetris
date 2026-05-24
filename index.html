@@ -1190,8 +1190,8 @@ function getCellSprite(color){
   const {r,g,b}=hexToRgb(color);
 
   // Soft baked ambient glow — present on every board cell without overpowering
-  sx.shadowColor=`rgba(${r},${g},${b},0.6)`;
-  sx.shadowBlur=7;
+  sx.shadowColor=`rgba(${r},${g},${b},0.72)`;
+  sx.shadowBlur=10;
 
   // Main fill: diagonal gradient (lit top-left → dark bottom-right) for 3D depth
   const gr=sx.createLinearGradient(p,p,p+s,p+s);
@@ -1297,9 +1297,9 @@ function drawBoard(){
         if(!current.shape[row][col])continue;
         gctx.save();
         gctx.shadowBlur=0;
-        gctx.strokeStyle=`rgba(${r},${g},${b},0.22)`;gctx.lineWidth=1;
+        gctx.strokeStyle=`rgba(${r},${g},${b},0.32)`;gctx.lineWidth=1.5;
         gctx.strokeRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
-        gctx.fillStyle=`rgba(${r},${g},${b},0.04)`;
+        gctx.fillStyle=`rgba(${r},${g},${b},0.06)`;
         gctx.fillRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
         gctx.restore();
       }
