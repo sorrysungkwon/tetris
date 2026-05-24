@@ -17,8 +17,9 @@
 - Keep single file structure (`index.html` only)
 - **Vercel Deployments & Preview Domains**:
   - Production URL: https://glowtris.vercel.app
-  - Option A Preview URL (Arithmetic branch `hotfix/option-a-arithmetic`): https://prevglow-a.vercel.app
-  - Option B Preview URL (Polling branch `hotfix/option-b-polling`): https://prevglow-b.vercel.app
-  - These preview domains are connected via Vercel to help verify specific bug fix approaches in real-time.
+  - General preview URL: https://prevglow.vercel.app — manually aliased to latest master preview; update with `vercel alias set <preview-url> prevglow.vercel.app` after each preview deploy.
+  - Branch verification previews (keep both, do not delete):
+    - Option A (Arithmetic fix, `hotfix/option-a-arithmetic`): https://prevglow-a.vercel.app
+    - Option B (Polling fix, `hotfix/option-b-polling`): https://prevglow-b.vercel.app
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`

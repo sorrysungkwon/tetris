@@ -8,9 +8,13 @@ A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://glowtris.vercel.app
 
-### Vercel Preview Environments (For testing specific bug fixes)
-- **Option A (Arithmetic fix):** https://prevglow-a.vercel.app (Connected to branch `hotfix/option-a-arithmetic`)
-- **Option B (Polling fix):** https://prevglow-b.vercel.app (Connected to branch `hotfix/option-b-polling`)
+### Vercel Environments
+| URL | 용도 |
+|-----|------|
+| https://glowtris.vercel.app | 🚀 Production |
+| https://prevglow.vercel.app | 🔍 General preview (master 최신 상태, 수동 alias 갱신) |
+| https://prevglow-a.vercel.app | 🧪 Branch verification — `hotfix/option-a-arithmetic` |
+| https://prevglow-b.vercel.app | 🧪 Branch verification — `hotfix/option-b-polling` |
 
 ## Stack
 
