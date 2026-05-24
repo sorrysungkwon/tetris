@@ -1942,8 +1942,27 @@ const BGM_FREQS=[
   _n(3), _n(5),_n(3),_n(2), _n(0),null,null,null,
 ];
 const BGM_BASS=[_n(0)/4,_n(7)/4,_n(0)/4,_n(3)/4];
+
+// Epic, high-stakes driving minor melody for Daily Challenge
+const CHALLENGE_FREQS=[
+  // Phrase 1 - Driving rhythmic motif
+  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), null,
+  _n(0), _n(3), _n(7), _n(3), _n(10), _n(8), _n(7), null,
+  // Phrase 2 - Heroic ascent
+  _n(3), _n(7), _n(12), _n(7), _n(10), _n(8), _n(7), _n(5),
+  _n(3), _n(2), _n(3), _n(5), _n(7), null, _n(0), null,
+  // Phrase 3 - Intense variation
+  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), _n(7),
+  _n(12), _n(10), _n(8), _n(7), _n(12), null, null, null,
+  // Phrase 4 - Resolution / crescendo
+  _n(14), _n(12), _n(10), _n(8), _n(7), _n(8), _n(10), _n(12),
+  _n(7), _n(8), _n(7), _n(5), _n(0), null, null, null
+];
+const CHALLENGE_BASS=[_n(0)/4, _n(3)/4, _n(-4)/4, _n(-2)/4];
+
 function getBGMBeat(){
-  const bpm=Math.min(200,135+(level||1)*5);
+  const baseBpm = isDailyMode ? 155 : 135;
+  const bpm=Math.min(210,baseBpm+(level||1)*5);
   return 60/bpm/4;
 }
 
@@ -1961,18 +1980,20 @@ function bgmScheduleNote(freq,t,dur,vol){
 
 function bgmScheduleLoop(){
   if(!bgmPlaying||!audioCtx)return;
+  const freqs = isDailyMode ? CHALLENGE_FREQS : BGM_FREQS;
+  const bassline = isDailyMode ? CHALLENGE_BASS : BGM_BASS;
   while(bgmNextTime<audioCtx.currentTime+0.5){
     const beat=getBGMBeat();
-    const idx=bgmBeat%BGM_FREQS.length;
-    const f=BGM_FREQS[idx];
+    const idx=bgmBeat%freqs.length;
+    const f=freqs[idx];
     if(f)bgmScheduleNote(f,bgmNextTime,beat*0.85,0.12);
     if(bgmBeat%16===0){
-      const bass=BGM_BASS[Math.floor(bgmBeat/16)%BGM_BASS.length];
+      const bass=bassline[Math.floor(bgmBeat/16)%bassline.length];
       bgmScheduleNote(bass,bgmNextTime,beat*14,0.08);
     }
     bgmNextTime+=beat;
     bgmBeat++;
-    if(bgmBeat>=BGM_FREQS.length)bgmBeat=0;
+    if(bgmBeat>=freqs.length)bgmBeat=0;
   }
   bgmScheduler=setTimeout(bgmScheduleLoop,100);
 }
