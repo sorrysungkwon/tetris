@@ -1183,15 +1183,15 @@ function hexToRgb(hex){
 // PAD gives room for the subtle glow to bleed just past the cell edge.
 function getCellSprite(color){
   if(_cellSprites[color])return _cellSprites[color];
-  const PAD=6,s=CELL,p=PAD;
+  const PAD=14,s=CELL,p=PAD;
   const sc=document.createElement('canvas');
   sc.width=sc.height=s+PAD*2;
   const sx=sc.getContext('2d');
   const {r,g,b}=hexToRgb(color);
 
-  // Soft baked ambient glow — present on every board cell without overpowering
-  sx.shadowColor=`rgba(${r},${g},${b},0.72)`;
-  sx.shadowBlur=10;
+  // PAD must exceed shadowBlur so the glow isn't clipped at sprite canvas edges
+  sx.shadowColor=`rgba(${r},${g},${b},0.8)`;
+  sx.shadowBlur=12;
 
   // Main fill: diagonal gradient (lit top-left → dark bottom-right) for 3D depth
   const gr=sx.createLinearGradient(p,p,p+s,p+s);
