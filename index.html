@@ -837,7 +837,7 @@ let prevTs=0;
 let isMobile=false;
 let _lbCache={board:[],dailyBoard:[],weeklyBoard:[]};
 // ─── Performance detection ────────────────────────────────────────────────────
-let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0,_perfLocked=false;
+let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0,_perfLocked=false,_fpsLowCount=0;
 // ─── Cell sprite cache (pre-rendered per color, GPU-blit instead of per-frame gradients) ───
 let _cellSprites={};
 // ─── Border/boxShadow cache (avoid CSS recalc 60x/s) ─────────────────────────
@@ -846,9 +846,12 @@ function measureFPS(ts){
   _fpsCnt++;
   if(ts-_fpsLast>=1000){
     const fps=_fpsCnt;_fpsCnt=0;_fpsLast=ts;
-    if(_perfHold>0){_perfHold--;return;}
-    // Once locked, never turn off during this session
-    if(!lowPerfMode&&fps<30){setLowPerfMode(true);_perfLocked=true;_perfHold=1;}
+    if(_perfHold>0){_perfHold--;_fpsLowCount=0;return;}
+    if(!lowPerfMode){
+      // Require 2 consecutive bad seconds — one-off jank doesn't lock perf mode
+      if(fps<28){_fpsLowCount++;if(_fpsLowCount>=2){setLowPerfMode(true);_perfLocked=true;_perfHold=1;}}
+      else{_fpsLowCount=0;}
+    }
   }
 }
 function setLowPerfMode(on){
@@ -1960,8 +1963,11 @@ function triggerLevelUpVisuals() {
 function startGame(){
   loadSettings();
   // Reset perf lock each new game so fresh hardware measurement starts clean
-  _perfLocked=false;setLowPerfMode(false);_fpsCnt=0;_fpsLast=0;_perfHold=0;
+  _perfLocked=false;setLowPerfMode(false);_fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
+  _perfHold=3; // Skip first 3s — JIT warmup + sprite creation spikes don't count
   _lastBorderColor=null; // Force border refresh on first piece
+  // Pre-warm all 7 piece sprites now so first-frame creation doesn't spike FPS
+  for(const k of Object.keys(PIECES))getCellSprite(PIECES[k].color);
   board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
   lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
