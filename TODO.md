@@ -218,6 +218,10 @@
 
 **Full analysis and both fix options are documented in `WALKTHROUGH.md` → "Open Bug Report" section.**
 
+**Vercel Preview Environments (For testing these specific bug fixes):**
+- **Option A (Arithmetic fix):** https://prevglow-a.vercel.app (Connected to branch `hotfix/option-a-arithmetic`)
+- **Option B (Polling fix):** https://prevglow-b.vercel.app (Connected to branch `hotfix/option-b-polling`)
+
 ### Option A — Revert to Simple Arithmetic (Recommended)
 - Remove `ResizeObserver`, `_touchLayoutDone` flag, and the RAF correction
 - Replace `_applyTouchCELL()` with a hardcoded formula: `availH = H - headerH - ctrlH - frameH`

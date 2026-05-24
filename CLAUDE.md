@@ -10,4 +10,9 @@
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).
 - **Unified Workspace Integration**: Keep all technical specifications, tasks, and walkthrough reports inside the shared project directory (using `TODO.md` and `WALKTHROUGH.md` in the project root) to maintain 100% transparent and synchronized collaboration with Antigravity.
 - Keep single file structure (`index.html` only)
+- **Vercel Deployments & Preview Domains**:
+  - Production URL: https://glowtris.vercel.app
+  - Option A Preview URL (Arithmetic branch `hotfix/option-a-arithmetic`): https://prevglow-a.vercel.app
+  - Option B Preview URL (Polling branch `hotfix/option-b-polling`): https://prevglow-b.vercel.app
+  - These preview domains are connected via Vercel to help verify specific bug fix approaches in real-time.
 - After every task: `git add . && git commit -m "description" && git push`
