@@ -2765,7 +2765,7 @@ async function loadStartLeaderboard(){
     const r=await fetch(url);
     const data=await r.json();
     _lbCache={..._lbCache, ...data}; // preserve myRank from previous POST if any
-    const activeTab=document.querySelector('.lb-tab.active');
+    const activeTab=document.querySelector('.lb-tab[data-tab].active');
     renderLbTab(activeTab?activeTab.dataset.tab:(lbMode === 'daily' ? 'challenge' : 'daily'));
   }catch(e){}
 }
@@ -2779,7 +2779,7 @@ function renderLbTab(tab){
   else if(tab==='challenge') { entries=_lbCache.challengeBoard||[]; myRank=_lbCache.challengeRank; }
   else { entries=_lbCache.board||[]; myRank=_lbCache.rank; }
   
-  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.querySelectorAll('.lb-tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
   inner.innerHTML=lbHTML(entries, _lbCache.myName, myRank, _lbCache.myScore);
 }
 
