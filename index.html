@@ -475,7 +475,7 @@
   .action-btn.sm { font-size:9px; padding:8px 16px; letter-spacing:2px; }
   .action-btn.ghost { background:transparent; border-color:rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); }
   .action-btn.ghost:hover { border-color:rgba(0,200,255,0.4); color:var(--cyan); background:rgba(0,200,255,0.08); }
-  #daily-challenge-btn {
+  #daily-challenge-btn, #daily-launch-btn {
     background: linear-gradient(90deg, #ffe600, #ffaa00);
     box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
     border-color: #ffe600;
@@ -483,7 +483,7 @@
     font-weight: 900;
     text-shadow: none;
   }
-  #daily-challenge-btn:hover {
+  #daily-challenge-btn:hover, #daily-launch-btn:hover {
     border-color: #fff;
     box-shadow: 0 0 25px rgba(255, 230, 0, 0.8), 0 0 8px rgba(255, 170, 0, 0.6);
     color: #000;
@@ -695,10 +695,12 @@
   html.low-perf .action-btn::after {
     display: none !important;
   }
-  html.low-perf #daily-challenge-btn {
+  html.low-perf #daily-challenge-btn,
+  html.low-perf #daily-launch-btn {
     box-shadow: none !important;
   }
-  html.low-perf #daily-challenge-btn:hover {
+  html.low-perf #daily-challenge-btn:hover,
+  html.low-perf #daily-launch-btn:hover {
     box-shadow: none !important;
   }
   /* scale-pop on level-up labels */
@@ -2307,6 +2309,32 @@ function startDailyChallenge(){
     showDailyGateOverlay(todayStr);
     return;
   }
+  
+  $overlay.innerHTML = `
+    <div class="glass-panel" style="width: min(300px, 90vw);">
+      <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600;letter-spacing:2px">🏆 DAILY CHALLENGE</h1>
+      <div style="font-size:36px;margin:10px 0;animation:pulse 1.5s infinite">🛰️</div>
+      <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SYSTEM SEEDED // SYNCHRONIZED</div>
+      
+      <div id="briefing-scroll" style="font-size:10px;line-height:1.6;color:rgba(255,255,255,0.8);text-align:left;margin-bottom:18px;padding:12px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.15);border-radius:8px;max-height:180px;overflow-y:auto">
+        <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[접속 승인: 오늘의 시드 동기화 완료]</p>
+        <p style="margin:0 0 8px 0">전 세계의 모든 플레이어들이 지금 이 순간, 동일한 우주적 난수 시드(PRNG Seed) <strong>#${todayStr}</strong>에 결속되었습니다.</p>
+        <p style="margin:0 0 8px 0">오늘 제공되는 낙하 파편의 시퀀스는 지구상의 모든 도전자에게 <strong>100% 동일</strong>하게 하강합니다.</p>
+        <p style="margin:0 0 8px 0;color:var(--cyan)">운의 무작위성은 소멸했습니다. 오직 당신의 전술적 라인 설계와 반사신경만이 글로벌 정점의 증거가 될 것입니다.</p>
+        <p style="margin:0;color:#ff5b5b;font-weight:700">⚠️ 단 하루, 단 한 번의 진입 기회만 주어지며 진입 시 중도 포기하더라도 재도전은 불가능합니다. 준비되셨습니까 러너?</p>
+      </div>
+      
+      <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
+        <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">LAUNCH MISSION</button>
+        <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">ABORT</button>
+      </div>
+    </div>
+  `;
+  $overlay.style.display = 'flex';
+}
+
+function launchDailyChallenge() {
+  const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   isDailyMode = true;
   _prng = mulberry32(parseInt(todayStr, 10));
   startGame();
