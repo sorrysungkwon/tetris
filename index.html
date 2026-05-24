@@ -217,7 +217,7 @@
     position:relative;
     flex:0 0 auto;
     width:var(--game-w, 300px);
-    height:calc(2 * var(--game-w, 300px));
+    height:var(--game-h, 600px);
   }
   #game-canvas {
     display:block;
@@ -1133,7 +1133,9 @@ function _applyTouchCELL() {
   CELL = newCELL;
   _cellSprites = {}; // Invalidate sprites — cell size changed
   const gameW = COLS * CELL;
+  const gameH = ROWS * CELL;
   document.documentElement.style.setProperty('--game-w', gameW + 'px');
+  document.documentElement.style.setProperty('--game-h', gameH + 'px');
   gc.width  = COLS * CELL; gc.height = ROWS * CELL;
   pc.width  = COLS * CELL; pc.height = ROWS * CELL;
   if (isMobile) {
@@ -1164,6 +1166,7 @@ function initLayout() {
     if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
     CELL = 30;
     document.documentElement.style.setProperty('--game-w', (COLS * CELL) + 'px');
+    document.documentElement.style.setProperty('--game-h', (ROWS * CELL) + 'px');
     gc.width  = COLS * CELL; gc.height = ROWS * CELL;
     pc.width  = COLS * CELL; pc.height = ROWS * CELL;
     ncD.width = 4 * CELL;    ncD.height = 3 * CELL;
