@@ -1116,8 +1116,11 @@ function _applyTouchCELL(gameRow) {
   pc.style.width  = gameW + 'px';
   pc.style.height = gameH + 'px';
 
-  // Skip expensive buffer resize + sprite invalidation when nothing changed
-  if (newCELL === CELL && gc.width === gameW) return;
+  // Skip expensive buffer resize + sprite invalidation when nothing changed.
+  // MUST check gc.height too — default canvas height is 150px, not gameH (600px).
+  // Without this check, iPad landscape (newCELL capped at 30, gc.width already 300)
+  // returns early and leaves gc.height=150 while CSS height=600px → 4× vertical stretch.
+  if (newCELL === CELL && gc.width === gameW && gc.height === gameH) return;
 
   CELL = newCELL;
   _cellSprites = {}; // Invalidate sprites — cell size changed

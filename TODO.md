@@ -198,6 +198,14 @@
 
 ---
 
+## ✅ Completed: Canvas Height Stretch Bugfix — by Claude (2026-05-24)
+
+- [x] **Root cause**: `_applyTouchCELL()` early-return condition checked `gc.width === gameW` but NOT `gc.height === gameH`. HTML canvas defaults to `height=150`; on iPad landscape (or any large touch screen where `newCELL` is capped at 30), `gc.width` happened to already equal `gameW=300` (COLS×30), so the early return fired — leaving `gc.height=150` while `gc.style.height` was already set to `600px`. Result: 4× vertical canvas stretch (canvas buffer squished into top-quarter, then CSS-scaled back up), making pieces appear tall and distorted.
+- [x] **Fix**: Added `gc.height === gameH` to the early-return guard on line 1120: `if (newCELL === CELL && gc.width === gameW && gc.height === gameH) return;` — one-line change, zero side effects.
+- [x] **Scope**: iPad landscape + large touch screens only. Portrait mode was immune because `availH / ROWS` resolved to 28 (not capped), so `newCELL ≠ CELL` and the buffer was always updated correctly.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
