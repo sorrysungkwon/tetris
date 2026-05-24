@@ -126,6 +126,16 @@
 
 ---
 
+## ✅ Completed: v1.0.7 (Keyboard Parallax & iPad Fit) — by Claude (2026-05-24)
+
+- [x] Feat: `nudgeUI(dx, dy)` — on ArrowLeft/Right, `#app` snaps ±2px horizontally then springs back via `cubic-bezier(0.34,1.56,0.64,1)` in 0.18s. Up/down and hard-drop excluded.
+- [x] Fix: `applyShake()` now only shakes on X-axis (`translate(Xpx, 0)`) — no more vertical screen shake.
+- [x] Fix: `overscroll-behavior:none` added to html/body — prevents rubber-band scroll on iPad.
+- [x] Fix: `_applyTouchCELL` subtracts 8px from `availH` and 8px from `availW` — board stays fully visible without clipping on iPad.
+- [x] Updated README.md roadmap and this file.
+
+---
+
 ## ✅ Completed: Robust Touch Layout Fix — by Claude (2026-05-24)
 
 - [x] CSS: `#game-row { flex:1 1 0; min-height:0; align-items:center; justify-content:center }` added under `@media (pointer:coarse)` — row fills all remaining space between header and controls.

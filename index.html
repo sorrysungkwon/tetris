@@ -43,6 +43,7 @@
     width:100%; height:100%;
     background:#000;
     overflow:hidden;
+    overscroll-behavior:none;
     user-select:none; -webkit-user-select:none;
     touch-action:none;
     font-family:'Orbitron', monospace;
@@ -900,11 +901,11 @@ const _rgbCache = new Map();
 let _touchLayoutObserver = null;
 
 function _applyTouchCELL(gameRow) {
-  const availH = gameRow.clientHeight;
-  if (!availH) return;
+  const availH = gameRow.clientHeight - 8;
+  if (availH <= 0) return;
   const W = window.innerWidth;
   isMobile = W < 600;
-  const availW = W - (isMobile ? 24 : 48);
+  const availW = W - (isMobile ? 32 : 56);
   const newCELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
   if (newCELL === CELL && gc.width === COLS * CELL) return;
   CELL = newCELL;
@@ -942,6 +943,19 @@ function initLayout() {
     nc.width  = 4 * CELL;    nc.height = 3 * CELL;
     hc.width  = 4 * CELL;    hc.height = 3 * CELL;
   }
+}
+
+// ─── Keyboard parallax nudge ──────────────────────────────────────────────────
+let _nudgeTimer = null;
+const $appEl = document.getElementById('app');
+function nudgeUI(dx, dy) {
+  $appEl.style.transition = 'none';
+  $appEl.style.transform  = `translate(${dx}px,${dy}px)`;
+  clearTimeout(_nudgeTimer);
+  _nudgeTimer = setTimeout(() => {
+    $appEl.style.transition = 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)';
+    $appEl.style.transform  = '';
+  }, 15);
 }
 
 let _resizeTimer;
@@ -1457,7 +1471,7 @@ function spawnHardDropParticles(){
 }
 
 function applyShake(){
-  if(shakeFrames>0){const m=shakeFrames*shakeMag;$app.style.transform=`translate(${(Math.random()-.5)*m}px,${(Math.random()-.5)*m}px)`;shakeFrames--;if(!shakeFrames)shakeMag=0.4;}
+  if(shakeFrames>0){const m=shakeFrames*shakeMag;$app.style.transform=`translate(${(Math.random()-.5)*m}px,0)`;shakeFrames--;if(!shakeFrames)shakeMag=0.4;}
   else $app.style.transform='';
 }
 
@@ -1692,8 +1706,8 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP'){togglePause();return;}
   if(gamePaused)return;
   switch(e.code){
-    case'ArrowLeft': moveX(-1);startDAS(-1);break;
-    case'ArrowRight':moveX(1); startDAS(1); break;
+    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(2,0);break;
+    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-2,0);break;
     case'ArrowDown': softDrop();break;
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
