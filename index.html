@@ -1093,17 +1093,8 @@ const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
-let _touchLayoutTimer   = null;
-// Detect PWA standalone mode — navigator.standalone is iOS-only;
-// (display-mode: standalone) covers Android/desktop PWA installs.
-const _isPWA = navigator.standalone === true ||
-               window.matchMedia('(display-mode: standalone)').matches;
 
 function _applyTouchCELL() {
-  // Compute availH from #app height minus the heights of the fixed header and controls.
-  // Do NOT use gameRow.clientHeight — that creates a ResizeObserver feedback loop:
-  // setting gc.style.height changes .game-wrap → #game-row size on iOS Safari
-  // (min-height:0 not always respected), which triggers the observer again endlessly.
   const appEl = document.getElementById('app');
   const mhEl  = document.getElementById('mobile-header');
   const tcEl  = document.getElementById('touch-controls');
@@ -1112,8 +1103,15 @@ function _applyTouchCELL() {
   const availW = W - (isMobile ? 32 : 56);
   const mhH = (mhEl && getComputedStyle(mhEl).display !== 'none') ? mhEl.offsetHeight : 0;
   const tcH = tcEl ? tcEl.offsetHeight : 0;
+  // Subtract #app's computed padding (reads env(safe-area-inset-*) correctly after first
+  // paint — returns 0 during synchronous execution but #game-row's ResizeObserver re-fires
+  // when safe-area CSS is applied, so this path runs again with correct values).
+  // appEl.clientHeight is stable (height:100dvh border-box), so availH never feeds back.
+  const appPadV = appEl
+    ? parseFloat(getComputedStyle(appEl).paddingTop) + parseFloat(getComputedStyle(appEl).paddingBottom)
+    : 0;
   // 16 = two 8px flex gaps (#app gap:8px × 2); 8 = breathing room so board never clips
-  const availH = (appEl ? appEl.clientHeight : window.innerHeight) - mhH - tcH - 16 - 8;
+  const availH = (appEl ? appEl.clientHeight - appPadV : window.innerHeight) - mhH - tcH - 16 - 8;
   if (availH <= 0) return;
 
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
@@ -1153,20 +1151,12 @@ function initLayout() {
 
   if (window.matchMedia('(pointer:coarse)').matches) {
     if (!_touchLayoutObserver) {
-      if (_isPWA && window.visualViewport) {
-        // PWA standalone: 100dvh fluctuates as the iOS home-indicator shows/hides,
-        // making ResizeObserver on #app fire in a tight loop. Use visualViewport
-        // instead — it only fires on true orientation/window-size changes.
-        window.visualViewport.addEventListener('resize', () => {
-          clearTimeout(_touchLayoutTimer);
-          _touchLayoutTimer = setTimeout(_applyTouchCELL, 100);
-        });
-        _touchLayoutObserver = 'pwa'; // truthy sentinel so we don't re-register
-      } else {
-        // Safari browser: #app is stable; ResizeObserver is safe here.
-        _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
-        _touchLayoutObserver.observe(document.getElementById('app'));
-      }
+      // Observe #game-row: it shrinks when safe-area insets are applied after first paint,
+      // triggering a re-run of _applyTouchCELL with correct env() values.
+      // No feedback loop: availH is derived from #app.clientHeight (stable, 100dvh
+      // border-box) not from #game-row, so the observer always converges in ≤2 frames.
+      _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
+      _touchLayoutObserver.observe(document.getElementById('game-row'));
     }
     _applyTouchCELL();
   } else {
