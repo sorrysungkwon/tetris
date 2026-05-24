@@ -1093,6 +1093,9 @@ const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
+// iOS PWA standalone: navigator.standalone is true; (display-mode:standalone) covers Android.
+const _isPWA = navigator.standalone === true ||
+               window.matchMedia('(display-mode: standalone)').matches;
 
 function _applyTouchCELL() {
   const appEl = document.getElementById('app');
@@ -1151,12 +1154,22 @@ function initLayout() {
 
   if (window.matchMedia('(pointer:coarse)').matches) {
     if (!_touchLayoutObserver) {
-      // Observe #game-row: it shrinks when safe-area insets are applied after first paint,
-      // triggering a re-run of _applyTouchCELL with correct env() values.
-      // No feedback loop: availH is derived from #app.clientHeight (stable, 100dvh
-      // border-box) not from #game-row, so the observer always converges in ≤2 frames.
-      _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
-      _touchLayoutObserver.observe(document.getElementById('game-row'));
+      if (_isPWA) {
+        // PWA standalone: iOS does not fully respect min-height:0 on flex items, so
+        // any ResizeObserver on #game-row or #app creates a feedback loop — canvas CSS
+        // height change → game-row resize → observer fires → repeat at ~0.1 s.
+        // Fix: no observer. Instead, re-run after first paint so env(safe-area-inset-*)
+        // values are available (they return 0 during synchronous JS execution).
+        // Subsequent orientation/resize changes are handled by the window.resize listener.
+        requestAnimationFrame(_applyTouchCELL);
+        _touchLayoutObserver = 'pwa'; // truthy sentinel — prevents re-registration
+      } else {
+        // Safari browser / non-PWA: min-height:0 is respected, so the observer is safe.
+        // #game-row shrinks when safe-area insets are applied post-first-paint, giving
+        // _applyTouchCELL a chance to re-calculate with correct env() values.
+        _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
+        _touchLayoutObserver.observe(document.getElementById('game-row'));
+      }
     }
     _applyTouchCELL();
   } else {
