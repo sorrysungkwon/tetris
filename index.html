@@ -1094,22 +1094,27 @@ const _rgbCache = new Map();
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
 
-function _applyTouchCELL(gameRow) {
-  // Zone A (top): #mobile-header — already subtracted via flex layout
-  // Zone B-top: #game-row fills remaining space → clientHeight is the canvas budget
-  // Zone B-bottom: #touch-controls — already subtracted via flex layout
-  const availH = gameRow.clientHeight - 8; // 8px breathing room
-  if (availH <= 0) return;
+function _applyTouchCELL() {
+  // Compute availH from #app height minus the heights of the fixed header and controls.
+  // Do NOT use gameRow.clientHeight — that creates a ResizeObserver feedback loop:
+  // setting gc.style.height changes .game-wrap → #game-row size on iOS Safari
+  // (min-height:0 not always respected), which triggers the observer again endlessly.
+  const appEl = document.getElementById('app');
+  const mhEl  = document.getElementById('mobile-header');
+  const tcEl  = document.getElementById('touch-controls');
   const W = window.innerWidth;
   isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
   const availW = W - (isMobile ? 32 : 56);
+  const mhH = (mhEl && getComputedStyle(mhEl).display !== 'none') ? mhEl.offsetHeight : 0;
+  const tcH = tcEl ? tcEl.offsetHeight : 0;
+  // 16 = two 8px flex gaps (#app gap:8px × 2); 8 = breathing room so board never clips
+  const availH = (appEl ? appEl.clientHeight : window.innerHeight) - mhH - tcH - 16 - 8;
+  if (availH <= 0) return;
+
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
   const gameW = COLS * newCELL;
   const gameH = ROWS * newCELL;
 
-  // ALWAYS update CSS variable + canvas CSS display size — prevents Safari "small
-  // clipped rectangle" bug where early return fires on first load when CELL default
-  // (30) matches the computed value and gc.width (300) already matches COLS*CELL.
   document.documentElement.style.setProperty('--game-w', gameW + 'px');
   gc.style.width  = gameW + 'px';
   gc.style.height = gameH + 'px';
@@ -1117,9 +1122,7 @@ function _applyTouchCELL(gameRow) {
   pc.style.height = gameH + 'px';
 
   // Skip expensive buffer resize + sprite invalidation when nothing changed.
-  // MUST check gc.height too — default canvas height is 150px, not gameH (600px).
-  // Without this check, iPad landscape (newCELL capped at 30, gc.width already 300)
-  // returns early and leaves gc.height=150 while CSS height=600px → 4× vertical stretch.
+  // Check gc.height too — default canvas height is 150px, not gameH.
   if (newCELL === CELL && gc.width === gameW && gc.height === gameH) return;
 
   CELL = newCELL;
@@ -1134,7 +1137,8 @@ function _applyTouchCELL(gameRow) {
     hcM.width = miniW; hcM.height = miniH;
     hcM.style.width = miniW + 'px'; hcM.style.height = miniH + 'px';
   }
-  if (gameRunning) drawBoard();
+  // Redraw all canvases — mini canvases were cleared by buffer resize above
+  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
 }
 
 function initLayout() {
@@ -1143,14 +1147,14 @@ function initLayout() {
   bgc.width = W; bgc.height = H;
 
   if (window.matchMedia('(pointer:coarse)').matches) {
-    const gameRow = document.getElementById('game-row');
-    // ResizeObserver fires whenever #game-row's rendered height changes — no hardcoded
-    // arithmetic, so CSS changes to header/controls/padding never break the calculation.
+    // Observe #app (the stable viewport container) instead of #game-row.
+    // Observing #game-row caused a feedback loop on iOS Safari: setting gc.style.height
+    // changed .game-wrap → #game-row height → ResizeObserver fired again → infinite loop.
     if (!_touchLayoutObserver) {
-      _touchLayoutObserver = new ResizeObserver(entries => _applyTouchCELL(entries[0].target));
-      _touchLayoutObserver.observe(gameRow);
+      _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
+      _touchLayoutObserver.observe(document.getElementById('app'));
     }
-    _applyTouchCELL(gameRow);
+    _applyTouchCELL();
   } else {
     if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
     CELL = 30;
