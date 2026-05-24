@@ -913,7 +913,9 @@ function initLayout() {
     // header + controls (sys30/34 + act54/64 + move72/84 + pad16 + 2×gap8/10) + app padding/gaps
     const headerH  = isMobile ? 52 : 30;
     const ctrlH    = isMobile ? 188 : 218;
-    const frameH   = 40; // app pad-top + pad-bot + 3 flex gaps
+    // #app padding is max(8, safeX); safeX is subtracted separately, so only
+    // the portion NOT covered by safeX counts here: max(0, 8 - safeX).
+    const frameH   = Math.max(0, 8 - safeTop) + Math.max(0, 8 - safeBottom) + 16;
     const availH   = H - headerH - ctrlH - frameH - safeTop - safeBottom;
     const availW   = W - (isMobile ? 24 : 48);
     CELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
