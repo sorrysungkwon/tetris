@@ -155,6 +155,21 @@
 
 ---
 
+## ✅ Completed: v1.0.8.1 (Performance & Visual Overhaul) — by Claude (2026-05-24)
+
+- [x] **Cell sprite cache** (`getCellSprite`): pre-renders each of 7 piece colors into a PAD-padded offscreen canvas once; `drawCell` blits via `drawImage` (GPU path). Eliminates ~400 `createLinearGradient` creates/frame.
+- [x] **Baked glow**: `shadowBlur=12` rendered into sprite pixels (PAD=14 so glow isn't clipped). All placed blocks glow at zero per-frame cost.
+- [x] **Glow threshold `glow > 1.2`**: board cells (glow=1) skip live shadowBlur entirely; active piece (glow=1.5) keeps it. Saves ~200 shadowBlur ops/frame — the single most expensive iOS canvas op.
+- [x] **Nebula bounding-box clip**: `fillRect` limited to nebula circle bounds, reducing fill area ~50% per nebula.
+- [x] **CSS border/boxShadow cache** (`_lastBorderColor`): `gc.style` only updated on piece color change, not 60×/s.
+- [x] **Perf mode tuned**: requires 2 consecutive seconds below 28fps (`_fpsLowCount`); 3s startup holdoff (`_perfHold=3`); sprites pre-warmed at `startGame()` to avoid first-frame spike.
+- [x] **Refined neon color palette**: J `#0055ff`→`#2979ff` (dark blues glow muddy), S `#00ff88`→`#00ffaa` (mint vs acid lime), T `#bf00ff`→`#cc00ff`, Z `#ff2255`→`#ff2040`.
+- [x] **Ghost piece rebalanced**: stroke 0.32/1.5px, fill 0.04 alpha, explicit `shadowBlur=0` — visible but never flashy.
+- [x] **Bug fix — blank start screen on Chrome Mac**: `#overlay` moved from inside `.game-wrap` to `<body>` level; `display:none` default prevents dark blocking overlay if JS fails; z-index bumped to 20.
+- [x] Version label bumped to v1.0.8.1; README roadmap updated.
+
+---
+
 ## 🔮 Planned: v1.0.9 (Daily Challenge + Achievement System)
 
 ### Daily Challenge
