@@ -1115,18 +1115,23 @@ function _applyTouchCELL() {
   
   const availW = W - (isMobile ? 32 : 56);
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
-  
-  if (newCELL === CELL && gc.width === COLS * CELL) return;
-  CELL = newCELL;
-  _cellSprites = {}; // Invalidate sprites — cell size changed
-  const gameW = COLS * CELL;
-  const gameH = ROWS * CELL;
+  const gameW = COLS * newCELL;
+  const gameH = ROWS * newCELL;
+
+  // Always sync CSS variables and inline styles — Safari needs this on every call
+  // to avoid the "small clipped rectangle" bug when CELL matches the JS default.
   document.documentElement.style.setProperty('--game-w', gameW + 'px');
   document.documentElement.style.setProperty('--game-h', gameH + 'px');
-  gc.width  = gameW; gc.height = gameH;
   gc.style.width = gameW + 'px'; gc.style.height = gameH + 'px';
-  pc.width  = gameW; pc.height = gameH;
   pc.style.width = gameW + 'px'; pc.style.height = gameH + 'px';
+
+  // Skip expensive buffer resize + sprite invalidation if nothing changed
+  if (newCELL === CELL && gc.width === gameW) return;
+
+  CELL = newCELL;
+  _cellSprites = {}; // Invalidate sprites — cell size changed
+  gc.width  = gameW; gc.height = gameH;
+  pc.width  = gameW; pc.height = gameH;
   if (isMobile) {
     const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
     const miniH = Math.round(miniW * 0.8);
