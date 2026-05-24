@@ -224,15 +224,16 @@
 
   /* Overlay */
   #overlay {
-    position:absolute; inset:0;
+    position:fixed; inset:0;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     background:rgba(0,0,20,0.86);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-    border-radius:4px; z-index:10;
+    z-index:10;
     padding:12px 8px;
   }
-  @media (min-width:600px) {
-    #overlay { position:fixed; border-radius:0; }
+  /* On touch devices shift the center point up above the touch controls */
+  @media (pointer:coarse) {
+    #overlay { padding-bottom:196px; }
   }
   #overlay h1 {
     font-size:26px; font-weight:900; letter-spacing:5px;
