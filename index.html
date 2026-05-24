@@ -1180,41 +1180,41 @@ function hexToRgb(hex){
 // Draws a white symbol overlay on a cell for colorblind accessibility.
 // cs = cell pixel size (allows reuse in mini-preview canvases with different sizes).
 // Pre-render each piece color as a padded canvas sprite — glow baked in, blitted at zero cost.
-// PAD gives room for the glow to bleed naturally outside the cell boundary.
+// PAD gives room for the subtle glow to bleed just past the cell edge.
 function getCellSprite(color){
   if(_cellSprites[color])return _cellSprites[color];
-  const PAD=10,s=CELL,p=PAD;
+  const PAD=6,s=CELL,p=PAD;
   const sc=document.createElement('canvas');
   sc.width=sc.height=s+PAD*2;
   const sx=sc.getContext('2d');
   const {r,g,b}=hexToRgb(color);
 
-  // Baked glow — rendered once into pixels, free at draw time
-  sx.shadowColor=`rgba(${r},${g},${b},0.9)`;
-  sx.shadowBlur=14;
+  // Soft baked ambient glow — present on every board cell without overpowering
+  sx.shadowColor=`rgba(${r},${g},${b},0.6)`;
+  sx.shadowBlur=7;
 
-  // Main fill: diagonal gradient gives 3D depth (lit top-left, shadowed bottom-right)
+  // Main fill: diagonal gradient (lit top-left → dark bottom-right) for 3D depth
   const gr=sx.createLinearGradient(p,p,p+s,p+s);
-  gr.addColorStop(0,  `rgba(${Math.min(255,r+50)},${Math.min(255,g+50)},${Math.min(255,b+50)},0.97)`);
-  gr.addColorStop(0.5,`rgba(${r},${g},${b},0.92)`);
-  gr.addColorStop(1,  `rgba(${Math.max(0,r-45)},${Math.max(0,g-45)},${Math.max(0,b-45)},0.95)`);
+  gr.addColorStop(0,  `rgba(${Math.min(255,r+40)},${Math.min(255,g+40)},${Math.min(255,b+40)},0.96)`);
+  gr.addColorStop(0.55,`rgba(${r},${g},${b},0.90)`);
+  gr.addColorStop(1,  `rgba(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)},0.94)`);
   sx.fillStyle=gr;sx.fillRect(p+1,p+1,s-2,s-2);
   sx.shadowBlur=0;
 
-  // Diagonal sheen — smooth 3-stop fade from bright corner to transparent
-  const sh=sx.createLinearGradient(p,p,p+s*0.68,p+s*0.68);
-  sh.addColorStop(0,  'rgba(255,255,255,0.42)');
-  sh.addColorStop(0.45,'rgba(255,255,255,0.08)');
+  // Diagonal sheen — smooth fade from bright corner, stops at ~60% of cell
+  const sh=sx.createLinearGradient(p,p,p+s*0.62,p+s*0.62);
+  sh.addColorStop(0,  'rgba(255,255,255,0.32)');
+  sh.addColorStop(0.5,'rgba(255,255,255,0.06)');
   sh.addColorStop(1,  'rgba(255,255,255,0)');
   sx.fillStyle=sh;sx.fillRect(p+2,p+2,s-4,s-4);
 
-  // Inner rim light — bright top & left edges for a raised, bevelled look
-  sx.strokeStyle=`rgba(${Math.min(255,r+110)},${Math.min(255,g+110)},${Math.min(255,b+110)},0.55)`;
-  sx.lineWidth=1.5;sx.lineCap='round';
-  sx.beginPath();sx.moveTo(p+2.5,p+s-1.5);sx.lineTo(p+2.5,p+2.5);sx.lineTo(p+s-1.5,p+2.5);sx.stroke();
+  // Inner rim light — subtle bright top & left bevel (raised tile feel)
+  sx.strokeStyle=`rgba(${Math.min(255,r+90)},${Math.min(255,g+90)},${Math.min(255,b+90)},0.4)`;
+  sx.lineWidth=1;sx.lineCap='round';
+  sx.beginPath();sx.moveTo(p+2,p+s-2);sx.lineTo(p+2,p+2);sx.lineTo(p+s-2,p+2);sx.stroke();
 
   // Outer border
-  sx.strokeStyle=`rgba(${Math.min(255,r+65)},${Math.min(255,g+65)},${Math.min(255,b+65)},0.55)`;
+  sx.strokeStyle=`rgba(${Math.min(255,r+55)},${Math.min(255,g+55)},${Math.min(255,b+55)},0.5)`;
   sx.lineWidth=1;sx.strokeRect(p+1.5,p+1.5,s-3,s-3);
 
   _cellSprites[color]={canvas:sc,pad:PAD};
@@ -1257,8 +1257,8 @@ function drawCell(ctx,x,y,color,alpha=1,glow=1,key=null){
   const s=CELL,px=x*s,py=y*s;
   const sp=getCellSprite(color);
   ctx.save();ctx.globalAlpha=alpha;
-  // Active piece gets an extra live glow layer on top of the baked sprite glow
-  if(glow>1.2&&!lowPerfMode){ctx.shadowColor=color;ctx.shadowBlur=14;}
+  // Active piece: extra live glow on top of the baked sprite glow — makes it pop above board
+  if(glow>1.2&&!lowPerfMode){ctx.shadowColor=color;ctx.shadowBlur=9;}
   ctx.drawImage(sp.canvas,px-sp.pad,py-sp.pad);
   ctx.shadowBlur=0;
   ctx.restore();
@@ -1296,9 +1296,10 @@ function drawBoard(){
       for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
         if(!current.shape[row][col])continue;
         gctx.save();
-        gctx.strokeStyle=`rgba(${r},${g},${b},0.38)`;gctx.lineWidth=1.5;
+        gctx.shadowBlur=0;
+        gctx.strokeStyle=`rgba(${r},${g},${b},0.22)`;gctx.lineWidth=1;
         gctx.strokeRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
-        gctx.fillStyle=`rgba(${r},${g},${b},0.07)`;
+        gctx.fillStyle=`rgba(${r},${g},${b},0.04)`;
         gctx.fillRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
         gctx.restore();
       }
@@ -1312,7 +1313,7 @@ function drawBoard(){
         }
       }
       gctx.save();
-      gctx.strokeStyle = `rgba(${r},${g},${b},0.15)`;
+      gctx.strokeStyle = `rgba(${r},${g},${b},0.09)`;
       gctx.lineWidth = 1;
       gctx.setLineDash([4, 4]);
       
