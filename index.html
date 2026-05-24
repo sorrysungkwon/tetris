@@ -830,7 +830,7 @@ let score,lines,level,combo,hiScore,maxCombo;
 let gameRunning,gamePaused,gameOver;
 let dropInterval;
 let particles=[];
-let shakeFrames=0,shakeMag=0.4;
+let shakeFrames=0,shakeMag=0.4,shakeAllDir=false;
 let flashLines=new Set();
 let flashTimer=0;
 let animFrame;
@@ -1516,9 +1516,15 @@ function spawnHardDropParticles(){
 }
 
 function applyShake(){
-  if(animIntensity!=='full'){$app.style.transform='';shakeFrames=0;return;}
-  if(shakeFrames>0){const m=shakeFrames*shakeMag;$app.style.transform=`translate(${(Math.random()-.5)*m}px,0)`;shakeFrames--;if(!shakeFrames)shakeMag=0.4;}
-  else $app.style.transform='';
+  if(animIntensity!=='full'){$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
+  if(shakeFrames>0){
+    const m=shakeFrames*shakeMag;
+    const x=(Math.random()-.5)*m;
+    const y=shakeAllDir?(Math.random()-.5)*m:0;
+    $app.style.transform=`translate(${x}px,${y}px)`;
+    shakeFrames--;
+    if(!shakeFrames){shakeMag=0.4;shakeAllDir=false;}
+  } else $app.style.transform='';
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -1794,7 +1800,7 @@ function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
   score+=d*2;updateUI();
-  if(animIntensity==='full'){shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;}
+  if(animIntensity==='full'){shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;shakeAllDir=true;}
   spawnHardDropParticles();
   sfxHardDrop();
   lockPiece();
@@ -1876,7 +1882,7 @@ function triggerLevelUpVisuals() {
 function startGame(){
   loadSettings();
   board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
-  particles=[];shakeFrames=0;shakeMag=0.4;flashLines=new Set();flashTimer=0;
+  particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
   lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
   hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
