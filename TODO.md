@@ -183,21 +183,18 @@
 
 ---
 
-## 🔮 Planned: v1.0.9 (Daily Challenge + Achievement System)
+## ✅ Completed: v1.0.9 (Daily Challenge + Achievement System) — by Antigravity (2026-05-24)
 
-### Daily Challenge
-- [ ] Task 1: **Date-Seeded RNG** — seeded PRNG (mulberry32) initialised from `YYYYMMDD` string so every player worldwide draws the same piece sequence each day.
-- [ ] Task 2: **Daily Gate** — check `localStorage` key `glowTrisDailyDate`; if already played today, show "Come back tomorrow" overlay with remaining time countdown instead of starting the game.
-- [ ] Task 3: **Start Screen Entry Point** — `DAILY CHALLENGE` button below `START GAME` on start screen; switches game into daily mode for that session.
-- [ ] Task 4: **Daily Leaderboard** — separate Redis key `daily:<YYYYMMDD>`; score-based (higher = better); TODAY tab only; rank shown after submission; leaderboard accessible from start screen.
-- [ ] Task 5: **Challenge Game-Over Screen** — shows 🏅 badge, rank, and a dedicated share card with "Glowtris Daily Challenge — [date]" header, score, rank, and lines.
-
-### Achievement System
-- [ ] Task 6: **Achievement Definitions** — 20 milestones stored as a static array; each has `id`, `label`, `description`, `icon` (emoji), and `condition` function evaluated at game-over and on key events (line clear, T-spin, All-clear, etc.). Examples: first Glowtris (4-line), T-spin Triple, All-clear, Combo 10+, reach Level 15, 1 000 lines lifetime, play 10 games, 5-game win streak, submit to leaderboard, complete first Daily Challenge.
-- [ ] Task 7: **Unlock Trigger** — check applicable achievements after each game-over and on milestone events in-game; newly unlocked achievements fire a toast popup (bottom of screen, 2.5s) with icon + label + gold particle burst.
-- [ ] Task 8: **Persistence** — unlocked achievement IDs saved to `localStorage` (glowTrisAchievements JSON array); lifetime cumulative stats (`totalLines`, `totalGames`, `totalGlowtris`) tracked separately (glowTrisLifetime).
-- [ ] Task 9: **STATS Overlay Badge Gallery** — new "ACHIEVEMENTS" section at the bottom of the STATS overlay; locked badges shown as dim grey, unlocked as coloured with unlock date tooltip.
-- [ ] Task 10: Update `README.md` roadmap and this file after completion.
+- [x] Task 1: **Date-Seeded RNG** — seeded PRNG (mulberry32) initialised from `YYYYMMDD` string so every player worldwide draws the same piece sequence each day.
+- [x] Task 2: **Daily Gate** — check `localStorage` key `glowTrisDailyDate`; if already played today, show "Come back tomorrow" overlay with remaining time countdown instead of starting the game.
+- [x] Task 3: **Start Screen Entry Point** — `DAILY CHALLENGE` button below `START GAME` on start screen; switches game into daily mode for that session.
+- [x] Task 4: **Daily Leaderboard** — separate Redis key `daily:<YYYYMMDD>`; score-based (higher = better); TODAY tab only; rank shown after submission; leaderboard accessible from start screen.
+- [x] Task 5: **Challenge Game-Over Screen** — shows 🏅 badge, rank, and a dedicated share card with "Glowtris Daily Challenge — [date]" header, score, rank, and lines.
+- [x] Task 6: **Achievement Definitions** — 20 milestones stored as a static array; each has `id`, `label`, `description`, `icon` (emoji), and check triggers in-game.
+- [x] Task 7: **Unlock Trigger** — newly unlocked achievements fire a neon gold toast popup (bottom of screen, 2.5s) with icon, label, description, and gold particle burst.
+- [x] Task 8: **Persistence** — unlocked achievement IDs and dates saved as JSON array to `localStorage` (glowTrisAchievements); lifetime cumulative stats (`totalLines`, `totalGames`, `totalGlowtris`) tracked separately in `glowTrisLifetime`.
+- [x] Task 9: **STATS Overlay Badge Gallery** — new "ACHIEVEMENTS" section at the bottom of the STATS overlay; locked badges shown as dim grey, unlocked as coloured with unlock date tooltip.
+- [x] Task 10: Update `README.md` roadmap and this file after completion.
 
 ---
 

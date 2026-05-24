@@ -8,6 +8,10 @@ const KEY_WEEKLY = () => {
   d.setUTCDate(d.getUTCDate() - day + 1);
   return `glowtris-weekly-${d.toISOString().slice(0,10)}`;
 };
+const KEY_CHALLENGE = () => {
+  const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  return `daily:${today}`;
+};
 const TOP = 10;
 const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
 const WEEKLY_TTL = 60 * 60 * 24 * 8; // 8 days
@@ -47,12 +51,21 @@ export default async function handler(req, res) {
   const weekly = KEY_WEEKLY();
 
   if (req.method === 'GET') {
+    const url = req.url ? new URL(req.url, 'http://localhost') : null;
+    const isChallenge = (req.query && (req.query.mode === 'daily' || req.query.challenge === '1')) || 
+                        (url && (url.searchParams.get('mode') === 'daily' || url.searchParams.get('challenge') === '1'));
+
+    if (isChallenge) {
+      const challengeBoard = await getBoard(KEY_CHALLENGE());
+      return res.status(200).json({ challengeBoard });
+    }
+
     const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily), getBoard(weekly)]);
     return res.status(200).json({ board, dailyBoard, weeklyBoard });
   }
 
   if (req.method === 'POST') {
-    const { name, score } = req.body;
+    const { name, score, mode } = req.body;
     if (!name || typeof score !== 'number') {
       return res.status(400).json({ error: 'name and score required' });
     }
@@ -60,6 +73,19 @@ export default async function handler(req, res) {
     if (!clean) return res.status(400).json({ error: 'invalid name' });
 
     const member = encodeURIComponent(`${clean}#${Date.now()}`);
+    const isChallenge = mode === 'daily' || req.body.challenge === 1;
+
+    if (isChallenge) {
+      const key = KEY_CHALLENGE();
+      await redis(`zadd/${key}/${score}/${member}`);
+      await redis(`expire/${key}/${DAILY_TTL}`);
+      
+      const challengeBoard = await getBoard(key);
+      const rankData = await redis(`zcount/${key}/${score + 1}/+inf`);
+      const challengeRank = (rankData.result || 0) + 1;
+
+      return res.status(200).json({ challengeBoard, challengeRank });
+    }
 
     // Write to all boards in parallel
     await Promise.all([
