@@ -170,6 +170,19 @@
 
 ---
 
+## ✅ Completed: v1.0.8.2 (Perf Mode: Full UI Effect Kill + Bug Fixes) — by Claude (2026-05-24)
+
+- [x] **Static background in low-perf**: `drawBackground()` now paints a solid `#000010` fill only — no stars, no nebulae, zero `createRadialGradient` calls per frame.
+- [x] **Canvas overlays bypassed**: `comboFlash`, `rainbowBorder`, `dangerPulse` (red vignette), `levelUpScanline` all guarded with `!lowPerfMode`; reset to 0 instantly on entry so no stale frames bleed through.
+- [x] **Flash & shake killed**: `triggerScreenFlash()` and `triggerAllClearFlash()` early-return in low-perf; `applyShake()` early-return in low-perf.
+- [x] **`triggerLevelUpVisuals()` no-op**: scale-pop animation on level/BPM labels skipped entirely in low-perf.
+- [x] **CSS animations off** (`html.low-perf`): `.dh-title` animation:none (static cyan text), `#screen-flash` display:none, `#level-bar` box-shadow:none + instant transition, `.new-best-badge`/`#combo-label` animation:none, `.scale-pop-active` animation:none.
+- [x] **Button effects stripped** (`html.low-perf`): `.action-btn` hover glow/scale/shimmer `::after` all off; `.tbtn` backdrop-filter and press box-shadow off; `.toggle-btn` hover/active glow off; `.toggle-btn.cb-active` box-shadow off.
+- [x] **Bug fix**: `nc`/`hc` undefined in desktop `initLayout()` — split-canvas refactor renamed `nc`→`ncD/ncM`, `hc`→`hcD/hcM` but left two bare references on lines 956-957; corrected to four split-canvas variables.
+- [x] Version label bumped to v1.0.8.2; README roadmap and TODO updated.
+
+---
+
 ## 🔮 Planned: v1.0.9 (Daily Challenge + Achievement System)
 
 ### Daily Challenge

@@ -618,16 +618,76 @@
   }
 
   /* ─── Low performance mode overrides ─── */
-  /* Only strip the most GPU-expensive per-frame operations.
-     Text glows, level-bar, and overlay blur are kept for design fidelity. */
+  /* Strip all GPU-expensive and cosmetic effects; keep only gameplay-critical UI. */
+
+  /* Kill all CSS animations and transitions on decorative elements */
   html.low-perf .dh-title {
     filter: none !important;
-    animation: gradient-flow 6s linear infinite !important;
+    animation: none !important;
+    background: var(--cyan) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
   }
-  /* Side panels are always visible during gameplay — remove their blur */
+  /* Side panels: no blur, no glow, no shadow */
   html.low-perf .panel {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    border-color: rgba(0,200,255,0.15) !important;
+  }
+  /* Level bar: no glow, instant width update */
+  html.low-perf #level-bar {
+    box-shadow: none !important;
+    transition: width 0.05s linear !important;
+  }
+  /* Screen flash: hidden entirely */
+  html.low-perf #screen-flash {
+    display: none !important;
+  }
+  /* Pulse animation on badges/labels */
+  html.low-perf .new-best-badge,
+  html.low-perf #combo-label {
+    animation: none !important;
+  }
+  /* action-btn: no hover glow, no scale spring, no shimmer sweep */
+  html.low-perf .action-btn {
+    transition: none !important;
+    text-shadow: none !important;
+  }
+  html.low-perf .action-btn:hover {
+    box-shadow: none !important;
+    transform: none !important;
+  }
+  html.low-perf .action-btn::after {
+    display: none !important;
+  }
+  /* scale-pop on level-up labels */
+  html.low-perf .scale-pop-active {
+    animation: none !important;
+  }
+  /* Mobile touch buttons: no glow on press, no backdrop-filter */
+  html.low-perf .tbtn {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    transition: background 0.05s ease !important;
+  }
+  html.low-perf .tbtn.pressed {
+    box-shadow: none !important;
+    transform: scale(0.93) !important;
+  }
+  html.low-perf .tbtn-rotate.pressed,
+  html.low-perf .tbtn-drop.pressed,
+  html.low-perf .tbtn-hold.pressed { box-shadow: none !important; }
+  /* Pause menu toggle buttons */
+  html.low-perf .toggle-btn {
+    transition: none !important;
+    box-shadow: none !important;
+  }
+  html.low-perf .toggle-btn:hover {
+    box-shadow: none !important;
+  }
+  html.low-perf .toggle-btn.cb-active {
     box-shadow: none !important;
   }
   /* Overlays (pause/game-over) only show when game is paused — keep their blur */
@@ -682,7 +742,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.0.8.1</span>
+    <span class="dh-version">v1.0.8.2</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -997,16 +1057,11 @@ function initStars() {
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
   if(lowPerfMode){
-    bgx.fillStyle='rgba(0,0,8,0.25)';bgx.fillRect(0,0,bgc.width,bgc.height);
-    // One simplified nebula for depth (2-stop gradient, no animation)
-    const neb=nebulae[0];
-    const ng=bgx.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r*0.8);
-    ng.addColorStop(0,`hsla(${neb.hue},70%,20%,0.04)`);ng.addColorStop(1,'transparent');
-    bgx.fillStyle=ng;bgx.fillRect(0,0,bgc.width,bgc.height);
-    // Stars
-    bgx.fillStyle='rgba(180,220,255,0.45)';bgx.beginPath();
-    for(const s of stars){s.y+=s.speed;if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}bgx.moveTo(s.x+s.r,s.y);bgx.arc(s.x,s.y,s.r,0,Math.PI*2);}
-    bgx.fill();return;
+    // Completely static dark background — no gradients, no stars, no nebulae.
+    // Saves all bg-canvas GPU work so every frame goes to gameplay rendering.
+    bgx.fillStyle='#000010';
+    bgx.fillRect(0,0,bgc.width,bgc.height);
+    return;
   }
   bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
 
@@ -1366,15 +1421,15 @@ function drawBoard(){
     }
   }
   if(flashTimer>0)flashTimer--;
-  if(comboFlash>0){
+  if(comboFlash>0&&!lowPerfMode){
     gctx.save();
     gctx.globalAlpha=(comboFlash/15)*0.28;
     gctx.fillStyle=comboFlashColor;
     gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
     gctx.restore();
     comboFlash--;
-  }
-  if(rainbowBorder>0){
+  } else if(lowPerfMode){ comboFlash=0; }
+  if(rainbowBorder>0&&!lowPerfMode){
     const hue=(Date.now()/4)%360;
     const a=(rainbowBorder/45)*0.9;
     gctx.save();
@@ -1386,8 +1441,8 @@ function drawBoard(){
     gctx.strokeRect(3,3,COLS*CELL-6,ROWS*CELL-6);
     gctx.restore();
     rainbowBorder--;
-  }
-  if(gameRunning&&!gamePaused){
+  } else if(lowPerfMode){ rainbowBorder=0; }
+  if(gameRunning&&!gamePaused&&!lowPerfMode){
     let topRow=ROWS;
     for(let r=0;r<ROWS;r++){if(board[r].some(v=>v!==null)){topRow=r;break;}}
     const dangerThreshold=Math.floor(ROWS*0.25); // row 5
@@ -1411,8 +1466,8 @@ function drawBoard(){
     } else {
       dangerPulse=0;
     }
-  }
-  if(levelUpScanline > 0){
+  } else if(lowPerfMode){ dangerPulse=0; }
+  if(levelUpScanline>0&&!lowPerfMode){
     const y = levelUpScanline * gc.height;
     gctx.save();
     const gr = gctx.createLinearGradient(0, y - 20, 0, y + 20);
@@ -1424,10 +1479,10 @@ function drawBoard(){
     gctx.shadowBlur = 24;
     gctx.fillRect(0, y - 10, gc.width, 20);
     gctx.restore();
-    
+
     levelUpScanline += 0.022; // speed
     if(levelUpScanline >= 1.0) levelUpScanline = 0;
-  }
+  } else if(lowPerfMode){ levelUpScanline = 0; }
 }
 
 function drawMiniPiece(ctx,piece,cw,ch){
@@ -1622,7 +1677,7 @@ function spawnHardDropParticles(){
 }
 
 function applyShake(){
-  if(animIntensity!=='full'){$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
+  if(animIntensity!=='full'||lowPerfMode){$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
   if(shakeFrames>0){
     const m=shakeFrames*shakeMag;
     const x=(Math.random()-.5)*m;
@@ -1820,7 +1875,7 @@ function sfxGameOver(){
   playBeep(130,'sawtooth',.6,.3,.75);
 }
 function triggerScreenFlash(){
-  if(animIntensity==='off')return;
+  if(animIntensity==='off'||lowPerfMode)return;
   $flash.style.transition='none';
   $flash.style.opacity='1';
   requestAnimationFrame(()=>{
@@ -1830,13 +1885,15 @@ function triggerScreenFlash(){
 }
 
 function triggerAllClearFlash(){
-  $flash.style.background='rgba(255,230,0,0.55)';
-  $flash.style.transition='none';$flash.style.opacity='1';
-  requestAnimationFrame(()=>{
-    $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
-    setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
-  });
-  if(animIntensity!=='off'){rainbowBorder=90;shakeFrames=30;shakeMag=0.9;}
+  if(!lowPerfMode){
+    $flash.style.background='rgba(255,230,0,0.55)';
+    $flash.style.transition='none';$flash.style.opacity='1';
+    requestAnimationFrame(()=>{
+      $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
+      setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
+    });
+  }
+  if(animIntensity!=='off'&&!lowPerfMode){rainbowBorder=90;shakeFrames=30;shakeMag=0.9;}
   [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
   if(animIntensity==='full'){
     for(let i=0;i<80;i++){
@@ -1964,6 +2021,7 @@ function loadSettings(){
 }
 
 function triggerLevelUpVisuals() {
+  if(lowPerfMode) return; // Skip all level-up cosmetics in perf mode
   const targetIds = ['level-display', 'level-display-m', 'bpm-display'];
   targetIds.forEach(id => {
     const el = document.getElementById(id);
