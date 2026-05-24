@@ -1102,9 +1102,22 @@ function _applyTouchCELL() {
   isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
   const availW  = W - (isMobile ? 32 : 56);
   const headerH = isMobile ? 52 : 30;   // #mobile-header rendered height
-  const ctrlH   = isMobile ? 188 : 218; // #touch-controls rendered height (3 rows + gaps + padding)
-  const frameH  = 40;                   // #app vertical padding + 3 flex gaps
-  const availH  = H - headerH - ctrlH - frameH;
+  const ctrlH   = isMobile ? 188 : 218; // #touch-controls rendered height
+
+  // Estimate safe area padding on PWAs (where env() resolves late after JS 기동)
+  const isPWA = navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const safeTop = isPWA ? 47 : 0;
+  const safeBottom = isPWA ? 34 : 0;
+
+  // #app vertical padding is max(8px, safe-area-inset)
+  const padTop = Math.max(8, safeTop);
+  const padBottom = Math.max(8, safeBottom);
+  const appPaddingV = padTop + padBottom;
+
+  // Two 8px flex gaps between #app children + 8px of safety breathing room at bottom
+  const gapsAndBreathing = 16 + 8;
+
+  const availH  = H - appPaddingV - headerH - ctrlH - gapsAndBreathing;
   if (availH <= 0) return;
 
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
