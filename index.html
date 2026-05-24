@@ -531,6 +531,8 @@
       box-shadow: 0 0 10px rgba(255, 0, 128, 0.25);
     }
   }
+  /* Colorblind active state — cyan glow to indicate it's ON */
+  .toggle-btn.cb-active { border-color:rgba(0,200,255,0.7); background:rgba(0,200,255,0.14); color:#fff; box-shadow:0 0 8px rgba(0,200,255,0.3); }
 
   /* ── Hide touch controls on mouse/trackpad devices ── */
   @media (pointer:fine) {
@@ -682,7 +684,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.0.6</span>
+    <span class="dh-version">v1.0.8</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -818,6 +820,9 @@ const SCORE_TABLE=[0,100,300,500,800];
 const TSPIN_SCORE=[400,800,1200,1600];
 const LEVEL_LINES=10;
 let lockMs=500;
+// Reverse map: color string → piece key (used for colorblind pattern lookup)
+const COLOR_TO_KEY={};
+for(const[k,v]of Object.entries(PIECES))COLOR_TO_KEY[v.color]=k;
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let board,current,next,held,canHold;
@@ -854,6 +859,8 @@ function setLowPerfMode(on){
 }
 let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50,ghostVisible=true;
+let colorblindMode=false;          // draws pattern overlay on each piece cell
+let animIntensity='full';          // 'full' | 'reduced' | 'off'
 let comboFlash=0,comboFlashColor='#00c8ff';
 let rainbowBorder=0;
 let dangerPulse=0;
@@ -1065,8 +1072,8 @@ function lockPiece(){
       ?TSPIN_SCORE[Math.min(cleared.length,3)]*level*mul
       :SCORE_TABLE[Math.min(cleared.length,4)]*level*mul;
     sfxLineClear(cleared.length);
-    if(tspin){sfxTSpin();shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}
-    if(combo>1){comboFlash=15;comboFlashColor=combo>=5?'#ff0080':combo>=3?'#a000ff':'#00c8ff';}
+    if(tspin){sfxTSpin();if(animIntensity==='full'){shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}}
+    if(combo>1&&animIntensity!=='off'){comboFlash=15;comboFlashColor=combo>=5?'#ff0080':combo>=3?'#a000ff':'#00c8ff';}
     addScore(pts,cleared.length,tspin);
     lines+=cleared.length;
     
@@ -1088,8 +1095,8 @@ function lockPiece(){
     setTimeout(()=>{
       for(const r of snap.slice().sort((a,b)=>a-b)){board.splice(r,1);board.unshift(Array(COLS).fill(null));}
       spawnLineClearParticles(snap);
-      if(snap.length>=4&&!tspin){shakeFrames=25;shakeMag=0.7;}
-      if(snap.length>=4){triggerScreenFlash();rainbowBorder=45;}
+      if(snap.length>=4&&!tspin&&animIntensity==='full'){shakeFrames=25;shakeMag=0.7;}
+      if(snap.length>=4){triggerScreenFlash();if(animIntensity!=='off')rainbowBorder=45;}
       // All-clear bonus: board completely empty
       if(board.every(row=>row.every(v=>v===null))){
         const bonus=2000*level;
@@ -1157,7 +1164,41 @@ function hexToRgb(hex){
   _rgbCache.set(hex,v);return v;
 }
 
-function drawCell(ctx,x,y,color,alpha=1,glow=1){
+// Draws a white symbol overlay on a cell for colorblind accessibility.
+// cs = cell pixel size (allows reuse in mini-preview canvases with different sizes).
+function drawCBPattern(ctx,px,py,cs,key){
+  ctx.save();
+  ctx.globalAlpha=0.62;
+  ctx.strokeStyle='rgba(255,255,255,0.85)';
+  ctx.lineWidth=Math.max(1,cs*0.09);
+  ctx.lineCap='round';
+  const m=cs*0.2,x1=px+m,y1=py+m,x2=px+cs-m,y2=py+cs-m;
+  const mx=px+cs*0.5,my=py+cs*0.5;
+  ctx.beginPath();
+  switch(key){
+    case'I': // ═ two horizontal bars
+      ctx.moveTo(x1,my-cs*0.14);ctx.lineTo(x2,my-cs*0.14);
+      ctx.moveTo(x1,my+cs*0.14);ctx.lineTo(x2,my+cs*0.14);break;
+    case'O': // ○ circle
+      ctx.arc(mx,my,cs*0.26,0,Math.PI*2);break;
+    case'T': // △ upward triangle
+      ctx.moveTo(mx,y1);ctx.lineTo(x2,y2);ctx.lineTo(x1,y2);ctx.closePath();break;
+    case'S': // / forward slash
+      ctx.moveTo(x2,y1);ctx.lineTo(x1,y2);break;
+    case'Z': // \ backward slash
+      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);break;
+    case'J': // ║ two vertical bars
+      ctx.moveTo(mx-cs*0.14,y1);ctx.lineTo(mx-cs*0.14,y2);
+      ctx.moveTo(mx+cs*0.14,y1);ctx.lineTo(mx+cs*0.14,y2);break;
+    case'L': // ✕ cross
+      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+      ctx.moveTo(x2,y1);ctx.lineTo(x1,y2);break;
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCell(ctx,x,y,color,alpha=1,glow=1,key=null){
   const s=CELL,px=x*s,py=y*s;
   const {r,g,b}=hexToRgb(color);
   ctx.save();ctx.globalAlpha=alpha;
@@ -1174,6 +1215,7 @@ function drawCell(ctx,x,y,color,alpha=1,glow=1){
   ctx.strokeStyle=`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},0.55)`;
   ctx.lineWidth=1;ctx.strokeRect(px+1.5,py+1.5,s-3,s-3);
   ctx.restore();
+  if(colorblindMode&&key)drawCBPattern(ctx,px,py,s,key);
 }
 
 function drawBoard(){
@@ -1198,7 +1240,7 @@ function drawBoard(){
       gctx.save();gctx.globalAlpha=0.5+0.5*Math.sin(t*Math.PI*4);
       gctx.fillStyle='#fff';if(!lowPerfMode){gctx.shadowColor='#fff';gctx.shadowBlur=28;}
       gctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);gctx.restore();
-    } else drawCell(gctx,c,r,board[r][c]);
+    } else drawCell(gctx,c,r,board[r][c],1,1,colorblindMode?COLOR_TO_KEY[board[r][c]]:null);
   }
   if(gameRunning&&!gamePaused&&current){
     const ghostY=getGhostY();
@@ -1257,7 +1299,7 @@ function drawBoard(){
       gctx.restore();
     }
     for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
-      if(current.shape[row][col]) drawCell(gctx,current.x+col,current.y+row,current.color,1,1.5);
+      if(current.shape[row][col]) drawCell(gctx,current.x+col,current.y+row,current.color,1,1.5,colorblindMode?current.key:null);
     }
     const {r,g,b}=hexToRgb(current.color);
     gc.style.borderColor=`rgba(${r},${g},${b},0.6)`;
@@ -1347,6 +1389,7 @@ function drawMiniPiece(ctx,piece,cw,ch){
     ctx.strokeStyle=`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},0.5)`;
     ctx.lineWidth=1;ctx.strokeRect(ox+col*cs+1.5,oy+row*cs+1.5,cs-3,cs-3);
     ctx.restore();
+    if(colorblindMode&&piece.key)drawCBPattern(ctx,ox+col*cs,oy+row*cs,cs,piece.key);
   }
 }
 
@@ -1363,6 +1406,7 @@ function drawHold(){
 const PAL=['#00c8ff','#a000ff','#ff0080','#ffe600','#00ff88'];
 
 function spawnLineClearParticles(rows){
+  if(animIntensity==='off')return;
   for(const row of rows) {
     particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*CELL*1.5,type:'radial-ring'});
     particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*CELL*2.3,type:'radial-ring'});
@@ -1380,7 +1424,7 @@ function spawnLineClearParticles(rows){
   }
 }
 function spawnLockParticles(){
-  if(!current)return;
+  if(!current||animIntensity==='off')return;
   const pCount = lowPerfMode ? 0 : (isMobile ? 1 : 2);
   if(pCount===0)return;
   for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
@@ -1394,7 +1438,7 @@ function spawnFloatingText(txt, x, y, color, size) {
   });
 }
 function spawnDropTrail() {
-  if(!current||lowPerfMode) return;
+  if(!current||lowPerfMode||animIntensity!=='full') return;
   const w = current.shape[0].length;
   const cx = (current.x + Math.random() * w) * CELL;
   const cy = current.y * CELL;
@@ -1464,6 +1508,7 @@ function updateParticles(){
 }
 
 function spawnHardDropParticles(){
+  if(animIntensity==='off')return;
   const cx=(current.x+current.shape[0].length/2)*CELL;
   const cy=(current.y+current.shape.length)*CELL;
   for(let i=0;i<22;i++)
@@ -1471,6 +1516,7 @@ function spawnHardDropParticles(){
 }
 
 function applyShake(){
+  if(animIntensity!=='full'){$app.style.transform='';shakeFrames=0;return;}
   if(shakeFrames>0){const m=shakeFrames*shakeMag;$app.style.transform=`translate(${(Math.random()-.5)*m}px,0)`;shakeFrames--;if(!shakeFrames)shakeMag=0.4;}
   else $app.style.transform='';
 }
@@ -1547,6 +1593,23 @@ function updateGhost(){
   const btn=document.getElementById('ov-ghost-btn');
   if(btn)btn.textContent=ghostVisible?'👻 GHOST ON':'👻 GHOST OFF';
   btn&&btn.classList.toggle('muted',!ghostVisible);
+}
+function updateColorblind(){
+  colorblindMode=!colorblindMode;
+  localStorage.setItem('glowTrisColorblind',colorblindMode?'1':'0');
+  const btn=document.getElementById('ov-cb-btn');
+  if(btn)btn.textContent=colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF';
+  btn&&btn.classList.toggle('cb-active',colorblindMode);
+  btn&&btn.classList.toggle('muted',!colorblindMode);
+  if(gameRunning&&!gamePaused)drawBoard();
+}
+function _animLabel(){return animIntensity==='full'?'✨ ANIM: FULL':animIntensity==='reduced'?'💫 ANIM: LOW':'🔲 ANIM: OFF';}
+function cycleAnimIntensity(){
+  animIntensity=animIntensity==='full'?'reduced':animIntensity==='reduced'?'off':'full';
+  localStorage.setItem('glowTrisAnim',animIntensity);
+  const btn=document.getElementById('ov-anim-btn');
+  if(btn)btn.textContent=_animLabel();
+  btn&&btn.classList.toggle('muted',animIntensity==='off');
 }
 
 const _n=s=>440*Math.pow(2,s/12);
@@ -1645,6 +1708,7 @@ function sfxGameOver(){
   playBeep(130,'sawtooth',.6,.3,.75);
 }
 function triggerScreenFlash(){
+  if(animIntensity==='off')return;
   $flash.style.transition='none';
   $flash.style.opacity='1';
   requestAnimationFrame(()=>{
@@ -1660,11 +1724,13 @@ function triggerAllClearFlash(){
     $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
     setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
   });
-  rainbowBorder=90;shakeFrames=30;shakeMag=0.9;
+  if(animIntensity!=='off'){rainbowBorder=90;shakeFrames=30;shakeMag=0.9;}
   [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
-  for(let i=0;i<80;i++){
-    const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
-    particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
+  if(animIntensity==='full'){
+    for(let i=0;i<80;i++){
+      const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
+      particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
+    }
   }
 }
 
@@ -1728,7 +1794,7 @@ function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
   score+=d*2;updateUI();
-  shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;
+  if(animIntensity==='full'){shakeFrames=Math.min(40,12+Math.floor(d*1.4));shakeMag=1.0;}
   spawnHardDropParticles();
   sfxHardDrop();
   lockPiece();
@@ -1776,6 +1842,8 @@ function loadSettings(){
   arr=parseInt(localStorage.getItem('glowTrisARR')||'50');
   lockMs=parseInt(localStorage.getItem('glowTrisLock')||'500');
   ghostVisible=localStorage.getItem('glowTrisGhost')!=='0';
+  colorblindMode=localStorage.getItem('glowTrisColorblind')==='1';
+  animIntensity=localStorage.getItem('glowTrisAnim')||'full';
   const icon=document.getElementById('mute-icon');
   const btn=document.getElementById('btn-mute');
   if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
@@ -1833,6 +1901,8 @@ function togglePause(){
         <div class="settings-box" style="width:100%">
           <button class="toggle-btn${muteAudio?' muted':''}" id="ov-mute-btn" onclick="toggleMute()">${muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON'}</button>
           <button class="toggle-btn${ghostVisible?'':' muted'}" id="ov-ghost-btn" onclick="updateGhost()">${ghostVisible?'👻 GHOST ON':'👻 GHOST OFF'}</button>
+          <button class="toggle-btn${colorblindMode?' cb-active':' muted'}" id="ov-cb-btn" onclick="updateColorblind()">${colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF'}</button>
+          <button class="toggle-btn${animIntensity==='off'?' muted':''}" id="ov-anim-btn" onclick="cycleAnimIntensity()">${_animLabel()}</button>
           <div class="settings-row">
             <span class="settings-lbl">DAS</span>
             <input type="range" class="neon-range" min="50" max="300" value="${das}" oninput="updateDAS(this.value)">

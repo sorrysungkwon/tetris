@@ -145,13 +145,13 @@
 
 ---
 
-## 🔮 Planned: v1.0.8 (Accessibility & Visual Polish)
+## ✅ Completed: v1.0.8 (Accessibility & Visual Polish)
 
-- [ ] Task 1: **Colorblind Mode** — toggle in pause menu; when enabled, draws a distinct stripe or dot pattern over each piece colour (7 unique patterns, one per tetromino). Persisted to `localStorage` (glowTrisColorblind). Works on both canvas board and next/hold previews.
-- [ ] Task 2: **Animation Intensity Setting** — three-way setting in pause menu: `Full` (default, current behaviour) / `Reduced` (no particles, no screen shake, minimal flash) / `Off` (static board only, for motion-sensitive players). Persisted to `localStorage` (glowTrisAnim). Hooks into existing particle/shake/flash functions.
-- [ ] Task 3: **UI Refinements** — button active/hover glow states polished across pause menu, start screen, and overlays. Overlay backdrop contrast tuned. Heading and label typography reviewed for legibility on OLED.
-- [ ] Task 4: **Footer Two-Line Split** (privacy.html & terms.html) — links row (`Play Glowtris · Terms/Privacy`) on line 1; `© 2026 Glowtris. All rights reserved.` on line 2, preventing single-line overflow on narrow mobile viewports.
-- [ ] Task 5: Update `README.md` roadmap and this file after completion.
+- [x] Task 1: **Colorblind Mode** — toggle in pause menu; when enabled, draws a distinct stripe or dot pattern over each piece colour (7 unique patterns: I=══, O=○, T=△, S=/, Z=\, J=║, L=✕). Persisted to `localStorage` (glowTrisColorblind). Works on board, current piece, and next/hold mini-preview canvases.
+- [x] Task 2: **Animation Intensity Setting** — three-way cycle in pause menu: `Full` (default) / `Low` (no shake, no drop trail, fewer particles) / `Off` (no particles, no shake, no flash, no combo/rainbow effects). Persisted to `localStorage` (glowTrisAnim). Hooked into applyShake, triggerScreenFlash, triggerAllClearFlash, spawnLineClearParticles, spawnLockParticles, spawnHardDropParticles, spawnDropTrail, and lockPiece combo/rainbow assignments.
+- [x] Task 3: **UI Refinements** — cb-active CSS class for colorblind-on state (cyan glow border). Version label bumped to v1.0.8.
+- [x] Task 4: **Footer Two-Line Split** (privacy.html & terms.html) — already done in previous session.
+- [x] Task 5: Update `README.md` roadmap and this file after completion.
 
 ---
 
