@@ -445,7 +445,7 @@
   .neon-input {
     background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.4);
     color:#fff; font-family:'Orbitron',monospace; font-size:12px; letter-spacing:2px;
-    padding:9px 14px; border-radius:6px; outline:none; width:100%; max-width:200px;
+    padding:9px 14px; border-radius:6px; outline:none; width:100%;
     text-align:center; margin-bottom:10px;
   }
   .neon-input:focus { border-color:var(--cyan); box-shadow:0 0 12px rgba(0,200,255,0.3); }
@@ -1999,30 +1999,37 @@ function endGame(){
 
     let badgesHTML = '';
     if(pbBadges.length>0 || newStreak>0){
-      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;">
+      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
         ${newStreak>0?`<div class="streak-badge">🔥 ${newStreak} STREAK</div>`:''}
         ${pbBadges.join(' ')}
       </div>`;
     } else if(displayMaxCombo>1){
-      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:6px 0;">
+      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
         <div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>
       </div>`;
     }
 
     $overlay.innerHTML=`
       <div class="glass-panel">
-        <h1 style="font-size:20px;margin-bottom:10px">GAME OVER</h1>
-        ${isNewBest?'<div class="new-best-badge">★ NEW BEST ★</div>':''}
-        <div class="sub" style="margin-bottom:2px">SCORE: ${score.toLocaleString()}</div>
-        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600;margin-bottom:6px">BEST: ${hiScore.toLocaleString()}</div>
-        ${histHTML}
-        ${badgesHTML}
-        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="margin-top:10px;width:100%;box-sizing:border-box">
-        <div class="btn-row" style="width:100%">
-          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
-          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        <!-- Group 1: title -->
+        <h1 style="font-size:20px;margin-bottom:18px">GAME OVER</h1>
+        ${isNewBest?'<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>':''}
+        <!-- Group 2: score stats -->
+        <div style="width:100%;text-align:center;margin-bottom:${badgesHTML?'16px':'22px'}">
+          <div class="sub" style="margin-bottom:3px">SCORE: ${score.toLocaleString()}</div>
+          <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${hiScore.toLocaleString()}</div>
         </div>
-        <div id="lb-result" style="margin-top:10px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
+        <!-- Group 3: badges (only if present) -->
+        ${badgesHTML?`<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>`:''}
+        <!-- Group 4: name input + action buttons -->
+        <div style="width:100%">
+          <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
+          <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
+            <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
+            <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+          </div>
+        </div>
+        <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
       </div>`;
     $overlay.style.display='flex';
     const inp=document.getElementById('lb-name');
