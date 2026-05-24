@@ -145,6 +145,34 @@
 
 ---
 
+## 🔮 Planned: v1.0.8 (Accessibility & Visual Polish)
+
+- [ ] Task 1: **Colorblind Mode** — toggle in pause menu; when enabled, draws a distinct stripe or dot pattern over each piece colour (7 unique patterns, one per tetromino). Persisted to `localStorage` (glowTrisColorblind). Works on both canvas board and next/hold previews.
+- [ ] Task 2: **Animation Intensity Setting** — three-way setting in pause menu: `Full` (default, current behaviour) / `Reduced` (no particles, no screen shake, minimal flash) / `Off` (static board only, for motion-sensitive players). Persisted to `localStorage` (glowTrisAnim). Hooks into existing particle/shake/flash functions.
+- [ ] Task 3: **UI Refinements** — button active/hover glow states polished across pause menu, start screen, and overlays. Overlay backdrop contrast tuned. Heading and label typography reviewed for legibility on OLED.
+- [ ] Task 4: **Footer Two-Line Split** (privacy.html & terms.html) — links row (`Play Glowtris · Terms/Privacy`) on line 1; `© 2026 Glowtris. All rights reserved.` on line 2, preventing single-line overflow on narrow mobile viewports.
+- [ ] Task 5: Update `README.md` roadmap and this file after completion.
+
+---
+
+## 🔮 Planned: v1.0.9 (Daily Challenge + Achievement System)
+
+### Daily Challenge
+- [ ] Task 1: **Date-Seeded RNG** — seeded PRNG (mulberry32) initialised from `YYYYMMDD` string so every player worldwide draws the same piece sequence each day.
+- [ ] Task 2: **Daily Gate** — check `localStorage` key `glowTrisDailyDate`; if already played today, show "Come back tomorrow" overlay with remaining time countdown instead of starting the game.
+- [ ] Task 3: **Start Screen Entry Point** — `DAILY CHALLENGE` button below `START GAME` on start screen; switches game into daily mode for that session.
+- [ ] Task 4: **Daily Leaderboard** — separate Redis key `daily:<YYYYMMDD>`; score-based (higher = better); TODAY tab only; rank shown after submission; leaderboard accessible from start screen.
+- [ ] Task 5: **Challenge Game-Over Screen** — shows 🏅 badge, rank, and a dedicated share card with "Glowtris Daily Challenge — [date]" header, score, rank, and lines.
+
+### Achievement System
+- [ ] Task 6: **Achievement Definitions** — 20 milestones stored as a static array; each has `id`, `label`, `description`, `icon` (emoji), and `condition` function evaluated at game-over and on key events (line clear, T-spin, All-clear, etc.). Examples: first Glowtris (4-line), T-spin Triple, All-clear, Combo 10+, reach Level 15, 1 000 lines lifetime, play 10 games, 5-game win streak, submit to leaderboard, complete first Daily Challenge.
+- [ ] Task 7: **Unlock Trigger** — check applicable achievements after each game-over and on milestone events in-game; newly unlocked achievements fire a toast popup (bottom of screen, 2.5s) with icon + label + gold particle burst.
+- [ ] Task 8: **Persistence** — unlocked achievement IDs saved to `localStorage` (glowTrisAchievements JSON array); lifetime cumulative stats (`totalLines`, `totalGames`, `totalGlowtris`) tracked separately (glowTrisLifetime).
+- [ ] Task 9: **STATS Overlay Badge Gallery** — new "ACHIEVEMENTS" section at the bottom of the STATS overlay; locked badges shown as dim grey, unlocked as coloured with unlock date tooltip.
+- [ ] Task 10: Update `README.md` roadmap and this file after completion.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
