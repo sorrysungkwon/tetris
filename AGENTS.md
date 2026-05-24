@@ -1,6 +1,11 @@
 # Instructions for Antigravity
 > Read this file at the start of every session.
 
+## 🚨 SAFETY HARNESS: STRICT CONSTRAINT RULES (Must follow!)
+- **NO Autonomous Merging/Tagging/Destructive Acts**: NEVER perform any git merges to `master`, `git tag` creations/pushes, `git reset --hard`, or `git push --force` autonomously. You MUST present your design/findings to the user first and obtain EXPLICIT verbal approval (e.g., "merge it" or "tag it") in the chat before running these commands.
+- **Respect Multi-Branch Previews**: When the user wants to compare multiple implementation routes (e.g., Option A vs Option B), do NOT rush to resolve them or force a single solution into `master`. Maintain the branch isolation, ensure preview environments are fully built and functioning, and act strictly as an observer/helper until a decision is declared by the user.
+- **No Over-Engineering**: Adhere strictly to the requested feature scope. Do not perform unsolicited massive refactoring or overwrite unrelated layout sections.
+
 # Agent Guidelines
 
 > **Naming note:** This project was previously located at `/home/ubuntu/projects/tetris` and called "Neon Tetris". It was renamed to **Glowtris** at v1.0.1. As of 2026-05-23, all "tetris" references have been purged from files, config, and git history. Always use "Glowtris" / "glowtris" — never "tetris".
@@ -10,4 +15,10 @@
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).
 - **Unified Workspace Integration**: Keep all technical specifications, tasks, and walkthrough reports inside the shared project directory (using `TODO.md` and `WALKTHROUGH.md` in the project root) to maintain 100% transparent and synchronized collaboration with Claude Code.
 - Keep single file structure (`index.html` only)
+- **Vercel Deployments & Preview Domains**:
+  - Production URL: https://glowtris.vercel.app
+  - Option A Preview URL (Arithmetic branch `hotfix/option-a-arithmetic`): https://prevglow-a.vercel.app
+  - Option B Preview URL (Polling branch `hotfix/option-b-polling`): https://prevglow-b.vercel.app
+  - These preview domains are connected via Vercel to help verify specific bug fix approaches in real-time.
 - After every task: `git add . && git commit -m "description" && git push`
+- **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`

@@ -1,12 +1,16 @@
 # Glowtris
 
-> **DEPLOY RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production.
+> **DEPLOY & RELEASE RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production. When completing/releasing a new version, always tag it: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
 
 > **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
 
 A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://glowtris.vercel.app
+
+### Vercel Preview Environments (For testing specific bug fixes)
+- **Option A (Arithmetic fix):** https://prevglow-a.vercel.app (Connected to branch `hotfix/option-a-arithmetic`)
+- **Option B (Polling fix):** https://prevglow-b.vercel.app (Connected to branch `hotfix/option-b-polling`)
 
 ## Stack
 
