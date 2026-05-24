@@ -212,30 +212,16 @@
     animation: scale-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
   }
 
-  /* Game wrap */
-  .game-wrap {
-    position:relative;
-    flex:0 0 auto;
-    width:var(--game-w, 300px);
-    height:var(--game-h, 600px);
-  }
+  /* Game wrap — sized by JS inline styles on the canvases (Safari safe) */
+  .game-wrap { position:relative; flex:0 0 auto; }
   #game-canvas {
     display:block;
-    width:100%;
-    height:100%;
     border:2px solid rgba(0,200,255,0.35);
     border-radius:4px;
     box-shadow:0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12);
     touch-action:none;
   }
-  #particle-canvas {
-    position:absolute;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    pointer-events:none;
-  }
+  #particle-canvas { position:absolute; top:0; left:0; pointer-events:none; }
 
   /* Overlay */
   #overlay {
@@ -1136,8 +1122,10 @@ function _applyTouchCELL() {
   const gameH = ROWS * CELL;
   document.documentElement.style.setProperty('--game-w', gameW + 'px');
   document.documentElement.style.setProperty('--game-h', gameH + 'px');
-  gc.width  = COLS * CELL; gc.height = ROWS * CELL;
-  pc.width  = COLS * CELL; pc.height = ROWS * CELL;
+  gc.width  = gameW; gc.height = gameH;
+  gc.style.width = gameW + 'px'; gc.style.height = gameH + 'px';
+  pc.width  = gameW; pc.height = gameH;
+  pc.style.width = gameW + 'px'; pc.style.height = gameH + 'px';
   if (isMobile) {
     const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
     const miniH = Math.round(miniW * 0.8);
@@ -1168,7 +1156,9 @@ function initLayout() {
     document.documentElement.style.setProperty('--game-w', (COLS * CELL) + 'px');
     document.documentElement.style.setProperty('--game-h', (ROWS * CELL) + 'px');
     gc.width  = COLS * CELL; gc.height = ROWS * CELL;
+    gc.style.width = (COLS * CELL) + 'px'; gc.style.height = (ROWS * CELL) + 'px';
     pc.width  = COLS * CELL; pc.height = ROWS * CELL;
+    pc.style.width = (COLS * CELL) + 'px'; pc.style.height = (ROWS * CELL) + 'px';
     ncD.width = 4 * CELL;    ncD.height = 3 * CELL;
     ncD.style.width = (4 * CELL) + 'px'; ncD.style.height = (3 * CELL) + 'px';
     ncM.width = 4 * CELL;    ncM.height = 3 * CELL;
