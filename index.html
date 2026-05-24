@@ -1092,13 +1092,23 @@ const _rgbCache = new Map();
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
 
-function _applyTouchCELL(gameRow) {
-  const availH = gameRow.clientHeight - 8;
-  if (availH <= 0) return;
-  const W = window.innerWidth;
+function _applyTouchCELL() {
+  const W = window.innerWidth, H = window.innerHeight;
   isMobile = W < 600;
+  
+  // Calculate available height stably by subtracting header and controls from viewport height.
+  // This breaks any height feedback loops caused by canvas resizing inside game-row.
+  const mh = document.getElementById('mobile-header');
+  const tc = document.getElementById('touch-controls');
+  const mhH = (mh && mh.style.display !== 'none') ? mh.offsetHeight : 0;
+  const tcH = (tc && tc.style.display !== 'none') ? tc.offsetHeight : 0;
+  
+  const availH = H - mhH - tcH - 24; // 24px safe margin for padding
+  if (availH <= 0) return;
+  
   const availW = W - (isMobile ? 32 : 56);
   const newCELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
+  
   if (newCELL === CELL && gc.width === COLS * CELL) return;
   CELL = newCELL;
   _cellSprites = {}; // Invalidate sprites — cell size changed
@@ -1121,14 +1131,13 @@ function initLayout() {
   bgc.width = W; bgc.height = H;
 
   if (window.matchMedia('(pointer:coarse)').matches) {
-    const gameRow = document.getElementById('game-row');
-    // ResizeObserver fires whenever #game-row's rendered height changes — no hardcoded
-    // arithmetic, so CSS changes to header/controls/padding never break the calculation.
+    // Observe document.body size changes (independent of game board height)
+    // to avoid infinite ResizeObserver loops.
     if (!_touchLayoutObserver) {
-      _touchLayoutObserver = new ResizeObserver(entries => _applyTouchCELL(entries[0].target));
-      _touchLayoutObserver.observe(gameRow);
+      _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
+      _touchLayoutObserver.observe(document.body);
     }
-    _applyTouchCELL(gameRow);
+    _applyTouchCELL();
   } else {
     if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
     CELL = 30;
