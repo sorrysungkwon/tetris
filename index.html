@@ -213,15 +213,29 @@
   }
 
   /* Game wrap */
-  .game-wrap { position:relative; flex:0 0 auto; }
+  .game-wrap {
+    position:relative;
+    flex:0 0 auto;
+    width:var(--game-w, 300px);
+    height:calc(2 * var(--game-w, 300px));
+  }
   #game-canvas {
     display:block;
+    width:100%;
+    height:100%;
     border:2px solid rgba(0,200,255,0.35);
     border-radius:4px;
     box-shadow:0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12);
     touch-action:none;
   }
-  #particle-canvas { position:absolute; top:0; left:0; pointer-events:none; }
+  #particle-canvas {
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+  }
 
   /* Overlay */
   #overlay {
@@ -611,11 +625,11 @@
     #game-row { flex:1 1 0; min-height:0; align-items:center; justify-content:center; }
 
     #touch-controls {
-      width:var(--game-w, 300px);
+      width: min(340px, 92vw);
       padding-bottom:16px;
       gap:8px;
     }
-    #mobile-header { width: var(--game-w, 300px); max-width: calc(100vw - 24px); }
+    #mobile-header { width: min(340px, 92vw); }
 
     /* Row 1 — system: small, space-between */
     #tc-sys {
@@ -654,7 +668,8 @@
 
   /* ── TABLET (≥ 600px touch): scale up buttons ── */
   @media (min-width:600px) and (pointer:coarse) {
-    #touch-controls { width: var(--game-w, 480px); gap:10px; }
+    #touch-controls { width: 340px; gap:10px; }
+    #mobile-header { width: 340px; }
 
     #tc-sys .tbtn  { height:34px; font-size:20px; padding:0 22px; }
 
@@ -1120,7 +1135,9 @@ function _applyTouchCELL() {
     const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
     const miniH = Math.round(miniW * 0.8);
     ncM.width = miniW; ncM.height = miniH;
+    ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
     hcM.width = miniW; hcM.height = miniH;
+    hcM.style.width = miniW + 'px'; hcM.style.height = miniH + 'px';
   }
   if (gameRunning) drawBoard();
 }
@@ -1141,12 +1158,17 @@ function initLayout() {
   } else {
     if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
     CELL = 30;
+    document.documentElement.style.setProperty('--game-w', (COLS * CELL) + 'px');
     gc.width  = COLS * CELL; gc.height = ROWS * CELL;
     pc.width  = COLS * CELL; pc.height = ROWS * CELL;
     ncD.width = 4 * CELL;    ncD.height = 3 * CELL;
+    ncD.style.width = (4 * CELL) + 'px'; ncD.style.height = (3 * CELL) + 'px';
     ncM.width = 4 * CELL;    ncM.height = 3 * CELL;
+    ncM.style.width = (4 * CELL) + 'px'; ncM.style.height = (3 * CELL) + 'px';
     hcD.width = 4 * CELL;    hcD.height = 3 * CELL;
+    hcD.style.width = (4 * CELL) + 'px'; hcD.style.height = (3 * CELL) + 'px';
     hcM.width = 4 * CELL;    hcM.height = 3 * CELL;
+    hcM.style.width = (4 * CELL) + 'px'; hcM.style.height = (3 * CELL) + 'px';
   }
 }
 
