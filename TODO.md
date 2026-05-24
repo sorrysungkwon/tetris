@@ -206,6 +206,33 @@
 
 ---
 
+## ⚠️ Open Bug: iOS PWA Canvas Oversizing on Cold Start
+
+**Symptom:** On iOS PWA (Add to Home Screen), the game canvas loads **larger than intended** at cold start. After the first resize event (orientation change, etc.) the size corrects itself. Safari browser is unaffected.
+
+**Root cause (diagnosed by Claude, 2026-05-24):**
+- `env(safe-area-inset-*)` is not resolved in JS even after one `requestAnimationFrame` on iOS PWA cold start
+- The current RAF "correction" in `_applyTouchCELL()` reads `appPadV = 16px` (safe-area = 0) instead of the real `~81px`
+- This makes the canvas **larger** than the sync estimate, not smaller
+- The `resize` skip guard (`bgc.width/height` tolerance check, line ~1222) then blocks self-correction because safe-area settling doesn't change `window.innerHeight`
+
+**Full analysis and both fix options are documented in `WALKTHROUGH.md` → "Open Bug Report" section.**
+
+### Option A — Revert to Simple Arithmetic (Recommended)
+- Remove `ResizeObserver`, `_touchLayoutDone` flag, and the RAF correction
+- Replace `_applyTouchCELL()` with a hardcoded formula: `availH = H - headerH - ctrlH - frameH`
+  - `headerH = isMobile ? 52 : 30`, `ctrlH = isMobile ? 188 : 218`, `frameH = 40`
+- Remove (or raise) the `resize` skip guard so orientation-change corrections always fire
+- **Safe-area is not subtracted in JS** — CSS `#app padding` already handles it visually
+
+### Option B — Poll Until `env()` Resolves
+- Keep the `appEl.clientHeight - appPadV` formula but replace the single RAF with a polling loop that retries until `paddingTop > 8px`
+- See `WALKTHROUGH.md` for sample code
+
+**Files to edit:** `index.html` only (layout section, `_applyTouchCELL` + `initLayout` + `resize` handler)
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
