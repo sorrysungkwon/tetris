@@ -1095,22 +1095,34 @@ const _rgbCache = new Map();
 let _touchLayoutObserver = null;
 
 function _applyTouchCELL(gameRow) {
-  const availH = gameRow.clientHeight - 8;
+  // Zone A (top): #mobile-header — already subtracted via flex layout
+  // Zone B-top: #game-row fills remaining space → clientHeight is the canvas budget
+  // Zone B-bottom: #touch-controls — already subtracted via flex layout
+  const availH = gameRow.clientHeight - 8; // 8px breathing room
   if (availH <= 0) return;
   const W = window.innerWidth;
   isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
   const availW = W - (isMobile ? 32 : 56);
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
-  if (newCELL === CELL && gc.width === COLS * CELL) return;
+  const gameW = COLS * newCELL;
+  const gameH = ROWS * newCELL;
+
+  // ALWAYS update CSS variable + canvas CSS display size — prevents Safari "small
+  // clipped rectangle" bug where early return fires on first load when CELL default
+  // (30) matches the computed value and gc.width (300) already matches COLS*CELL.
+  document.documentElement.style.setProperty('--game-w', gameW + 'px');
+  gc.style.width  = gameW + 'px';
+  gc.style.height = gameH + 'px';
+  pc.style.width  = gameW + 'px';
+  pc.style.height = gameH + 'px';
+
+  // Skip expensive buffer resize + sprite invalidation when nothing changed
+  if (newCELL === CELL && gc.width === gameW) return;
+
   CELL = newCELL;
   _cellSprites = {}; // Invalidate sprites — cell size changed
-  const gameW = COLS * CELL;
-  const gameH = ROWS * CELL;
-  document.documentElement.style.setProperty('--game-w', gameW + 'px');
-  gc.width  = COLS * CELL; gc.height = ROWS * CELL;
-  gc.style.width = gameW + 'px'; gc.style.height = gameH + 'px';
-  pc.width  = COLS * CELL; pc.height = ROWS * CELL;
-  pc.style.width = gameW + 'px'; pc.style.height = gameH + 'px';
+  gc.width  = gameW; gc.height = gameH;
+  pc.width  = gameW; pc.height = gameH;
   if (isMobile) {
     const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
     const miniH = Math.round(miniW * 0.8);
