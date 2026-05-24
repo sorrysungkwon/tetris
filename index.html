@@ -1118,7 +1118,12 @@ function _applyTouchCELL() {
   const mhH = mh ? mh.offsetHeight : 0;
   const tcH = tc ? tc.offsetHeight : 0;
   
-  const availH = H - mhH - tcH - 24; // 24px safe margin for padding
+  // Account for iOS Safe Area Insets in standalone web apps / PWAs
+  const style = getComputedStyle(document.documentElement);
+  const safeTop = parseFloat(style.getPropertyValue('--safe-top')) || 0;
+  const safeBottom = parseFloat(style.getPropertyValue('--safe-bottom')) || 0;
+  
+  const availH = H - mhH - tcH - safeTop - safeBottom - 24; // 24px safe margin for padding
   if (availH <= 0) return;
   
   const availW = W - (isMobile ? 32 : 56);
