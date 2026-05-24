@@ -538,6 +538,10 @@
 
   /* ── ALL TOUCH DEVICES: iPhone-style 3-row stacked layout ── */
   @media (pointer:coarse) {
+    /* Let the game row fill whatever vertical space remains between header and controls. */
+    /* ResizeObserver in JS reads clientHeight and sets CELL — no hardcoded arithmetic. */
+    #game-row { flex:1 1 0; min-height:0; align-items:center; justify-content:center; }
+
     #touch-controls {
       width:var(--game-w, 300px);
       padding-bottom:16px;
@@ -893,47 +897,51 @@ const $flash    = document.getElementById('screen-flash');
 const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
+let _touchLayoutObserver = null;
+
+function _applyTouchCELL(gameRow) {
+  const availH = gameRow.clientHeight;
+  if (!availH) return;
+  const W = window.innerWidth;
+  isMobile = W < 600;
+  const availW = W - (isMobile ? 24 : 48);
+  const newCELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
+  if (newCELL === CELL && gc.width === COLS * CELL) return;
+  CELL = newCELL;
+  const gameW = COLS * CELL;
+  document.documentElement.style.setProperty('--game-w', gameW + 'px');
+  gc.width  = COLS * CELL; gc.height = ROWS * CELL;
+  pc.width  = COLS * CELL; pc.height = ROWS * CELL;
+  if (isMobile) {
+    const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
+    const miniH = Math.round(miniW * 0.8);
+    ncM.width = miniW; ncM.height = miniH;
+    hcM.width = miniW; hcM.height = miniH;
+  }
+  if (gameRunning) drawBoard();
+}
+
 function initLayout() {
   const W = window.innerWidth, H = window.innerHeight;
   isMobile = W < 600;
-  const isTouch = window.matchMedia('(pointer:coarse)').matches;
+  bgc.width = W; bgc.height = H;
 
-  if (isTouch) {
-    const _safeEl = document.createElement('div');
-    _safeEl.style.cssText = 'position:fixed;top:0;left:0;pointer-events:none;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)';
-    document.body.appendChild(_safeEl);
-    const _safeCs = getComputedStyle(_safeEl);
-    const safeTop    = parseFloat(_safeCs.paddingTop)    || 0;
-    const safeBottom = parseFloat(_safeCs.paddingBottom) || 0;
-    document.body.removeChild(_safeEl);
-
-    // header + controls (sys30/34 + act54/64 + move72/84 + pad16 + 2×gap8/10) + app padding/gaps
-    const headerH  = isMobile ? 52 : 30;
-    const ctrlH    = isMobile ? 188 : 218;
-    // #app padding is max(8, safeX); safeX is subtracted separately, so only
-    // the portion NOT covered by safeX counts here: max(0, 8 - safeX).
-    const frameH   = Math.max(0, 8 - safeTop) + Math.max(0, 8 - safeBottom) + 16;
-    const availH   = H - headerH - ctrlH - frameH - safeTop - safeBottom;
-    const availW   = W - (isMobile ? 24 : 48);
-    CELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
-    const gameW = COLS * CELL;
-    document.documentElement.style.setProperty('--game-w', gameW + 'px');
-    if (isMobile) {
-      // Resize mobile mini canvases proportionally
-      const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
-      const miniH = Math.round(miniW * 0.8);
-      ncM.width = miniW; ncM.height = miniH;
-      hcM.width = miniW; hcM.height = miniH;
+  if (window.matchMedia('(pointer:coarse)').matches) {
+    const gameRow = document.getElementById('game-row');
+    // ResizeObserver fires whenever #game-row's rendered height changes — no hardcoded
+    // arithmetic, so CSS changes to header/controls/padding never break the calculation.
+    if (!_touchLayoutObserver) {
+      _touchLayoutObserver = new ResizeObserver(entries => _applyTouchCELL(entries[0].target));
+      _touchLayoutObserver.observe(gameRow);
     }
+    _applyTouchCELL(gameRow);
   } else {
     CELL = 30;
+    gc.width  = COLS * CELL; gc.height = ROWS * CELL;
+    pc.width  = COLS * CELL; pc.height = ROWS * CELL;
+    nc.width  = 4 * CELL;    nc.height = 3 * CELL;
+    hc.width  = 4 * CELL;    hc.height = 3 * CELL;
   }
-
-  gc.width  = COLS * CELL;
-  gc.height = ROWS * CELL;
-  pc.width  = COLS * CELL;
-  pc.height = ROWS * CELL;
-  bgc.width = W; bgc.height = H;
 }
 
 let _resizeTimer;
@@ -2234,9 +2242,6 @@ function closeStats(){
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 initLayout();
-// Re-run after first paint: env(safe-area-inset-*) may return 0 during synchronous
-// script execution on iOS before the browser has computed safe area values.
-requestAnimationFrame(()=>{initLayout();initStars();if(gameRunning)drawBoard();});
 initStars();
 loadSettings();
 hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');

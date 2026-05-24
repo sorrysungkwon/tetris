@@ -126,6 +126,15 @@
 
 ---
 
+## ✅ Completed: Robust Touch Layout Fix — by Claude (2026-05-24)
+
+- [x] CSS: `#game-row { flex:1 1 0; min-height:0; align-items:center; justify-content:center }` added under `@media (pointer:coarse)` — row fills all remaining space between header and controls.
+- [x] JS: Replaced fragile manual `headerH`/`ctrlH`/`frameH` arithmetic in `initLayout()` with a `ResizeObserver` on `#game-row`; `_applyTouchCELL()` reads actual `clientHeight` and sets CELL.
+- [x] Removed `requestAnimationFrame` re-layout call (no longer needed — ResizeObserver fires after layout is complete, handles iOS safe-area timing automatically).
+- [x] Updated README.md roadmap and this file.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
