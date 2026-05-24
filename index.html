@@ -1509,10 +1509,59 @@ function updateParticles(){
 
 function spawnHardDropParticles(){
   if(animIntensity==='off')return;
-  const cx=(current.x+current.shape[0].length/2)*CELL;
+  const col=current.color;
+  const w=current.shape[0].length;
+  const cx=(current.x+w/2)*CELL;
   const cy=(current.y+current.shape.length)*CELL;
-  for(let i=0;i<22;i++)
-    particles.push({x:cx,y:cy,vx:(Math.random()-.5)*9,vy:Math.random()*-7-1,life:1,decay:.05,color:current.color,size:Math.random()*5+2,type:'spark'});
+  const full=animIntensity==='full';
+
+  // 1. Flat shockwave rings expanding along the floor
+  if(full&&!lowPerfMode){
+    particles.push({x:cx,y:cy,vx:0,vy:0,life:1,decay:0.05,color:'#ffffff',size:5,maxRadius:w*CELL*1.0,aspectRatio:0.16,type:'ring'});
+    particles.push({x:cx,y:cy,vx:0,vy:0,life:1,decay:0.035,color:col,size:3.5,maxRadius:w*CELL*1.8,aspectRatio:0.2,type:'ring'});
+  }
+
+  // 2. Central upward burst — sparks from the full bottom edge of the piece
+  const burstCount=full?(isMobile?32:48):14;
+  for(let i=0;i<burstCount;i++){
+    const sp=Math.random()*13+5;
+    const angle=Math.PI+Math.random()*Math.PI; // upper hemisphere
+    particles.push({
+      x:cx+(Math.random()-.5)*w*CELL*0.9,y:cy,
+      vx:Math.cos(angle)*sp,vy:Math.sin(angle)*sp,
+      life:1,decay:Math.random()*0.022+0.028,
+      color:Math.random()<0.35?'#ffffff':col,
+      size:Math.random()*6+2,type:'spark'
+    });
+  }
+
+  // 3. Floor spray — low-angle debris kicking left & right
+  const sprayCount=full?18:0;
+  for(let i=0;i<sprayCount;i++){
+    const dir=Math.random()<0.5?1:-1;
+    particles.push({
+      x:cx+(Math.random()-.5)*w*CELL*0.7,y:cy,
+      vx:dir*(Math.random()*16+7),vy:-(Math.random()*2.5+0.5),
+      life:1,decay:Math.random()*0.028+0.035,
+      color:Math.random()<0.4?'#ffffff':col,
+      size:Math.random()*3+1,type:'spark'
+    });
+  }
+
+  // 4. Star glints for extra sparkle (full only)
+  if(full&&!lowPerfMode){
+    for(let i=0;i<10;i++){
+      const a=Math.PI+Math.random()*Math.PI;
+      const sp=Math.random()*9+3;
+      particles.push({
+        x:cx+(Math.random()-.5)*w*CELL*0.8,y:cy,
+        vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+        life:1,decay:0.022,
+        color:Math.random()<0.5?'#ffffff':col,
+        size:Math.random()*5+3,type:'star'
+      });
+    }
+  }
 }
 
 function applyShake(){
