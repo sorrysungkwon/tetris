@@ -1204,9 +1204,17 @@ function nudgeUI(dx, dy) {
 }
 
 let _resizeTimer;
-window.addEventListener('resize',()=>{
+window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
-  _resizeTimer=setTimeout(()=>{initLayout();initStars();if(gameRunning)drawBoard();},150);
+  _resizeTimer = setTimeout(() => {
+    // Skip if the actual window dimensions haven't changed — iOS PWA fires spurious
+    // resize events when canvas/layout changes, which would re-trigger _applyTouchCELL
+    // and create a 0.1 s flicker loop. bgc dimensions are updated in initLayout() so
+    // they always reflect the size from the last real layout pass.
+    // Allow a 5 px tolerance for dvh micro-fluctuations that aren't real orientation changes.
+    if (window.innerWidth === bgc.width && Math.abs(window.innerHeight - bgc.height) <= 5) return;
+    initLayout(); initStars(); if(gameRunning) drawBoard();
+  }, 150);
 });
 
 // ─── Background starfield ─────────────────────────────────────────────────────
