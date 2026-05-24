@@ -226,11 +226,12 @@
   /* Overlay */
   #overlay {
     position:fixed; inset:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    flex-direction:column; align-items:center; justify-content:center;
     background:rgba(0,0,20,0.86);
     backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
-    z-index:10;
+    z-index:20;
     padding:12px 8px;
+    overflow-y:auto;
   }
   #overlay h1 {
     font-size:26px; font-weight:900; letter-spacing:5px;
@@ -643,6 +644,7 @@
 <canvas id="bg-canvas"></canvas>
 <div id="screen-flash"></div>
 <div id="perf-indicator">⚡ PERF MODE</div>
+<div id="overlay" style="display:none"></div>
 
 <div id="htp-overlay" style="display:none" onclick="closeHowToPlay()">
   <div id="htp-box" onclick="event.stopPropagation()">
@@ -730,7 +732,6 @@
     <div class="game-wrap">
       <canvas id="game-canvas"></canvas>
       <canvas id="particle-canvas"></canvas>
-      <div id="overlay"></div>
       <div id="score-popup"></div>
     </div>
 
