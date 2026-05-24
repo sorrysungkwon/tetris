@@ -601,17 +601,28 @@
   /* ─── Performance mode indicator ─── */
   #perf-indicator {
     position: fixed;
-    bottom: max(10px, env(safe-area-inset-bottom, 0px));
-    right: 12px;
+    bottom: max(14px, env(safe-area-inset-bottom, 0px));
+    right: 14px;
     z-index: 999;
     font-family: 'Orbitron', monospace;
-    font-size: 7px;
+    font-size: 9px;
+    font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: rgba(255,200,0,0.55);
+    color: #ffcc00;
+    text-shadow: 0 0 8px rgba(255,200,0,0.9), 0 0 16px rgba(255,160,0,0.5);
+    background: rgba(255,160,0,0.12);
+    border: 1px solid rgba(255,200,0,0.35);
+    border-radius: 6px;
+    padding: 4px 8px;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 1.2s ease;
+    transition: opacity 0.4s ease;
+    animation: perf-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes perf-pulse {
+    0%, 100% { text-shadow: 0 0 8px rgba(255,200,0,0.9), 0 0 16px rgba(255,160,0,0.5); }
+    50%       { text-shadow: 0 0 14px rgba(255,220,0,1),  0 0 28px rgba(255,160,0,0.8); }
   }
 
   /* ─── Low performance mode overrides ─── */
@@ -1849,7 +1860,7 @@ function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
   score+=d*2;updateUI();
-  if(animIntensity==='full'){shakeFrames=Math.min(10,4+Math.floor(d*0.4));shakeMag=2.8;shakeAllDir=true;}
+  if(animIntensity==='full'){shakeFrames=Math.min(12,5+Math.floor(d*0.45));shakeMag=2.8;shakeAllDir=true;}
   spawnHardDropParticles();
   sfxHardDrop();
   lockPiece();
