@@ -287,9 +287,9 @@
   .mini-cv { border:1px solid var(--border); border-radius:3px; display:block; margin:0 auto; background:rgba(0,0,15,0.55); }
 
   /* ════════════════════════════════
-     MOBILE  (< 600 px)
+     MOBILE  (< 600 px) / TOUCH
   ════════════════════════════════ */
-  @media (max-width:599px) {
+  @media (max-width:599px), (pointer:coarse) {
     #desktop-header { display:none; }
     #left-panel, #right-panel { display:none; }
 
@@ -485,7 +485,7 @@
   .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:9px; color:rgba(0,200,255,0.38); letter-spacing:1px; }
   .hist-sep { opacity:0.3; }
   .lb-inner { width:100%; max-height:180px; overflow-y:auto; margin:8px 0 14px; }
-  @media (max-width:599px) { .lb-inner { max-height:130px; } }
+  @media (max-width:599px), (pointer:coarse) { .lb-inner { max-height:130px; } }
   .lb-table { width:100%; border-collapse:collapse; display:table; table-layout:fixed; }
   .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.1); }
   .lb-table td { padding:7px 4px; font-size:10px; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -615,7 +615,7 @@
       padding-bottom:16px;
       gap:8px;
     }
-    #mobile-header { width:calc(100vw - 24px); }
+    #mobile-header { width: var(--game-w, 300px); max-width: calc(100vw - 24px); }
 
     /* Row 1 — system: small, space-between */
     #tc-sys {
@@ -654,7 +654,7 @@
 
   /* ── TABLET (≥ 600px touch): scale up buttons ── */
   @media (min-width:600px) and (pointer:coarse) {
-    #touch-controls { width:min(480px, 90vw); gap:10px; }
+    #touch-controls { width: var(--game-w, 480px); gap:10px; }
 
     #tc-sys .tbtn  { height:34px; font-size:20px; padding:0 22px; }
 
@@ -1094,20 +1094,20 @@ let _touchLayoutObserver = null;
 
 function _applyTouchCELL() {
   const W = window.innerWidth, H = window.innerHeight;
-  isMobile = W < 600;
+  isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
   
   // Calculate available height stably by subtracting header and controls from viewport height.
   // This breaks any height feedback loops caused by canvas resizing inside game-row.
   const mh = document.getElementById('mobile-header');
   const tc = document.getElementById('touch-controls');
-  const mhH = (mh && mh.style.display !== 'none') ? mh.offsetHeight : 0;
-  const tcH = (tc && tc.style.display !== 'none') ? tc.offsetHeight : 0;
+  const mhH = mh ? mh.offsetHeight : 0;
+  const tcH = tc ? tc.offsetHeight : 0;
   
   const availH = H - mhH - tcH - 24; // 24px safe margin for padding
   if (availH <= 0) return;
   
   const availW = W - (isMobile ? 32 : 56);
-  const newCELL = Math.max(18, Math.floor(Math.min(availW / COLS, availH / ROWS)));
+  const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
   
   if (newCELL === CELL && gc.width === COLS * CELL) return;
   CELL = newCELL;
@@ -1127,7 +1127,7 @@ function _applyTouchCELL() {
 
 function initLayout() {
   const W = window.innerWidth, H = window.innerHeight;
-  isMobile = W < 600;
+  isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
   bgc.width = W; bgc.height = H;
 
   if (window.matchMedia('(pointer:coarse)').matches) {
