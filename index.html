@@ -1099,38 +1099,63 @@ const $flash    = document.getElementById('screen-flash');
 const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
-let _touchLayoutObserver = null;
-let _touchLayoutDone = false; // true after first RAF pass on iOS PWA (safe-area now correct)
-
+// Option A: hardcoded arithmetic — deterministic, no timing/loop issues.
+// env(safe-area-inset-*) does NOT resolve synchronously in JS on iOS PWA cold start.
+// CSS handles safe areas via #app padding for all platforms; this function replicates
+// those values in JS so the canvas is sized correctly before CSS env() resolves.
+//
+// Safe area reference (portrait, PWA/standalone):
+//   iOS iPhone — navigator.standalone === true, detected by screen portrait height (CSS px):
+//     Dynamic Island  (iPhone 14 Pro / 15 / 16 / 17 series)     ph >= 852 → top 59  bottom 34
+//     Large notch     (iPhone 12 / 13 / 14 standard & Plus)      ph >= 844 → top 47  bottom 34
+//     Small notch     (iPhone X/XS/XR/11/11 Pro / 12-13 mini)    ph >= 780 → top 44  bottom 34
+//     No notch        (iPhone SE 1st/2nd/3rd, iPhone 8 & older)  ph <  780 → top 20  bottom  0
+//   iOS iPad — navigator.standalone === true, detected by screen portrait height:
+//     Face ID  (iPad Pro all / Air 4-5 / mini 6-7 / iPad 10th+)  ph >= 1100 → top 24  bottom 20
+//     Home btn (iPad 9th gen and older)                           ph <  1100 → top 20  bottom  0
+//   Android PWA (Galaxy S/Z Fold / Pixel Fold / etc.) — navigator.standalone is false;
+//     env() resolves correctly in Android Chrome, so JS uses 0 and CSS #app handles it.
+//   Desktop / PC / laptop — no safe areas; CSS #app padding falls back to 8px.
+// headerH: #mobile-header rendered height | ctrlH: #touch-controls rendered height
 function _applyTouchCELL() {
-  const appEl = document.getElementById('app');
-  const mhEl  = document.getElementById('mobile-header');
-  const tcEl  = document.getElementById('touch-controls');
-  const W = window.innerWidth;
+  const W = window.innerWidth, H = window.innerHeight;
   isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
-  const availW = W - (isMobile ? 32 : 56);
-  const mhH = (mhEl && getComputedStyle(mhEl).display !== 'none') ? mhEl.offsetHeight : 0;
-  const tcH = tcEl ? tcEl.offsetHeight : 0;
+  const availW  = W - (isMobile ? 32 : 56);
+  const headerH = isMobile ? 52 : 30;   // #mobile-header rendered height
+  const ctrlH   = isMobile ? 188 : 218; // #touch-controls rendered height
 
-  let availH;
-  if (!_touchLayoutDone && navigator.standalone === true) {
-    // iOS PWA cold start: env(safe-area-inset-*) returns 0 during synchronous execution,
-    // so the normal formula oversizes the canvas significantly.
-    // Use 65% of window.innerHeight as a close estimate — empirically matches the true
-    // available height on all iPhone models (touch controls ≈23%, safe areas ≈9%,
-    // gaps ≈3% = ~35% overhead). RAF will correct it with accurate safe-area values.
-    availH = window.innerHeight * 0.65;
-  } else {
-    // After first paint (safe-area correct) or non-iOS-PWA: use precise formula.
-    const appPadV = appEl
-      ? parseFloat(getComputedStyle(appEl).paddingTop) + parseFloat(getComputedStyle(appEl).paddingBottom)
-      : 0;
-    // 16 = two 8px flex gaps (#app gap:8px × 2); 8 = breathing room so board never clips
-    availH = (appEl ? appEl.clientHeight - appPadV : window.innerHeight) - mhH - tcH - 16 - 8;
+  // iOS PWA only: env() doesn't resolve at cold start — estimate from screen dimensions.
+  // Android PWA / browser / desktop: env() works correctly; CSS handles padding, JS reads 0.
+  const isIOSPWA = navigator.standalone === true;
+  let safeTop = 0, safeBottom = 0;
+  if (isIOSPWA) {
+    const isIPad = /iPad/.test(navigator.userAgent) ||
+      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+    const ph = Math.max(screen.width, screen.height); // portrait height in CSS px
+    if (isIPad) {
+      safeTop    = ph >= 1100 ? 24 : 20; // Face ID iPad : Home button iPad
+      safeBottom = ph >= 1100 ? 20 :  0;
+    } else {
+      // iPhone — keyed on portrait CSS px height
+      if      (ph >= 852) { safeTop = 59; safeBottom = 34; } // Dynamic Island
+      else if (ph >= 844) { safeTop = 47; safeBottom = 34; } // Large notch
+      else if (ph >= 780) { safeTop = 44; safeBottom = 34; } // Small notch / mini
+      else                { safeTop = 20; safeBottom =  0; } // No notch (SE / 8)
+    }
   }
+
+  // #app vertical padding is max(8px, safe-area-inset)
+  const padTop = Math.max(8, safeTop);
+  const padBottom = Math.max(8, safeBottom);
+  const appPaddingV = padTop + padBottom;
+
+  // Two 8px flex gaps between #app children + 8px of safety breathing room at bottom
+  const gapsAndBreathing = 16 + 8;
+
+  const availH  = H - appPaddingV - headerH - ctrlH - gapsAndBreathing;
   if (availH <= 0) return;
 
-  const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
+  const newCELL = Math.max(10, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
   const gameW = COLS * newCELL;
   const gameH = ROWS * newCELL;
 
@@ -1166,25 +1191,8 @@ function initLayout() {
   bgc.width = W; bgc.height = H;
 
   if (window.matchMedia('(pointer:coarse)').matches) {
-    if (!_touchLayoutObserver) {
-      // Evaluate at call time, not parse time, to avoid cold-start race conditions.
-      const isPWA = navigator.standalone === true ||
-                    window.matchMedia('(display-mode: standalone)').matches;
-      if (isPWA) {
-        // PWA standalone: iOS does not fully respect min-height:0 on flex items, so
-        // any ResizeObserver on #game-row or #app creates a feedback loop — canvas CSS
-        // height change → game-row resize → observer fires → repeat at ~0.1 s.
-        // Fix: no observer. Sync call uses 65%-estimate; RAF re-runs with correct safe-area.
-        requestAnimationFrame(() => { _touchLayoutDone = true; _applyTouchCELL(); });
-        _touchLayoutObserver = 'pwa'; // truthy sentinel — prevents re-registration
-      } else {
-        // Safari browser / non-PWA: min-height:0 is respected, so the observer is safe.
-        // #game-row shrinks when safe-area insets are applied post-first-paint, giving
-        // _applyTouchCELL a chance to re-calculate with correct env() values.
-        _touchLayoutObserver = new ResizeObserver(() => _applyTouchCELL());
-        _touchLayoutObserver.observe(document.getElementById('game-row'));
-      }
-    }
+    // Option A: no ResizeObserver, no RAF — just call directly.
+    // Simple arithmetic is timing-independent and never creates feedback loops.
     _applyTouchCELL();
   } else {
     if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
@@ -1220,13 +1228,9 @@ function nudgeUI(dx, dy) {
 let _resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
+  // Option A: no skip guard — hardcoded arithmetic is idempotent so re-running is safe.
+  // Orientation changes (portrait↔landscape) must always re-run to update CELL.
   _resizeTimer = setTimeout(() => {
-    // Skip if the actual window dimensions haven't changed.
-    // iOS PWA: dvh changes by ~34 px when the home indicator shows/hides, firing spurious
-    // resize events that would re-trigger _applyTouchCELL and loop. Using a 40 px height
-    // tolerance absorbs these without masking real orientation changes (which always flip
-    // innerWidth dramatically). bgc dimensions reflect the last real initLayout() pass.
-    if (window.innerWidth === bgc.width && Math.abs(window.innerHeight - bgc.height) <= 40) return;
     initLayout(); initStars(); if(gameRunning) drawBoard();
   }, 150);
 });

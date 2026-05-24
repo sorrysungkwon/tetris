@@ -227,19 +227,19 @@
 ### 🛠️ Active Task Checklist: Build & Verify Both Options
 We must fully implement and polish the actual code on both branches (which are currently templates/drafts):
 
-- [ ] **Task 1: Complete Option A (Arithmetic Fix) on `hotfix/option-a-arithmetic`**
+- [x] **Task 1: Complete Option A (Arithmetic Fix) on `hotfix/option-a-arithmetic`**
   - Checkout `hotfix/option-a-arithmetic`
   - Remove all ResizeObserver, RAF races, and PWA observers from `initLayout()`
   - Implement standard hardcoded layout calculations `availH = H - headerH - ctrlH - frameH`
   - Completely relax the `resize` skip guard to guarantee orientation and size self-corrections
   - Verify and deploy to `prevglow-a.vercel.app`
-- [ ] **Task 2: Complete Option B (Polling Fix) on `hotfix/option-b-polling`**
+- [x] **Task 2: Complete Option B (Polling Fix) on `hotfix/option-b-polling`**
   - Checkout `hotfix/option-b-polling`
   - Keep dynamic layout calculations `appEl.clientHeight - appPadV`
   - Implement a recursive RAF polling loop (`_waitForSafeArea`) retrying up to 15 frames (~250ms) on iOS PWA cold start
   - Increase the `resize` skip guard threshold to 60px to absorb home indicator dvh jumps
   - Verify and deploy to `prevglow-b.vercel.app`
-- [ ] **Task 3: Compare and present results**
+- [x] **Task 3: Compare and present results**
   - Facilitate user testing of both PWA instances and gather feedback before master merge
 
 ---
