@@ -16,3 +16,4 @@
   - Option B Preview URL (Polling branch `hotfix/option-b-polling`): https://prevglow-b.vercel.app
   - These preview domains are connected via Vercel to help verify specific bug fix approaches in real-time.
 - After every task: `git add . && git commit -m "description" && git push`
+- **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`

@@ -1,6 +1,6 @@
 # Glowtris
 
-> **DEPLOY RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production.
+> **DEPLOY & RELEASE RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production. When completing/releasing a new version, always tag it: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
 
 > **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
 
