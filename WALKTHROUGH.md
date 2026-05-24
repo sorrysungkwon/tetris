@@ -76,6 +76,10 @@ We added a dedicated, isolated Redis key generator and processing branches to ha
 
 **Status:** ⚠️ Unresolved — needs a fix decision from the next agent.
 
+**Vercel Preview Environments (For testing these specific bug fixes):**
+- **Option A (Arithmetic fix):** https://prevglow-a.vercel.app (Connected to branch `hotfix/option-a-arithmetic`)
+- **Option B (Polling fix):** https://prevglow-b.vercel.app (Connected to branch `hotfix/option-b-polling`)
+
 **Symptom:** When Glowtris is launched as an iOS PWA (Add to Home Screen), the game canvas loads **larger than intended** on cold start. After interacting or triggering a resize event, the canvas snaps to the correct size. Safari browser (non-PWA) is unaffected.
 
 ---

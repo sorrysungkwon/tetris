@@ -3,7 +3,7 @@
 ## 🚨 Behavioral Guidelines (Must read first!)
 - **Single File Rule**: Always maintain the single `index.html` structure. No external frontend libraries allowed.
 - **English-Only Rule**: All code changes, comments, logs, documentation, and Git commit messages MUST be written entirely in English.
-- **Workflow Integrity**: Before starting any task, read this file and `README.md` first. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then execute `git add . && git commit -m "description" && git push`.
+- **Workflow Integrity**: Before starting any task, read this file and `README.md` first. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then execute `git add . && git commit -m "description" && git push`. When releasing a new version, always create and push an annotated tag: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
 
 ---
 
