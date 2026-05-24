@@ -1093,9 +1093,7 @@ const _rgbCache = new Map();
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 let _touchLayoutObserver = null;
-// iOS PWA standalone: navigator.standalone is true; (display-mode:standalone) covers Android.
-const _isPWA = navigator.standalone === true ||
-               window.matchMedia('(display-mode: standalone)').matches;
+let _touchLayoutDone = false; // true after first RAF pass on iOS PWA (safe-area now correct)
 
 function _applyTouchCELL() {
   const appEl = document.getElementById('app');
@@ -1106,15 +1104,23 @@ function _applyTouchCELL() {
   const availW = W - (isMobile ? 32 : 56);
   const mhH = (mhEl && getComputedStyle(mhEl).display !== 'none') ? mhEl.offsetHeight : 0;
   const tcH = tcEl ? tcEl.offsetHeight : 0;
-  // Subtract #app's computed padding (reads env(safe-area-inset-*) correctly after first
-  // paint — returns 0 during synchronous execution but #game-row's ResizeObserver re-fires
-  // when safe-area CSS is applied, so this path runs again with correct values).
-  // appEl.clientHeight is stable (height:100dvh border-box), so availH never feeds back.
-  const appPadV = appEl
-    ? parseFloat(getComputedStyle(appEl).paddingTop) + parseFloat(getComputedStyle(appEl).paddingBottom)
-    : 0;
-  // 16 = two 8px flex gaps (#app gap:8px × 2); 8 = breathing room so board never clips
-  const availH = (appEl ? appEl.clientHeight - appPadV : window.innerHeight) - mhH - tcH - 16 - 8;
+
+  let availH;
+  if (!_touchLayoutDone && navigator.standalone === true) {
+    // iOS PWA cold start: env(safe-area-inset-*) returns 0 during synchronous execution,
+    // so the normal formula oversizes the canvas significantly.
+    // Use 65% of window.innerHeight as a close estimate — empirically matches the true
+    // available height on all iPhone models (touch controls ≈23%, safe areas ≈9%,
+    // gaps ≈3% = ~35% overhead). RAF will correct it with accurate safe-area values.
+    availH = window.innerHeight * 0.65;
+  } else {
+    // After first paint (safe-area correct) or non-iOS-PWA: use precise formula.
+    const appPadV = appEl
+      ? parseFloat(getComputedStyle(appEl).paddingTop) + parseFloat(getComputedStyle(appEl).paddingBottom)
+      : 0;
+    // 16 = two 8px flex gaps (#app gap:8px × 2); 8 = breathing room so board never clips
+    availH = (appEl ? appEl.clientHeight - appPadV : window.innerHeight) - mhH - tcH - 16 - 8;
+  }
   if (availH <= 0) return;
 
   const newCELL = Math.max(18, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
@@ -1154,14 +1160,15 @@ function initLayout() {
 
   if (window.matchMedia('(pointer:coarse)').matches) {
     if (!_touchLayoutObserver) {
-      if (_isPWA) {
+      // Evaluate at call time, not parse time, to avoid cold-start race conditions.
+      const isPWA = navigator.standalone === true ||
+                    window.matchMedia('(display-mode: standalone)').matches;
+      if (isPWA) {
         // PWA standalone: iOS does not fully respect min-height:0 on flex items, so
         // any ResizeObserver on #game-row or #app creates a feedback loop — canvas CSS
         // height change → game-row resize → observer fires → repeat at ~0.1 s.
-        // Fix: no observer. Instead, re-run after first paint so env(safe-area-inset-*)
-        // values are available (they return 0 during synchronous JS execution).
-        // Subsequent orientation/resize changes are handled by the window.resize listener.
-        requestAnimationFrame(_applyTouchCELL);
+        // Fix: no observer. Sync call uses 65%-estimate; RAF re-runs with correct safe-area.
+        requestAnimationFrame(() => { _touchLayoutDone = true; _applyTouchCELL(); });
         _touchLayoutObserver = 'pwa'; // truthy sentinel — prevents re-registration
       } else {
         // Safari browser / non-PWA: min-height:0 is respected, so the observer is safe.
@@ -1207,12 +1214,12 @@ let _resizeTimer;
 window.addEventListener('resize', () => {
   clearTimeout(_resizeTimer);
   _resizeTimer = setTimeout(() => {
-    // Skip if the actual window dimensions haven't changed — iOS PWA fires spurious
-    // resize events when canvas/layout changes, which would re-trigger _applyTouchCELL
-    // and create a 0.1 s flicker loop. bgc dimensions are updated in initLayout() so
-    // they always reflect the size from the last real layout pass.
-    // Allow a 5 px tolerance for dvh micro-fluctuations that aren't real orientation changes.
-    if (window.innerWidth === bgc.width && Math.abs(window.innerHeight - bgc.height) <= 5) return;
+    // Skip if the actual window dimensions haven't changed.
+    // iOS PWA: dvh changes by ~34 px when the home indicator shows/hides, firing spurious
+    // resize events that would re-trigger _applyTouchCELL and loop. Using a 40 px height
+    // tolerance absorbs these without masking real orientation changes (which always flip
+    // innerWidth dramatically). bgc dimensions reflect the last real initLayout() pass.
+    if (window.innerWidth === bgc.width && Math.abs(window.innerHeight - bgc.height) <= 40) return;
     initLayout(); initStars(); if(gameRunning) drawBoard();
   }, 150);
 });
