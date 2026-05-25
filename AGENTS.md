@@ -28,6 +28,14 @@
   4. Production deploys automatically on merge
   > ⚠️ NEVER open a PR to `master` without first verifying on `preview`. Always confirm with the user that preview looks good before proceeding.
 
+## Vercel Project Info
+
+- **Team slug**: `sgkwon-team` (renamed from `seonqwer-3337s-projects` on 2026-05-25)
+- **Team ID**: `team_pb1objuXoHlJIv67jumHZrg8`
+- **Project**: `glowtris` / `prj_V1lhSONnxAM9K2hpk5VLtemldWnm`
+- **Dashboard**: https://vercel.com/sgkwon-team/glowtris
+- **Ignored Build Step**: **CLEARED** (set to `null` on 2026-05-25). Do NOT re-add `git diff HEAD^ HEAD --quiet` — Vercel uses shallow clones where `HEAD^` is unavailable, so the command always exits 0 and skips every build.
+
 ## 🚨 DEPLOYMENT DISCIPLINE — Minimize Deployments (applies to ALL agents incl. Claude Code)
 
 Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL deployments until midnight UTC. Every agent must treat each deployment as expensive.
@@ -36,6 +44,7 @@ Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL d
 1. **NEVER run `vercel`, `vercel deploy`, or `vercel --prod` manually via CLI** — the GitHub integration auto-deploys on every `git push`. Running the CLI on top doubles the count.
 2. **NEVER push micro-fixes directly to `preview`** — e.g. "adjust color → push → check → adjust again → push" burns 3+ deployments for one tweak. Do ALL iteration on a `feature/*` branch first.
 3. **NEVER push to `preview` more than once per feature** — accumulate every change in `feature/*`, test locally, then do a single merge-to-preview when the feature is truly complete.
+4. **NEVER push docs-only commits to `preview` separately** — bundle docs updates with the code commit they describe.
 
 ### Required habits:
 - **Batch all changes**: finish the entire feature (including all fine-tuning) on `feature/*` before merging to `preview`.
@@ -45,3 +54,56 @@ Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL d
 
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
+- **After merging preview → master via PR**: always sync preview back: `git checkout preview && git merge master && git push origin preview`
+
+## 🚨 GITHUB ACTIONS & VERCEL INTEGRATION — NEVER REPEAT THESE MISTAKES
+
+These rules exist because of an incident on 2026-05-25 where bad GitHub Actions config + excessive CLI usage hit BOTH GitHub's deployment rate limit AND Vercel's 100/day deployment cap simultaneously.
+
+### 1. NEVER use the GitHub Deployment API in Actions workflows
+
+```js
+// ❌ FORBIDDEN
+await github.rest.repos.createDeployment({ ... });
+await github.rest.repos.createDeploymentStatus({ ... });
+```
+The Vercel GitHub App already creates one GitHub Deployment record per push. Doubling these hits GitHub's deployment rate limit ("deployment rate limited - retry 24 hours").
+
+```js
+// ✅ CORRECT — use Commit Status API only
+await github.rest.repos.createCommitStatus({ state: 'pending', context: 'Vercel / Preview', ... });
+```
+
+### 2. Vercel 100/day limit counts EVERYTHING
+
+CANCELED deployments count. CLI deployments count. Empty commits count. When limit is hit, ALL deployments block until midnight UTC. Recovery: wait for midnight UTC, then check with `vercel ls --scope sgkwon-team`.
+
+### 3. NEVER set `commandForIgnoringBuildStep` to `git diff HEAD^ HEAD --quiet`
+
+Vercel uses shallow clones — `HEAD^` doesn't exist → exits 0 → skips every build silently. Field is cleared (`null`). Leave it empty.
+
+### 4. Use stable TEAM ID and PROJECT ID in API calls — never the slug
+
+- Team ID: `team_pb1objuXoHlJIv67jumHZrg8` (permanent)
+- Project ID: `prj_V1lhSONnxAM9K2hpk5VLtemldWnm` (permanent)
+
+Slug (`sgkwon-team`) can change; these IDs never do. Use IDs in all curl/API calls.
+
+### 5. Vercel Deployment Checks — no action needed
+
+Deployment Checks gate production domain aliasing only. Our PR-based workflow (preview verification → user approves → PR merge) provides the same gate manually. Leave Vercel Dashboard → Settings → Deployment Checks empty.
+
+## 🔁 Mandatory Release Workflow (no exceptions)
+
+```
+feature/xxx  →  preview  →  PR to master  →  master  →  (tag if versioned)
+```
+
+1. Create `feature/xxx`, develop and iterate locally
+2. When 100% done: `git add . && git commit && git push origin feature/xxx`
+3. Merge to preview: `git checkout preview && git merge feature/xxx && git push origin preview`
+4. Verify at **https://prevglow.vercel.app** — confirm with user
+5. Open PR to master (only after user confirms preview is OK)
+6. User approves and merges PR → production auto-deploys
+7. Tag if versioned: `git tag -a vX.Y.Z -m "..." && git push origin vX.Y.Z`
+8. Sync preview: `git checkout preview && git merge master && git push origin preview`
