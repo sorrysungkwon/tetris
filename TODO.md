@@ -219,7 +219,7 @@
 **Full analysis and both fix options are documented in `WALKTHROUGH.md` → "Open Bug Report" / "The Great Fumbling & Deployment Incident" sections.**
 
 ### 🚨 The Great Fumbling & Deployment Incident (2026-05-24)
-- **Fumbling:** The agent (Antigravity) mistakenly merged Option A directly to master and bumped version to `v1.0.9.1` before the user could test/compare both options. Following the user's order ("아니 뒤로 돌아가"), master was rolled back to `f0a414d` and the `v1.0.9.1` tag deleted.
+- **Fumbling:** The agent (Antigravity) mistakenly merged Option A directly to master and bumped version to `v1.0.9.1` before the user could test/compare both options. Following the user's order ("roll it back"), master was rolled back to `f0a414d` and the `v1.0.9.1` tag deleted.
 - **Rescue:** The branch previews originally returned 404. The agent checked out both branches locally, ran manual Vercel builds (`vercel --yes`), and assigned the custom domain aliases (`vercel alias set`) so that both options are fully accessible at:
   - **Option A (Arithmetic):** https://prevglow-a.vercel.app
   - **Option B (Polling):** https://prevglow-b.vercel.app

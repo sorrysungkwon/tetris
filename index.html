@@ -971,6 +971,32 @@ let lockMs=500;
 const COLOR_TO_KEY={};
 for(const[k,v]of Object.entries(PIECES))COLOR_TO_KEY[v.color]=k;
 
+// ─── localStorage keys ────────────────────────────────────────────────────────
+// All keys in one place — prevents typos and makes future renaming a one-line change.
+const LS = {
+  HI:           'glowTrisHi',
+  HISTORY:      'glowTrisHistory',
+  STREAK:       'glowTrisStreak',
+  MAX_COMBO:    'glowTrisMaxCombo',
+  TOTAL_GAMES:  'glowTrisTotalGames',
+  TOTAL_SCORE:  'glowTrisTotalScore',
+  BEST_LEVEL:   'glowTrisBestLevel',
+  TOTAL_LINES:  'glowTrisTotalLines',
+  MAX_LINES:    'glowTrisMaxLines',
+  LIFETIME:     'glowTrisLifetime',
+  DAILY_DATE:   'glowTrisDailyDate',
+  NAME:         'glowTrisName',
+  MUTE:         'glowTrisMute',
+  DAS:          'glowTrisDAS',
+  ARR:          'glowTrisARR',
+  LOCK:         'glowTrisLock',
+  GHOST:        'glowTrisGhost',
+  COLORBLIND:   'glowTrisColorblind',
+  ANIM:         'glowTrisAnim',
+  LOW_PERF:     'glowTrisLowPerf',
+  ACHIEVEMENTS: 'glowTrisAchievements',
+};
+
 // ─── Achievement definitions ───────────────────────────────────────────────────
 const ACHIEVEMENTS = [
   { id: 'first_game', label: 'First Stack', description: 'Complete your first game', icon: '🧱' },
@@ -1048,8 +1074,8 @@ function setLowPerfMode(on){
   const ind=document.getElementById('perf-indicator');
   if(ind)ind.style.opacity=on?'1':'0';
   // Persist so the next game (and next session) starts in the right mode immediately.
-  if(on) localStorage.setItem('glowTrisLowPerf','1');
-  else   localStorage.removeItem('glowTrisLowPerf');
+  if(on) localStorage.setItem(LS.LOW_PERF,'1');
+  else   localStorage.removeItem(LS.LOW_PERF);
 }
 let lastWasRotate=false;
 let muteAudio=false,das=150,arr=50,ghostVisible=true;
@@ -1345,13 +1371,13 @@ function lockPiece(){
     lines+=cleared.length;
     
     // Update lifetime stats and achievements
-    const lifetime = JSON.parse(localStorage.getItem('glowTrisLifetime') || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+    const lifetime = JSON.parse(localStorage.getItem(LS.LIFETIME) || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
     lifetime.totalLines = (lifetime.totalLines || 0) + cleared.length;
     if (cleared.length === 4) {
       lifetime.totalGlowtris = (lifetime.totalGlowtris || 0) + 1;
       unlockAchievement('glowtris_1');
     }
-    localStorage.setItem('glowTrisLifetime', JSON.stringify(lifetime));
+    localStorage.setItem(LS.LIFETIME, JSON.stringify(lifetime));
     
     if (tspin) {
       unlockAchievement('tspin_1');
@@ -1405,7 +1431,7 @@ function lockPiece(){
 }
 
 function addScore(pts,n,tspin=false){
-  score+=pts;if(score>hiScore){hiScore=score;localStorage.setItem('glowTrisHi',hiScore);}
+  score+=pts;if(score>hiScore){hiScore=score;localStorage.setItem(LS.HI,hiScore);}
   updateUI();showScorePopup(pts,n,tspin);
   
   if (score >= 50000) unlockAchievement('score_50k');
@@ -1955,7 +1981,7 @@ function getAudioCtx(){
 function toggleMute(){
   muteAudio=!muteAudio;
   if(masterGain)masterGain.gain.value=muteAudio?0:1;
-  localStorage.setItem('glowTrisMute',muteAudio?'1':'0');
+  localStorage.setItem(LS.MUTE,muteAudio?'1':'0');
   const icon=document.getElementById('mute-icon');
   const btn=document.getElementById('btn-mute');
   if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
@@ -1965,27 +1991,27 @@ function toggleMute(){
 }
 
 function updateDAS(v){
-  das=parseInt(v);localStorage.setItem('glowTrisDAS',v);
+  das=parseInt(v);localStorage.setItem(LS.DAS,v);
   const el=document.getElementById('ov-das-val');if(el)el.textContent=v+'ms';
 }
 function updateARR(v){
-  arr=parseInt(v);localStorage.setItem('glowTrisARR',v);
+  arr=parseInt(v);localStorage.setItem(LS.ARR,v);
   const el=document.getElementById('ov-arr-val');if(el)el.textContent=v+'ms';
 }
 function updateLockDelay(v){
-  lockMs=parseInt(v);localStorage.setItem('glowTrisLock',v);
+  lockMs=parseInt(v);localStorage.setItem(LS.LOCK,v);
   const el=document.getElementById('ov-lock-val');if(el)el.textContent=v+'ms';
 }
 function updateGhost(){
   ghostVisible=!ghostVisible;
-  localStorage.setItem('glowTrisGhost',ghostVisible?'1':'0');
+  localStorage.setItem(LS.GHOST,ghostVisible?'1':'0');
   const btn=document.getElementById('ov-ghost-btn');
   if(btn)btn.textContent=ghostVisible?'👻 GHOST ON':'👻 GHOST OFF';
   btn&&btn.classList.toggle('muted',!ghostVisible);
 }
 function updateColorblind(){
   colorblindMode=!colorblindMode;
-  localStorage.setItem('glowTrisColorblind',colorblindMode?'1':'0');
+  localStorage.setItem(LS.COLORBLIND,colorblindMode?'1':'0');
   const btn=document.getElementById('ov-cb-btn');
   if(btn)btn.textContent=colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF';
   btn&&btn.classList.toggle('cb-active',colorblindMode);
@@ -1995,7 +2021,7 @@ function updateColorblind(){
 function _animLabel(){return animIntensity==='full'?'✨ ANIM: FULL':animIntensity==='reduced'?'💫 ANIM: LOW':'🔲 ANIM: OFF';}
 function cycleAnimIntensity(){
   animIntensity=animIntensity==='full'?'reduced':animIntensity==='reduced'?'off':'full';
-  localStorage.setItem('glowTrisAnim',animIntensity);
+  localStorage.setItem(LS.ANIM,animIntensity);
   const btn=document.getElementById('ov-anim-btn');
   if(btn)btn.textContent=_animLabel();
   btn&&btn.classList.toggle('muted',animIntensity==='off');
@@ -2223,15 +2249,15 @@ function showAchievementToast(ach) {
 }
 
 function unlockAchievement(id) {
-  const achieved = JSON.parse(localStorage.getItem('glowTrisAchievements') || '[]');
+  const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
   const isAlreadyUnlocked = achieved.some(a => (typeof a === 'string' ? a === id : a.id === id));
   if (isAlreadyUnlocked) return;
-  
+
   const ach = ACHIEVEMENTS.find(a => a.id === id);
   if (!ach) return;
-  
+
   achieved.push({ id, date: new Date().toLocaleDateString() });
-  localStorage.setItem('glowTrisAchievements', JSON.stringify(achieved));
+  localStorage.setItem(LS.ACHIEVEMENTS, JSON.stringify(achieved));
   
   showAchievementToast(ach);
 }
@@ -2333,13 +2359,13 @@ function gameLoop(ts){
 
 // ─── Game control ─────────────────────────────────────────────────────────────
 function loadSettings(){
-  muteAudio=localStorage.getItem('glowTrisMute')==='1';
-  das=parseInt(localStorage.getItem('glowTrisDAS')||'150');
-  arr=parseInt(localStorage.getItem('glowTrisARR')||'50');
-  lockMs=parseInt(localStorage.getItem('glowTrisLock')||'500');
-  ghostVisible=localStorage.getItem('glowTrisGhost')!=='0';
-  colorblindMode=localStorage.getItem('glowTrisColorblind')==='1';
-  animIntensity=localStorage.getItem('glowTrisAnim')||'full';
+  muteAudio=localStorage.getItem(LS.MUTE)==='1';
+  das=parseInt(localStorage.getItem(LS.DAS)||'150');
+  arr=parseInt(localStorage.getItem(LS.ARR)||'50');
+  lockMs=parseInt(localStorage.getItem(LS.LOCK)||'500');
+  ghostVisible=localStorage.getItem(LS.GHOST)!=='0';
+  colorblindMode=localStorage.getItem(LS.COLORBLIND)==='1';
+  animIntensity=localStorage.getItem(LS.ANIM)||'full';
   const icon=document.getElementById('mute-icon');
   const btn=document.getElementById('btn-mute');
   if(icon)icon.textContent=muteAudio?'volume_off':'volume_up';
@@ -2378,7 +2404,7 @@ function startGame(){
   // Restore perf mode from localStorage (persists across games + sessions).
   // If _perfLocked was set mid-game, honour it — don't reset just because a new game started.
   // A device that couldn't hit 28fps won't suddenly become faster next round.
-  const savedPerf = localStorage.getItem('glowTrisLowPerf')==='1';
+  const savedPerf = localStorage.getItem(LS.LOW_PERF)==='1';
   if(!_perfLocked && !savedPerf){ setLowPerfMode(false); }
   else { setLowPerfMode(true); }
   _fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
@@ -2389,7 +2415,7 @@ function startGame(){
   board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
   lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
-  hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
+  hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
   spawnPiece();drawNext();drawHold();updateUI();
@@ -2440,7 +2466,7 @@ function showDailyGateOverlay(todayStr){
 
 function startDailyChallenge(){
   const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  if (localStorage.getItem('glowTrisDailyDate') === todayStr) {
+  if (localStorage.getItem(LS.DAILY_DATE) === todayStr) {
     showDailyGateOverlay(todayStr);
     return;
   }
@@ -2517,128 +2543,137 @@ function togglePause(){
   }
 }
 
-function endGame(){
-  gameRunning=false;gameOver=true;
-  stopBGM();sfxGameOver();
-  
+// Saves all end-of-game stats to localStorage and fires achievement checks.
+// Returns a stats object consumed by _renderGameOverScreen.
+function _saveGameStats() {
   const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  if (isDailyMode) {
-    localStorage.setItem('glowTrisDailyDate', todayStr);
-  }
+  if (isDailyMode) localStorage.setItem(LS.DAILY_DATE, todayStr);
 
-  const isNewBest=score>hiScore;
-  if(isNewBest){hiScore=score;localStorage.setItem('glowTrisHi',hiScore);}
-  const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
-  hist.unshift({score,lines,level,date:Date.now()});
-  localStorage.setItem('glowTrisHistory',JSON.stringify(hist.slice(0,5)));
-  const prevStreak=parseInt(localStorage.getItem('glowTrisStreak')||'0');
-  const newStreak=score>=5000?prevStreak+1:0;
-  localStorage.setItem('glowTrisStreak',newStreak);
-  const storedMaxCombo=parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
-  if(maxCombo>storedMaxCombo)localStorage.setItem('glowTrisMaxCombo',maxCombo);
-  const displayMaxCombo=Math.max(maxCombo,storedMaxCombo);
+  const isNewBest = score > hiScore;
+  if (isNewBest) { hiScore = score; localStorage.setItem(LS.HI, hiScore); }
 
-  let totalGames=parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
-  let totalScore=parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
-  let bestLevel=parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
-  let totalLines=parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
-  let maxLines=parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
+  const hist = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
+  hist.unshift({ score, lines, level, date: Date.now() });
+  localStorage.setItem(LS.HISTORY, JSON.stringify(hist.slice(0, 5)));
+
+  const prevStreak = parseInt(localStorage.getItem(LS.STREAK) || '0');
+  const newStreak = score >= 5000 ? prevStreak + 1 : 0;
+  localStorage.setItem(LS.STREAK, newStreak);
+
+  const storedMaxCombo = parseInt(localStorage.getItem(LS.MAX_COMBO) || '0');
+  if (maxCombo > storedMaxCombo) localStorage.setItem(LS.MAX_COMBO, maxCombo);
+  const displayMaxCombo = Math.max(maxCombo, storedMaxCombo);
+
+  let totalGames = parseInt(localStorage.getItem(LS.TOTAL_GAMES) || '0');
+  let totalScore = parseInt(localStorage.getItem(LS.TOTAL_SCORE) || '0');
+  let bestLevel  = parseInt(localStorage.getItem(LS.BEST_LEVEL)  || '0');
+  let totalLines = parseInt(localStorage.getItem(LS.TOTAL_LINES) || '0');
+  let maxLines   = parseInt(localStorage.getItem(LS.MAX_LINES)   || '0');
 
   // record checks must happen before updating lifetime totals
-  const isBestLevel=level>0 && level>=bestLevel;
-  const isBestCombo=maxCombo>0 && maxCombo>=storedMaxCombo;
-  const isBestLines=lines>0 && lines>=maxLines;
+  const isBestLevel = level > 0 && level >= bestLevel;
+  const isBestCombo = maxCombo > 0 && maxCombo >= storedMaxCombo;
+  const isBestLines = lines > 0 && lines >= maxLines;
 
-  totalGames+=1;
-  totalScore+=score;
-  if(level>bestLevel) bestLevel=level;
-  totalLines+=lines;
-  if(lines>maxLines) maxLines=lines;
+  totalGames += 1; totalScore += score;
+  if (level > bestLevel) bestLevel = level;
+  totalLines += lines;
+  if (lines > maxLines) maxLines = lines;
 
-  localStorage.setItem('glowTrisTotalGames',totalGames);
-  localStorage.setItem('glowTrisTotalScore',totalScore);
-  localStorage.setItem('glowTrisBestLevel',bestLevel);
-  localStorage.setItem('glowTrisTotalLines',totalLines);
-  localStorage.setItem('glowTrisMaxLines',maxLines);
-  
-  // Track achievements cumulative lifetime game counts
-  const lifetime = JSON.parse(localStorage.getItem('glowTrisLifetime') || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+  localStorage.setItem(LS.TOTAL_GAMES, totalGames);
+  localStorage.setItem(LS.TOTAL_SCORE, totalScore);
+  localStorage.setItem(LS.BEST_LEVEL,  bestLevel);
+  localStorage.setItem(LS.TOTAL_LINES, totalLines);
+  localStorage.setItem(LS.MAX_LINES,   maxLines);
+
+  // Track cumulative lifetime game count for achievement thresholds
+  const lifetime = JSON.parse(localStorage.getItem(LS.LIFETIME) || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
   lifetime.totalGames = (lifetime.totalGames || 0) + 1;
-  localStorage.setItem('glowTrisLifetime', JSON.stringify(lifetime));
-  
+  localStorage.setItem(LS.LIFETIME, JSON.stringify(lifetime));
+
   unlockAchievement('first_game');
   if (lifetime.totalGames >= 10) unlockAchievement('games_10');
   if (lifetime.totalGames >= 50) unlockAchievement('games_50');
   if (isDailyMode) unlockAchievement('daily_challenge_1');
   if (newStreak >= 5) unlockAchievement('streak_5');
 
+  return { isNewBest, newStreak, displayMaxCombo, isBestLevel, isBestCombo, isBestLines };
+}
+
+// Builds and shows the game-over overlay HTML after the explosion animation settles.
+function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLevel, isBestCombo, isBestLines }) {
+  const savedName = localStorage.getItem(LS.NAME) || '';
+
+  let pbBadges = [];
+  if (isDailyMode) {
+    pbBadges.push(`<div class="pb-badge score-pb" style="background:rgba(255,230,0,0.12);border-color:#ffe600;color:#ffe600">🏅 DAILY CHALLENGE</div>`);
+  } else {
+    if (isNewBest)  pbBadges.push(`<div class="pb-badge score-pb">🏆 RECORD SCORE</div>`);
+    if (isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${level}</div>`);
+    if (isBestLines) pbBadges.push(`<div class="pb-badge lines-pb">🎯 RECORD LINES: ${lines}</div>`);
+    if (isBestCombo) pbBadges.push(`<div class="pb-badge combo-pb">⚡ RECORD COMBO: x${maxCombo}</div>`);
+  }
+
+  let badgesHTML = '';
+  if (pbBadges.length > 0 || newStreak > 0) {
+    badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      ${!isDailyMode && newStreak > 0 ? `<div class="streak-badge">🔥 ${newStreak} STREAK</div>` : ''}
+      ${pbBadges.join(' ')}
+    </div>`;
+  } else if (displayMaxCombo > 1) {
+    badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+      <div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>
+    </div>`;
+  }
+
+  $overlay.innerHTML = `
+    <div class="glass-panel">
+      <h1 style="font-size:20px;margin-bottom:18px">${isDailyMode ? 'DAILY CHALLENGE' : 'GAME OVER'}</h1>
+      ${!isDailyMode && isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>' : ''}
+      <div style="width:100%;text-align:center;margin-bottom:${badgesHTML ? '16px' : '22px'}">
+        <div class="sub" style="margin-bottom:3px">SCORE: ${score.toLocaleString()}</div>
+        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${hiScore.toLocaleString()}</div>
+      </div>
+      ${badgesHTML ? `<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>` : ''}
+      <div style="width:100%">
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
+        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
+          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
+          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        </div>
+      </div>
+      <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
+    </div>`;
+  $overlay.style.display = 'flex';
+  const inp = document.getElementById('lb-name');
+  inp.focus(); inp.select();
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitScore(); });
+}
+
+function endGame(){
+  gameRunning=false;gameOver=true;
+  stopBGM();sfxGameOver();
+
+  const stats = _saveGameStats();
+
+  // Explode all board pieces into spark particles
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
     if(!board[r][c])continue;
     const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
     particles.push({x:(c+.5)*CELL,y:(r+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:board[r][c],size:Math.random()*5+3,type:'spark'});
   }
   shakeFrames=40;shakeMag=0.7;
-  if(isNewBest){
+
+  if(stats.isNewBest){
     [523,659,784,1047].forEach((f,i)=>playBeep(f,'sawtooth',.18,.28,i*.06+.3));
     for(let i=0;i<60;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*10+3;
       particles.push({x:(Math.random()*COLS)*CELL,y:(Math.random()*ROWS*0.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#ffe600','#ffaa00','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+2,type:'star'});
     }
   }
-  setTimeout(()=>{
-    const savedName=localStorage.getItem('glowTrisName')||'';
-    const hist=JSON.parse(localStorage.getItem('glowTrisHistory')||'[]');
-    const histHTML=hist.length>1?`<div class="history-row">${hist.slice(1,4).map(h=>`<span>${h.score.toLocaleString()}</span>`).join('<span class="hist-sep">·</span>')}</div>`:'';
-    
-    let pbBadges = [];
-    if (isDailyMode) {
-      pbBadges.push(`<div class="pb-badge score-pb" style="background:rgba(255,230,0,0.12);border-color:#ffe600;color:#ffe600">🏅 DAILY CHALLENGE</div>`);
-    } else {
-      if(isNewBest) pbBadges.push(`<div class="pb-badge score-pb">🏆 RECORD SCORE</div>`);
-      if(isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${level}</div>`);
-      if(isBestLines) pbBadges.push(`<div class="pb-badge lines-pb">🎯 RECORD LINES: ${lines}</div>`);
-      if(isBestCombo) pbBadges.push(`<div class="pb-badge combo-pb">⚡ RECORD COMBO: x${maxCombo}</div>`);
-    }
 
-    let badgesHTML = '';
-    if(pbBadges.length>0 || newStreak>0){
-      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-        ${!isDailyMode&&newStreak>0?`<div class="streak-badge">🔥 ${newStreak} STREAK</div>`:''}
-        ${pbBadges.join(' ')}
-      </div>`;
-    } else if(displayMaxCombo>1){
-      badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-        <div class="combo-badge">⚡ x${displayMaxCombo} BEST COMBO</div>
-      </div>`;
-    }
-
-    $overlay.innerHTML=`
-      <div class="glass-panel">
-        <!-- Group 1: title -->
-        <h1 style="font-size:20px;margin-bottom:18px">${isDailyMode?'DAILY CHALLENGE':'GAME OVER'}</h1>
-        ${!isDailyMode&&isNewBest?'<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>':''}
-        <!-- Group 2: score stats -->
-        <div style="width:100%;text-align:center;margin-bottom:${badgesHTML?'16px':'22px'}">
-          <div class="sub" style="margin-bottom:3px">SCORE: ${score.toLocaleString()}</div>
-          <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${hiScore.toLocaleString()}</div>
-        </div>
-        <!-- Group 3: badges (only if present) -->
-        ${badgesHTML?`<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>`:''}
-        <!-- Group 4: name input + action buttons -->
-        <div style="width:100%">
-          <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
-          <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
-            <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
-            <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
-          </div>
-        </div>
-        <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
-      </div>`;
-    $overlay.style.display='flex';
-    const inp=document.getElementById('lb-name');
-    inp.focus();inp.select();
-    inp.addEventListener('keydown',e=>{if(e.key==='Enter')submitScore();});
-  },600);
+  // Delay overlay so the explosion animation plays before UI appears
+  setTimeout(() => _renderGameOverScreen(stats), 600);
 }
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
@@ -2667,7 +2702,7 @@ async function submitScore(){
   if(btn.disabled)return;
   const name=inp.value.trim();
   if(!name){inp.focus();return;}
-  localStorage.setItem('glowTrisName',name);
+  localStorage.setItem(LS.NAME,name);
 
   // disable form immediately to prevent duplicate submissions
   btn.disabled=true; inp.disabled=true;
@@ -2995,16 +3030,16 @@ function closeHowToPlay(){
 
 let _statsOpenTs=0;
 function openStats(){
-  const sGames  = parseInt(localStorage.getItem('glowTrisTotalGames')||'0');
-  const sScore  = parseInt(localStorage.getItem('glowTrisTotalScore')||'0');
-  const sLevel  = parseInt(localStorage.getItem('glowTrisBestLevel')||'0');
-  const sLines  = parseInt(localStorage.getItem('glowTrisTotalLines')||'0');
-  const sCombo  = parseInt(localStorage.getItem('glowTrisMaxCombo')||'0');
-  const sMaxLn  = parseInt(localStorage.getItem('glowTrisMaxLines')||'0');
-  const sHi     = parseInt(localStorage.getItem('glowTrisHi')||'0');
+  const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES)||'0');
+  const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE)||'0');
+  const sLevel  = parseInt(localStorage.getItem(LS.BEST_LEVEL)||'0');
+  const sLines  = parseInt(localStorage.getItem(LS.TOTAL_LINES)||'0');
+  const sCombo  = parseInt(localStorage.getItem(LS.MAX_COMBO)||'0');
+  const sMaxLn  = parseInt(localStorage.getItem(LS.MAX_LINES)||'0');
+  const sHi     = parseInt(localStorage.getItem(LS.HI)||'0');
   const avgScore = sGames > 0 ? Math.round(sScore / sGames) : 0;
 
-  const achieved = JSON.parse(localStorage.getItem('glowTrisAchievements') || '[]');
+  const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
 
   const el = document.getElementById('stats-scroll');
   if(el) {
@@ -3089,7 +3124,7 @@ function hideAchTooltip() {
 initLayout();
 initStars();
 loadSettings();
-hiScore=parseInt(localStorage.getItem('glowTrisHi')||'0');
+hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
 $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
 animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
