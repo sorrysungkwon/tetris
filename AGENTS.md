@@ -15,11 +15,12 @@
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).
 - **Unified Workspace Integration**: Keep all technical specifications, tasks, and walkthrough reports inside the shared project directory (using `TODO.md` and `WALKTHROUGH.md` in the project root) to maintain 100% transparent and synchronized collaboration with Claude Code.
 - Keep single file structure (`index.html` only)
-- **Vercel Deployments & Preview Domains**:
-  - Production URL: https://glowtris.vercel.app
-  - General preview URL: https://prevglow.vercel.app — manually aliased to latest master preview; update with `vercel alias set <preview-url> prevglow.vercel.app` after each preview deploy.
-  - Branch verification previews (keep both, do not delete):
-    - Option A (Arithmetic fix, `hotfix/option-a-arithmetic`): https://prevglow-a.vercel.app
-    - Option B (Polling fix, `hotfix/option-b-polling`): https://prevglow-b.vercel.app
+- **Branch & Deployment Strategy**:
+  - `master` — protected, requires PR. Auto-deploys to **https://glowtris.vercel.app** (production).
+  - `preview` — push freely. Auto-deploys to **https://prevglow.vercel.app** (staging/general preview).
+  - `hotfix/option-a` — keep, do NOT delete. Testing only → **https://prevglow-a.vercel.app**
+  - `hotfix/option-b` — keep, do NOT delete. Testing only → **https://prevglow-b.vercel.app**
+  - `feature/*` — regular feature branches; Vercel auto-creates random preview URLs per push.
+- **Workflow**: work on `feature/xxx` → merge into `preview` to verify at prevglow → open PR to `master` → production deploys on merge.
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
