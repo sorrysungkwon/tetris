@@ -9,12 +9,12 @@ A neon-styled block stacking game built as a single HTML file.
 **Live:** https://glowtris.vercel.app
 
 ### Vercel Environments
-| URL | 브랜치 | 용도 |
-|-----|--------|------|
-| https://glowtris.vercel.app | `master` | 🚀 Production (PR 필수) |
-| https://prevglow.vercel.app | `preview` | 🔍 Staging — push하면 자동 반영 |
-| https://prevglow-a.vercel.app | `hotfix/option-a` | 🧪 테스트 전용 |
-| https://prevglow-b.vercel.app | `hotfix/option-b` | 🧪 테스트 전용 |
+| URL | Branch | Purpose |
+|-----|--------|---------|
+| https://glowtris.vercel.app | `master` | 🚀 Production (PR required) |
+| https://prevglow.vercel.app | `preview` | 🔍 Staging — auto-deploys on push |
+| https://prevglow-a.vercel.app | `hotfix/option-a` | 🧪 Testing only |
+| https://prevglow-b.vercel.app | `hotfix/option-b` | 🧪 Testing only |
 
 ## Stack
 
