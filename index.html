@@ -1279,10 +1279,42 @@ let _bgGradCache=null, _bgGradCtx=null;
 let _chGradCache=null, _chGradCtx=null;
 let _bgFrameCount=0;
 const BG_GRAD_INTERVAL=4; // re-create gradients every N frames
+// Low-perf static background: rendered once, blit every frame (zero per-frame gradient cost)
+let _lpBgCache=null, _lpChBgCache=null;
+
+// Build a static low-perf background into an offscreen canvas (called once per resize)
+function _buildLowPerfBg(W, H, isChallenge) {
+  const oc = document.createElement('canvas');
+  oc.width = W; oc.height = H;
+  const c = oc.getContext('2d');
+  // Deep base fill
+  c.fillStyle = isChallenge ? '#060001' : '#00000e';
+  c.fillRect(0, 0, W, H);
+  // Subtle radial vignette — lighter in centre, darker at edges
+  const cg = c.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H)*0.75);
+  if(isChallenge){
+    cg.addColorStop(0,   'rgba(60,4,8,0.55)');
+    cg.addColorStop(0.5, 'rgba(28,2,4,0.35)');
+    cg.addColorStop(1,   'rgba(0,0,0,0)');
+  } else {
+    cg.addColorStop(0,   'rgba(4,6,40,0.55)');
+    cg.addColorStop(0.5, 'rgba(2,3,22,0.35)');
+    cg.addColorStop(1,   'rgba(0,0,0,0)');
+  }
+  c.fillStyle = cg; c.fillRect(0, 0, W, H);
+  // Very faint colour accent at top — cyan tint (normal) / amber tint (challenge)
+  const tg = c.createLinearGradient(0, 0, 0, H*0.3);
+  tg.addColorStop(0,   isChallenge ? 'rgba(100,20,0,0.10)' : 'rgba(0,40,80,0.10)');
+  tg.addColorStop(1,   'rgba(0,0,0,0)');
+  c.fillStyle = tg; c.fillRect(0, 0, W, H);
+  return oc;
+}
+
 function initStars() {
   // Invalidate gradient caches whenever canvas is resized/reinitialised
   _bgGradCache=null; _bgGradCtx=null;
   _chGradCache=null; _chGradCtx=null;
+  _lpBgCache=null; _lpChBgCache=null;
   _bgFrameCount=0;
   stars=[];
   const numStars = isMobile ? 80 : 150;
@@ -1302,8 +1334,14 @@ function initStars() {
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
   if(lowPerfMode){
-    bgx.fillStyle=isDailyMode?'#0a0002':'#000010';
-    bgx.fillRect(0,0,bgc.width,bgc.height);
+    // Blit pre-rendered static gradient (built once, free every frame after that)
+    if(isDailyMode){
+      if(!_lpChBgCache||_lpChBgCache.width!==bgc.width) _lpChBgCache=_buildLowPerfBg(bgc.width,bgc.height,true);
+      bgx.drawImage(_lpChBgCache,0,0);
+    } else {
+      if(!_lpBgCache||_lpBgCache.width!==bgc.width) _lpBgCache=_buildLowPerfBg(bgc.width,bgc.height,false);
+      bgx.drawImage(_lpBgCache,0,0);
+    }
     return;
   }
   // Increment frame counter here so both normal and challenge paths share the same throttle
