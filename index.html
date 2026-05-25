@@ -1362,7 +1362,7 @@ function _drawChallengeBg(){
   bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
 
   // 5. Thin dark-red edge vignette — 4 linear gradients, portrait-safe
-  const vA=0.13+Math.sin(_cBgPulse)*0.03;
+  const vA=0.07+Math.sin(_cBgPulse)*0.02;
   const vc=`rgba(160,0,10,${vA})`;
   const vTop=bgx.createLinearGradient(0,0,0,H*0.14);
   vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
