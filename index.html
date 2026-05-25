@@ -1273,7 +1273,17 @@ window.addEventListener('resize', () => {
 
 // ─── Background starfield ─────────────────────────────────────────────────────
 let stars=[], nebulae=[], bgHue=0, _cBgPulse=0;
+// Background gradient cache: re-render expensive radial/linear gradients every 4 frames (~15fps).
+// Nebulae move so slowly (~0.1px/frame) the 4-frame lag is imperceptible.
+let _bgGradCache=null, _bgGradCtx=null;
+let _chGradCache=null, _chGradCtx=null;
+let _bgFrameCount=0;
+const BG_GRAD_INTERVAL=4; // re-create gradients every N frames
 function initStars() {
+  // Invalidate gradient caches whenever canvas is resized/reinitialised
+  _bgGradCache=null; _bgGradCtx=null;
+  _chGradCache=null; _chGradCtx=null;
+  _bgFrameCount=0;
   stars=[];
   const numStars = isMobile ? 80 : 150;
   for(let i=0;i<numStars;i++) stars.push({
@@ -1299,23 +1309,47 @@ function drawBackground() {
   if(isDailyMode){ _drawChallengeBg(); return; }
 
   // ── Normal background ────────────────────────────────────────────────────
+  // Trail fade: semi-transparent fill every frame (cheap)
   bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
-  for(const neb of nebulae) {
-    neb.x += neb.vx; neb.y += neb.vy;
-    if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
-    if(neb.y - neb.r < 0 || neb.y + neb.r > bgc.height) neb.vy *= -1;
-    neb.hue = (neb.hue + 0.02) % 360;
-    const gr = bgx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
-    gr.addColorStop(0, `hsla(${neb.hue}, 85%, 25%, 0.045)`);
-    gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360}, 80%, 15%, 0.02)`);
-    gr.addColorStop(1, 'transparent');
-    bgx.fillStyle = gr;
-    const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
-    bgx.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
+
+  // Update nebula positions every frame (smooth movement, ~0.1px/frame drift)
+  for(const neb of nebulae){
+    neb.x+=neb.vx; neb.y+=neb.vy;
+    if(neb.x-neb.r<0||neb.x+neb.r>bgc.width) neb.vx*=-1;
+    if(neb.y-neb.r<0||neb.y+neb.r>bgc.height) neb.vy*=-1;
+    neb.hue=(neb.hue+0.02)%360;
   }
-  const gr=bgx.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
-  gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
-  bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
+
+  // Re-render gradient layer every BG_GRAD_INTERVAL frames (~15fps).
+  // Nebulae change so slowly the reduced rate is imperceptible.
+  _bgFrameCount++;
+  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
+    if(!_bgGradCache||_bgGradCache.width!==bgc.width||_bgGradCache.height!==bgc.height){
+      _bgGradCache=document.createElement('canvas');
+      _bgGradCache.width=bgc.width; _bgGradCache.height=bgc.height;
+      _bgGradCtx=_bgGradCache.getContext('2d');
+    }
+    const gc=_bgGradCtx;
+    gc.clearRect(0,0,bgc.width,bgc.height);
+    for(const neb of nebulae){
+      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+      gr.addColorStop(0,`hsla(${neb.hue},85%,25%,0.045)`);
+      gr.addColorStop(0.5,`hsla(${(neb.hue+40)%360},80%,15%,0.02)`);
+      gr.addColorStop(1,'transparent');
+      gc.fillStyle=gr;
+      const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
+      gc.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
+    }
+    const gr=gc.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
+    gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);
+    gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);
+    gr.addColorStop(1,'transparent');
+    gc.fillStyle=gr; gc.fillRect(0,0,bgc.width,bgc.height);
+  }
+  // Blit cached gradient layer (single GPU drawImage — ~free)
+  if(_bgGradCache) bgx.drawImage(_bgGradCache,0,0);
+
+  // Stars: update & draw every frame (cheap arc paths, no gradients)
   bgx.fillStyle='rgba(180,220,255,0.5)';
   bgx.beginPath();
   for(const s of stars){
@@ -1326,65 +1360,86 @@ function drawBackground() {
 }
 
 // ── Challenge-exclusive background: crimson arena ─────────────────────────
+// Gradient layer cached every BG_GRAD_INTERVAL frames (reduces 65→~16 gradient creates/frame).
 function _drawChallengeBg(){
   _cBgPulse=(_cBgPulse+0.022)%(Math.PI*2);
   const W=bgc.width,H=bgc.height;
 
-  // 1. Dark crimson fade (replaces blue)
+  // 1. Dark crimson fade every frame (cheap solid fill)
   bgx.fillStyle='rgba(10,0,3,0.22)';
   bgx.fillRect(0,0,W,H);
 
-  // 2. Red/amber nebulae — faster drift, clamped to hue 0-55 (red→amber→gold)
+  // Update nebula positions every frame (smooth)
   for(const neb of nebulae){
     neb.x+=neb.vx*1.7; neb.y+=neb.vy*1.7;
     if(neb.x-neb.r<0||neb.x+neb.r>W) neb.vx*=-1;
     if(neb.y-neb.r<0||neb.y+neb.r>H) neb.vy*=-1;
     neb.hue=(neb.hue+0.06)%55;
-    const gr=bgx.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
-    gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
-    gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
-    gr.addColorStop(1,'transparent');
-    bgx.fillStyle=gr;
-    const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
-    bgx.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
   }
-
-  // 3. Diagonal meteor shower with amber glow trails
+  // Update meteor positions every frame (smooth movement)
   for(const s of stars){
     s.y+=s.speed*2.8; s.x+=s.vx*2.8;
     if(s.y>H||s.x>W){s.y=Math.random()*H*0.4; s.x=Math.random()*W*0.6;}
-    const tLen=s.speed*22;
-    const tg=bgx.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
-    tg.addColorStop(0,'transparent');
-    tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
-    bgx.strokeStyle=tg; bgx.lineWidth=s.r*0.9;
-    bgx.beginPath(); bgx.moveTo(s.x-s.vx*22,s.y-tLen); bgx.lineTo(s.x,s.y); bgx.stroke();
   }
 
-  // 4. Slow-pulsing central glow — deep amber core rising from below
-  const coreY=H*0.82;
-  const pulse=0.5+Math.sin(_cBgPulse)*0.5;  // 0→1→0 smooth pulse
-  const cg=bgx.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
-  cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
-  cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
-  cg.addColorStop(1,'transparent');
-  bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
+  // Re-create gradient layer every BG_GRAD_INTERVAL frames (~15fps)
+  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
+    if(!_chGradCache||_chGradCache.width!==W||_chGradCache.height!==H){
+      _chGradCache=document.createElement('canvas');
+      _chGradCache.width=W; _chGradCache.height=H;
+      _chGradCtx=_chGradCache.getContext('2d');
+    }
+    const gc=_chGradCtx;
+    gc.clearRect(0,0,W,H);
 
-  // 5. Thin dark-red edge vignette — 4 linear gradients, portrait-safe
-  const vA=0.07+Math.sin(_cBgPulse)*0.02;
-  const vc=`rgba(160,0,10,${vA})`;
-  const vTop=bgx.createLinearGradient(0,0,0,H*0.14);
-  vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
-  bgx.fillStyle=vTop; bgx.fillRect(0,0,W,H*0.14);
-  const vBot=bgx.createLinearGradient(0,H,0,H*0.86);
-  vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
-  bgx.fillStyle=vBot; bgx.fillRect(0,H*0.86,W,H*0.14);
-  const vLft=bgx.createLinearGradient(0,0,W*0.10,0);
-  vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
-  bgx.fillStyle=vLft; bgx.fillRect(0,0,W*0.10,H);
-  const vRgt=bgx.createLinearGradient(W,0,W*0.90,0);
-  vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
-  bgx.fillStyle=vRgt; bgx.fillRect(W*0.90,0,W*0.10,H);
+    // 2. Red/amber nebulae
+    for(const neb of nebulae){
+      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+      gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
+      gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
+      gr.addColorStop(1,'transparent');
+      gc.fillStyle=gr;
+      const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
+      gc.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
+    }
+
+    // 3. Meteor trails (60 linear gradients — only recreated every 4 frames)
+    for(const s of stars){
+      const tLen=s.speed*22;
+      const tg=gc.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
+      tg.addColorStop(0,'transparent');
+      tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
+      gc.strokeStyle=tg; gc.lineWidth=s.r*0.9;
+      gc.beginPath(); gc.moveTo(s.x-s.vx*22,s.y-tLen); gc.lineTo(s.x,s.y); gc.stroke();
+    }
+
+    // 4. Amber core glow
+    const coreY=H*0.82;
+    const pulse=0.5+Math.sin(_cBgPulse)*0.5;
+    const cg=gc.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
+    cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
+    cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
+    cg.addColorStop(1,'transparent');
+    gc.fillStyle=cg; gc.fillRect(0,0,W,H);
+
+    // 5. Edge vignette — 4 linear gradients
+    const vA=0.07+Math.sin(_cBgPulse)*0.02;
+    const vc=`rgba(160,0,10,${vA})`;
+    const vTop=gc.createLinearGradient(0,0,0,H*0.14);
+    vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
+    gc.fillStyle=vTop; gc.fillRect(0,0,W,H*0.14);
+    const vBot=gc.createLinearGradient(0,H,0,H*0.86);
+    vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
+    gc.fillStyle=vBot; gc.fillRect(0,H*0.86,W,H*0.14);
+    const vLft=gc.createLinearGradient(0,0,W*0.10,0);
+    vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
+    gc.fillStyle=vLft; gc.fillRect(0,0,W*0.10,H);
+    const vRgt=gc.createLinearGradient(W,0,W*0.90,0);
+    vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
+    gc.fillStyle=vRgt; gc.fillRect(W*0.90,0,W*0.10,H);
+  }
+  // Blit cached gradient layer
+  if(_chGradCache) bgx.drawImage(_chGradCache,0,0);
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
@@ -1907,7 +1962,7 @@ function updateParticles(){
       if(lowPerfMode){p.life-=p.decay;continue;}
       p.life-=p.decay;
       pctx.save();pctx.globalAlpha=Math.max(0,p.life);
-      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;pctx.shadowColor=p.color;pctx.shadowBlur=15;
+      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;if(!lowPerfMode){pctx.shadowColor=p.color;pctx.shadowBlur=15;}
       pctx.beginPath();
       const rx=(1-p.life)*p.maxRadius;
       if(p.type==='ring') pctx.ellipse(p.x,p.y,rx,rx*(p.aspectRatio||0.35),0,0,Math.PI*2);
