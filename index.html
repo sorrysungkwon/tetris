@@ -2459,11 +2459,11 @@ document.addEventListener('keyup',e=>{
 function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
 let dasDownTimer=null;
-function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{dasDownTimer=setInterval(()=>{if(gameRunning&&!gamePaused)softDrop();},arr);},das);}
+function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{if(gameRunning&&!gamePaused)softDrop();dasDownTimer=setInterval(()=>{if(gameRunning&&!gamePaused)softDrop();},arr);},das);}
 function clearDASDown(){clearTimeout(dasDownTimer);clearInterval(dasDownTimer);dasDownTimer=null;}
 
 function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
-function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
+function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{if(!lockActive){lockActive=true;lockTimer=lockMs;}}}
 function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
