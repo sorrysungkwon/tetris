@@ -291,6 +291,14 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
+## ✅ Completed: Soft Drop Down-Hold Fix — by Claude (2026-05-25)
+
+- [x] **Bug fix — lock timer reset on ARR**: `softDrop()` was resetting `lockTimer=lockMs` on every ARR interval (50ms) when grounded, preventing placement while holding down. Fixed with `if(!lockActive)` guard so timer starts only once.
+- [x] **Bug fix — DAS immediate fire**: `startDASDown()` now fires one `softDrop()` immediately when DAS completes (before first ARR interval), making the continuous fall feel responsive right away.
+- [x] **T-spin audit**: Confirmed `checkTSpin()` uses standard 3-corner rule; T-spin Mini not distinguished from full T-spin (by design, acceptable for casual play). Scoring values (400/800/1200/1600 × level) are correct. No action needed yet.
+
+---
+
 ## 🔲 Pending (requested but not yet started) — by Claude (2026-05-25)
 
 - [ ] **Leaderboard deduplication**: if same username submits a better score, remove their old entry and keep only their personal best. Detection logic: match by name (localStorage username) + score comparison. Backend: Redis ZRANGEBYSCORE + ZREM before ZADD, or client-side filter on response.
