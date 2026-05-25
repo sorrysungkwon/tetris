@@ -301,6 +301,15 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
+## ✅ Completed: v1.0.9.4 (Hotfix — PC Panel Overflow + PC Perf) — by Claude (2026-05-25)
+
+- [x] **Hold/Next panel overflow fix**: With `box-sizing: border-box` globally applied, `.panel { width: 132px; padding: 16px 14px; border: 1px; }` left only 102px content space while `ncD.width = 4 × CELL = 120px` overflowed by 18px. Fixed by widening panel to `width: 150px` (120px canvas + 14px×2 padding + 1px×2 border = 150px exact fit).
+- [x] **drawNext/drawHold hardcoded dims fix**: `drawMiniPiece(ncDx, next, 108, 96)` and `drawMiniPiece(hcDx, held, 108, 80)` used stale hardcoded dimensions mismatched from actual canvas size (120×90). Now use `ncD.width, ncD.height` and `hcD.width, hcD.height` for correct centering.
+- [x] **PC performance**: Background gradient caching (every 4 frames), static low-perf gradient for Intel iGPU (auto-detected via WEBGL_debug_renderer_info), `_perfLocked` removed so user can exit perf mode.
+- [x] Version bumped to v1.0.9.4.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
