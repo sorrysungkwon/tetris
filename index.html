@@ -2277,6 +2277,19 @@ function _getDrumBuf(){
   _drumBufCtx=audioCtx;
   return _drumBuffer;
 }
+// Register all nodes in a BGM voice: track in bgmNodes[] and disconnect ALL on end.
+// Previously only the source node was tracked; GainNode/BiquadFilterNode companions
+// were never disconnected, leaking the entire AudioContext routing graph over time.
+function _bgmRegister(src, ...rest){
+  const all=[src,...rest];
+  bgmNodes.push(...all);
+  src.onended=()=>{
+    all.forEach(n=>{
+      try{n.disconnect();}catch(e){}
+      const i=bgmNodes.indexOf(n);if(i!==-1)bgmNodes.splice(i,1);
+    });
+  };
+}
 function bgmScheduleKick(t){
   const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
   osc.connect(g);g.connect(masterGain);
@@ -2286,8 +2299,7 @@ function bgmScheduleKick(t){
   g.gain.setValueAtTime(0.35,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
   osc.start(t);osc.stop(t+0.15);
-  bgmNodes.push(osc);
-  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(osc,g);
 }
 function bgmScheduleSnare(t){
   const buf=_getDrumBuf();if(!buf)return;
@@ -2297,8 +2309,7 @@ function bgmScheduleSnare(t){
   g.gain.setValueAtTime(0.18,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
   src.start(t);src.stop(t+0.1);
-  bgmNodes.push(src);
-  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(src,filt,g);
 }
 function bgmScheduleHihat(t){
   const buf=_getDrumBuf();if(!buf)return;
@@ -2308,8 +2319,7 @@ function bgmScheduleHihat(t){
   g.gain.setValueAtTime(0.07,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
   src.start(t);src.stop(t+0.04);
-  bgmNodes.push(src);
-  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(src,filt,g);
 }
 
 function getBGMBeat(){
@@ -2327,12 +2337,14 @@ function bgmScheduleNote(freq,t,dur,vol,type='square'){
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
   osc.start(t);osc.stop(t+dur);
-  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
-  bgmNodes.push(osc);
+  _bgmRegister(osc,gain);
 }
 
 function bgmScheduleLoop(){
   if(!bgmPlaying||!audioCtx)return;
+  // Guard: if tab was hidden, audioCtx.currentTime may have jumped far ahead of
+  // bgmNextTime — clamp to avoid scheduling a massive backlog of nodes at once.
+  if(bgmNextTime < audioCtx.currentTime - 0.2) bgmNextTime=audioCtx.currentTime;
   const melody=isDailyMode?CHALLENGE_MELODY:BGM_MELODY;
   const harmony=isDailyMode?CHALLENGE_HARMONY:BGM_HARMONY;
   const bassWalk=isDailyMode?CHALLENGE_BASS_WALK:BGM_BASS_WALK;
@@ -2376,7 +2388,10 @@ function stopBGM(){
   bgmPlaying=false;
   if(bgmScheduler){clearTimeout(bgmScheduler);bgmScheduler=null;}
   const nodes=[...bgmNodes];bgmNodes=[];
-  nodes.forEach(o=>{try{o.stop();}catch(e){}});
+  // stop() only works on scheduled sources; disconnect() works on all AudioNodes.
+  // Both calls are wrapped in try/catch: stop() throws on GainNode/BiquadFilterNode,
+  // disconnect() throws if already disconnected — either way we want to continue.
+  nodes.forEach(n=>{try{n.stop(audioCtx.currentTime+0.01);}catch(e){} try{n.disconnect();}catch(e){}});
 }
 
 function pauseBGM(){if(audioCtx&&audioCtx.state==='running')audioCtx.suspend();}
@@ -3280,6 +3295,12 @@ function setLbMode(mode) {
 
 function showStartScreen(){
   isDailyMode = false; // reset when returning to start screen
+  // Stop the game loop; switch to lightweight bgOnly loop for the start screen.
+  // gameLoop runs full drawBoard()+particles+shake — unnecessary when no game is active.
+  gameRunning=false;
+  stopBGM();
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
   $overlay.innerHTML=`
     <div class="glass-panel">
       <h1>GLOWTRIS</h1>
@@ -3427,12 +3448,14 @@ function hideAchTooltip() {
 // Detect via WebGL renderer string and pre-emptively apply low-perf mode.
 function _detectLowEndGPU(){
   try{
-    const gl=document.createElement('canvas').getContext('webgl')||
-             document.createElement('canvas').getContext('experimental-webgl');
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
     if(!gl)return false;
     const ext=gl.getExtension('WEBGL_debug_renderer_info');
-    if(!ext)return false;
-    const r=(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'').toLowerCase();
+    const r=ext?(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'').toLowerCase():'';
+    // Explicitly release the WebGL context to free GPU memory immediately.
+    // Without this the throwaway canvas holds a GPU context until GC.
+    try{gl.getExtension('WEBGL_lose_context')?.loseContext();}catch(e){}
     // Intel integrated — exclude Iris Xe (sufficiently capable)
     if(r.includes('intel')&&!r.includes(' xe '))return true;
     // AMD Vega integrated APU (Ryzen iGPU) — exclude discrete RX Vega
@@ -3463,6 +3486,35 @@ showStartScreen();
 (window.requestIdleCallback||function(cb){setTimeout(cb,200);})(function(){
   for(var k in PIECES)getCellSprite(PIECES[k].color);
 },{timeout:8000});
+
+// ─── Memory / resource lifecycle ─────────────────────────────────────────────
+// visibilitychange: when the user switches tabs or minimises the window
+//   • RAF is paused automatically by the browser — no action needed there.
+//   • bgmScheduler (setTimeout) keeps firing even when hidden.  If the tab stays
+//     hidden for >0.5 s the bgmScheduleLoop backlog guard (bgmNextTime clamp) will
+//     skip the gap, but the AudioContext continues advancing — we suspend it here
+//     so no time passes and no stale notes play on re-focus.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    // Suspend audio clock — stops time, avoids scheduling backlog on return.
+    if(audioCtx&&audioCtx.state==='running')audioCtx.suspend();
+    // Also kill the BGM scheduler so it isn't creating nodes while hidden.
+    if(bgmScheduler){clearTimeout(bgmScheduler);bgmScheduler=null;}
+  } else {
+    // Resume audio clock then restart BGM scheduler if game is mid-session.
+    if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+    if(bgmPlaying&&gameRunning&&!gamePaused)bgmScheduleLoop();
+  }
+});
+
+// beforeunload: explicitly release AudioContext + cancel RAF before the page
+// unloads.  Without this, Chrome on Windows can hold GPU/audio resources
+// briefly after tab close, causing perceived hangs on low-RAM machines.
+window.addEventListener('beforeunload',()=>{
+  stopBGM();
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  if(audioCtx&&audioCtx.state!=='closed'){try{audioCtx.close();}catch(e){}}
+});
 </script>
 </body>
 </html>
