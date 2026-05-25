@@ -28,6 +28,28 @@
   4. Production deploys automatically on merge
   > ⚠️ NEVER open a PR to `master` without first verifying on `preview`. Always confirm with the user that preview looks good before proceeding.
 
+## Vercel Project Info
+
+- **Team slug**: `sgkwon-team` (renamed from `seonqwer-3337s-projects` on 2026-05-25)
+- **Team ID**: `team_pb1objuXoHlJIv67jumHZrg8`
+- **Project**: `glowtris` / `prj_V1lhSONnxAM9K2hpk5VLtemldWnm`
+- **Dashboard**: https://vercel.com/sgkwon-team/glowtris
+- **Ignored Build Step**: `git diff HEAD^ HEAD --quiet` — skips builds with no file changes (empty commits are automatically canceled; this is intentional)
+
+### Environment Variables (set in Vercel dashboard — do NOT hardcode)
+
+| Variable | Target | Purpose |
+|---|---|---|
+| `UPSTASH_REDIS_REST_URL` | production, preview | Upstash Redis endpoint for leaderboard API |
+| `UPSTASH_REDIS_REST_TOKEN` | production, preview | Upstash Redis auth token |
+
+> These are `sensitive` type in Vercel. To add/update: Vercel Dashboard → Settings → Environment Variables.
+> For local development, create a `.env.local` file (never commit it).
+
+### GitHub Actions
+
+- **`VERCEL_TOKEN`** — add as a GitHub repo secret (Settings → Secrets → Actions) to enable the `vercel-status.yml` deployment tracking workflow.
+
 ## 🚨 DEPLOYMENT DISCIPLINE — Minimize Deployments (applies to ALL agents incl. Antigravity)
 
 Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL deployments until midnight UTC. Every agent must treat each deployment as expensive.

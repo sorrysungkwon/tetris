@@ -79,6 +79,30 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.9.4~~ ✅ | **Hotfix — Hold/Next Panel Overflow + PC Perf**: Fixed hold/next canvas overflowing panel container on desktop (box-sizing:border-box → panel widened 132→150px, canvas dims passed correctly to drawMiniPiece). PC background gradient caching (every 4 frames), auto low-perf mode for Intel iGPU (WEBGL_debug_renderer_info), static gradient background in low-perf mode. |
 | v1.1 | **Sprint Mode**: Clear 40 lines as fast as possible. Stopwatch timer + remaining-lines HUD, Marathon vs Sprint mode selector on start screen, dedicated time-based Redis leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint stats & Canvas Share image. |
 
+## Infrastructure
+
+| Item | Value |
+|---|---|
+| Hosting | Vercel (Hobby) — team `sgkwon-team` |
+| Production URL | https://glowtris.vercel.app |
+| Preview URL | https://prevglow.vercel.app |
+| Leaderboard DB | Upstash Redis (REST API) |
+| OG Image | `/api/og` Edge Function (`@vercel/og`) |
+| CI | GitHub Actions — `.github/workflows/vercel-status.yml` |
+
+### Environment Variables
+
+| Variable | Target | Description |
+|---|---|---|
+| `UPSTASH_REDIS_REST_URL` | production, preview | Upstash Redis REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | production, preview | Upstash Redis auth token |
+
+Set in Vercel Dashboard → Settings → Environment Variables. Never commit to repo.
+
+### Vercel Ignored Build Step
+
+`git diff HEAD^ HEAD --quiet` — Vercel skips the build when there are no file changes (empty commits are auto-canceled). Real commits with file changes always deploy.
+
 ## Rules
 
 - Maintain single `index.html` file structure

@@ -130,7 +130,7 @@ jobs:
               deployment_id: Number('${{ steps.gh_deploy.outputs.id }}'),
               state:         'in_progress',
               description:   'Building on Vercel…',
-              log_url:       'https://vercel.com/seonqwer-3337s-projects/glowtris',
+              log_url:       'https://vercel.com/sgkwon-team/glowtris',
             });
 
       # ── 4. Final status: success / failure / inactive / error ───────────────
@@ -156,5 +156,5 @@ jobs:
               state,
               description:     desc,
               environment_url: url || undefined,
-              log_url:         'https://vercel.com/seonqwer-3337s-projects/glowtris',
+              log_url:         'https://vercel.com/sgkwon-team/glowtris',
             });
