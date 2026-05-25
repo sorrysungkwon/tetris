@@ -226,6 +226,7 @@
 
   /* Overlay */
   #overlay {
+    display:flex;  /* visible by default — hides game UI on first paint before JS runs */
     position:fixed; inset:0;
     flex-direction:column; align-items:center; justify-content:center;
     background:rgba(0,0,20,0.86);
@@ -793,7 +794,7 @@
 <canvas id="bg-canvas"></canvas>
 <div id="screen-flash"></div>
 <div id="perf-indicator">⚡ PERF MODE</div>
-<div id="overlay" style="display:none"></div>
+<div id="overlay"></div>
 
 <div id="htp-overlay" style="display:none" onclick="closeHowToPlay()">
   <div id="htp-box" onclick="event.stopPropagation()">
