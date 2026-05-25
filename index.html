@@ -1356,17 +1356,17 @@ function _drawChallengeBg(){
   const coreY=H*0.82;
   const pulse=0.5+Math.sin(_cBgPulse)*0.5;  // 0→1→0 smooth pulse
   const cg=bgx.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
-  cg.addColorStop(0,`rgba(220,80,0,${0.06*pulse})`);
-  cg.addColorStop(0.4,`rgba(160,20,0,${0.04*pulse})`);
+  cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
+  cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
   cg.addColorStop(1,'transparent');
   bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
 
-  // 5. Pulsing crimson edge vignette (heartbeat)
-  const vAlpha=0.20+Math.sin(_cBgPulse)*0.07;
-  const vg=bgx.createRadialGradient(W/2,H/2,H*0.22,W/2,H/2,W*0.72);
+  // 5. Subtle dark-purple edge vignette — soft, wide spread, low opacity
+  const vAlpha=0.10+Math.sin(_cBgPulse)*0.03;
+  const vg=bgx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,W*0.85);
   vg.addColorStop(0,'transparent');
-  vg.addColorStop(0.65,'transparent');
-  vg.addColorStop(1,`rgba(190,0,25,${vAlpha})`);
+  vg.addColorStop(0.55,'transparent');
+  vg.addColorStop(1,`rgba(60,0,90,${vAlpha})`);
   bgx.fillStyle=vg; bgx.fillRect(0,0,W,H);
 }
 
