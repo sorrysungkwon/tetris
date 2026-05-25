@@ -356,3 +356,61 @@ Iterated through user feedback:
 | `hotfix/option-a` | Testing only | https://prevglow-a.vercel.app |
 | `hotfix/option-b` | Testing only | https://prevglow-b.vercel.app |
 | `feature/bgm-upgrade` | Merged into preview | (no alias) |
+
+---
+
+# Session Walkthrough: v1.0.9.2 Finalisation + Vignette Polish (2026-05-25)
+
+## 1. Vignette Portrait Fix
+
+**Problem:** Challenge mode edge vignette used a single radial gradient:
+```js
+bgx.createRadialGradient(W/2,H/2, H*0.35, W/2,H/2, W*0.85)
+```
+On portrait phones (H >> W), the top and bottom edges lie **outside** the outer radius (`W*0.85`), so the entire top/bottom areas filled with solid red — the vignette looked far too thick and dominant.
+
+**Fix:** Replaced with 4 independent linear gradients — one per edge:
+```js
+const vA = 0.07 + Math.sin(_cBgPulse)*0.02;  // alpha 0.05–0.09
+const vc = `rgba(160,0,10,${vA})`;
+// Top: 14% of height
+const vTop = bgx.createLinearGradient(0,0, 0,H*0.14);
+vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
+bgx.fillStyle=vTop; bgx.fillRect(0,0,W,H*0.14);
+// Bottom, Left (10%W), Right (10%W) — identical pattern
+```
+
+Each direction is independently controlled, alpha capped at 0.09 — appears as a faint glow frame rather than a bold overlay.
+
+**Branch:** `feature/vignette-fix` → merged to `preview` → PR #3 → merged to `master` → tagged `v1.0.9.2`
+
+## 2. Deployment Discipline Rules
+
+Root cause analysis of hitting Vercel's 100 deploys/day limit:
+1. Each `git push preview` triggers GitHub auto-deploy → 1 deploy
+2. Agent also ran `vercel --yes` manually on top → 2 deploys per push
+3. Iterative vignette color tweaks pushed directly to `preview` (3+ times) → 3+ extra deploys
+
+**Fix:** Added `## 🚨 DEPLOYMENT DISCIPLINE` section to both `CLAUDE.md` and `AGENTS.md`:
+- Forbid manual `vercel` CLI calls
+- Forbid micro-fix pushes directly to `preview`
+- Rule: one feature → one `feature/*` branch → one merge to `preview` → one deployment
+
+## 3. v1.0.9.2 Release
+
+- PR #3 (preview → master) merged by user
+- Git tag `v1.0.9.2` created and pushed
+- `glowtris.vercel.app` auto-deployed from master merge
+
+**Full v1.0.9.2 feature set:**
+- BGM 4-track chiptune (melody/harmony/bass/drums) for both normal and challenge modes
+- Challenge BGM: A harmonic minor, BPM 165, double-kick, tritone harmony
+- Challenge-exclusive background: `_drawChallengeBg()` with 5 layers (crimson fade, amber nebulae, diagonal meteors, pulsing core, edge vignette)
+- Vignette: 4-directional linear gradients, `rgba(160,0,10)`, alpha 0.07 — portrait-safe
+- First-load flash fix: `#overlay display:flex` in CSS (was `display:none` in HTML)
+- Leaderboard split: TODAY/WEEKLY top 10, ALL TIME top 20
+
+## 4. Pending Tasks
+
+- **Leaderboard deduplication**: keep only personal best per username (Redis ZRANGEBYSCORE + ZREM before ZADD)
+- **OG/Social meta tags**: verify PNG og:image, twitter:card, absolute URLs for SNS rich previews
