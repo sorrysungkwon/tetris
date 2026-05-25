@@ -1262,61 +1262,111 @@ window.addEventListener('resize', () => {
 });
 
 // ─── Background starfield ─────────────────────────────────────────────────────
-let stars=[], nebulae=[], bgHue=0;
+let stars=[], nebulae=[], bgHue=0, _cBgPulse=0;
 function initStars() {
   stars=[];
   const numStars = isMobile ? 80 : 150;
-  for(let i=0;i<numStars;i++) stars.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.5+0.2,speed:Math.random()*0.3+0.05});
-  
-  // 3 ambient large color-shifting gas nebulae
+  for(let i=0;i<numStars;i++) stars.push({
+    x:Math.random()*bgc.width, y:Math.random()*bgc.height,
+    r:Math.random()*1.5+0.2,  speed:Math.random()*0.3+0.05,
+    vx:Math.random()*0.18+0.06  // used for diagonal meteor trail in challenge mode
+  });
   const w = bgc.width, h = bgc.height;
   nebulae = [
-    { x: w * 0.25, y: h * 0.3, r: Math.min(w, h) * 0.45, vx: 0.15, vy: 0.08, hue: 190 },
-    { x: w * 0.75, y: h * 0.6, r: Math.min(w, h) * 0.55, vx: -0.1, vy: -0.12, hue: 280 },
-    { x: w * 0.5, y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07, vy: -0.07, hue: 330 }
+    { x: w * 0.25, y: h * 0.3,  r: Math.min(w, h) * 0.45, vx: 0.15,  vy: 0.08,  hue: 190 },
+    { x: w * 0.75, y: h * 0.6,  r: Math.min(w, h) * 0.55, vx: -0.1,  vy: -0.12, hue: 280 },
+    { x: w * 0.5,  y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07,  vy: -0.07, hue: 330 }
   ];
 }
+
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
   if(lowPerfMode){
-    // Completely static dark background — no gradients, no stars, no nebulae.
-    // Saves all bg-canvas GPU work so every frame goes to gameplay rendering.
-    bgx.fillStyle='#000010';
+    bgx.fillStyle=isDailyMode?'#0a0002':'#000010';
     bgx.fillRect(0,0,bgc.width,bgc.height);
     return;
   }
-  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
+  if(isDailyMode){ _drawChallengeBg(); return; }
 
+  // ── Normal background ────────────────────────────────────────────────────
+  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
   for(const neb of nebulae) {
     neb.x += neb.vx; neb.y += neb.vy;
     if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
     if(neb.y - neb.r < 0 || neb.y + neb.r > bgc.height) neb.vy *= -1;
     neb.hue = (neb.hue + 0.02) % 360;
-    
-    bgx.save();
     const gr = bgx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
     gr.addColorStop(0, `hsla(${neb.hue}, 85%, 25%, 0.045)`);
     gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360}, 80%, 15%, 0.02)`);
     gr.addColorStop(1, 'transparent');
     bgx.fillStyle = gr;
-    // Fill only the nebula bounding box — transparent outside anyway
     const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
     bgx.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
-    bgx.restore();
   }
-  
   const gr=bgx.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
   gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
   bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
-  
   bgx.fillStyle='rgba(180,220,255,0.5)';
   bgx.beginPath();
   for(const s of stars){
     s.y+=s.speed; if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}
-    bgx.moveTo(s.x+s.r,s.y);
-    bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bgx.moveTo(s.x+s.r,s.y); bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
   }
   bgx.fill();
+}
+
+// ── Challenge-exclusive background: crimson arena ─────────────────────────
+function _drawChallengeBg(){
+  _cBgPulse=(_cBgPulse+0.022)%(Math.PI*2);
+  const W=bgc.width,H=bgc.height;
+
+  // 1. Dark crimson fade (replaces blue)
+  bgx.fillStyle='rgba(10,0,3,0.22)';
+  bgx.fillRect(0,0,W,H);
+
+  // 2. Red/amber nebulae — faster drift, clamped to hue 0-55 (red→amber→gold)
+  for(const neb of nebulae){
+    neb.x+=neb.vx*1.7; neb.y+=neb.vy*1.7;
+    if(neb.x-neb.r<0||neb.x+neb.r>W) neb.vx*=-1;
+    if(neb.y-neb.r<0||neb.y+neb.r>H) neb.vy*=-1;
+    neb.hue=(neb.hue+0.06)%55;
+    const gr=bgx.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+    gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
+    gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
+    gr.addColorStop(1,'transparent');
+    bgx.fillStyle=gr;
+    const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
+    bgx.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
+  }
+
+  // 3. Diagonal meteor shower with amber glow trails
+  for(const s of stars){
+    s.y+=s.speed*2.8; s.x+=s.vx*2.8;
+    if(s.y>H||s.x>W){s.y=Math.random()*H*0.4; s.x=Math.random()*W*0.6;}
+    const tLen=s.speed*22;
+    const tg=bgx.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
+    tg.addColorStop(0,'transparent');
+    tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
+    bgx.strokeStyle=tg; bgx.lineWidth=s.r*0.9;
+    bgx.beginPath(); bgx.moveTo(s.x-s.vx*22,s.y-tLen); bgx.lineTo(s.x,s.y); bgx.stroke();
+  }
+
+  // 4. Slow-pulsing central glow — deep amber core rising from below
+  const coreY=H*0.82;
+  const pulse=0.5+Math.sin(_cBgPulse)*0.5;  // 0→1→0 smooth pulse
+  const cg=bgx.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
+  cg.addColorStop(0,`rgba(220,80,0,${0.06*pulse})`);
+  cg.addColorStop(0.4,`rgba(160,20,0,${0.04*pulse})`);
+  cg.addColorStop(1,'transparent');
+  bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
+
+  // 5. Pulsing crimson edge vignette (heartbeat)
+  const vAlpha=0.20+Math.sin(_cBgPulse)*0.07;
+  const vg=bgx.createRadialGradient(W/2,H/2,H*0.22,W/2,H/2,W*0.72);
+  vg.addColorStop(0,'transparent');
+  vg.addColorStop(0.65,'transparent');
+  vg.addColorStop(1,`rgba(190,0,25,${vAlpha})`);
+  bgx.fillStyle=vg; bgx.fillRect(0,0,W,H);
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
