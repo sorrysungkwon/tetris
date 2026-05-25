@@ -310,6 +310,24 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
+## ✅ Completed: Post-v1.0.9.4 Fixes — by Claude (2026-05-25)
+
+- [x] **Low-perf background gradient strengthened**: Centre radial glow opacity 0.55→0.85, radius widened to 0.85×, top accent 0.10→0.22, bottom vignette added. Normal mode: deep navy core; Challenge mode: deep crimson core.
+- [x] **Memory leak fixes (critical — caused browser/OS freeze)**:
+  - Audio node leak: BGM voices (kick/snare/hihat/note) created 2–3 AudioNodes per beat; only source tracked in `bgmNodes[]`; companion GainNode/BiquadFilterNode never `disconnect()`ed → AudioContext accumulated thousands of orphaned nodes per game. Fixed with `_bgmRegister(src, ...rest)` helper that tracks ALL nodes and disconnects all on `onended`. `stopBGM()` now also calls `disconnect()` on every node.
+  - BGM scheduler backlog: tab hidden → RAF pauses but `setTimeout` keeps running → `bgmScheduleLoop` while-loop creates huge backlog on return. Fixed: `visibilitychange` suspends AudioContext + stops scheduler on hide; resumes on show. Added `bgmNextTime` clamp guard.
+  - WebGL context not released: `_detectLowEndGPU()` canvas held GPU memory. Fixed: `WEBGL_lose_context.loseContext()` called immediately after reading renderer string.
+  - `showStartScreen()` now cancels `gameLoop` and switches to lightweight `bgOnly` loop (background-only).
+  - `beforeunload`: explicitly stops BGM, cancels RAF, closes AudioContext.
+- [x] **Vercel team rename**: team slug `seonqwer-3337s-projects` → `sgkwon-team` (same team ID). Updated CLAUDE.md, README.md, and `vercel-status.yml`.
+- [x] **Environment variables documented**: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (production + preview) documented in CLAUDE.md and README.md Infrastructure section.
+- [x] **GitHub Actions — Vercel status tracking** (`.github/workflows/vercel-status.yml`):
+  - v1: used GitHub Deployment API → created duplicate records (Vercel GitHub App + our workflow) → hit GitHub deployment rate limit.
+  - v2 (current): uses **Commit Status API** (`repos.createCommitStatus`) instead — no deployment records created, zero conflict with Vercel GitHub App. Shows as `Vercel / Preview — Building… → Deployed ✓` on commits. Requires `VERCEL_TOKEN` secret.
+- [x] **Vercel ignored build step cleared**: `git diff HEAD^ HEAD --quiet` was causing all preview deployments to be immediately CANCELED (shallow clone in Vercel build environment → `HEAD^` unavailable → exit 0 → skip). Cleared via PATCH API.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
