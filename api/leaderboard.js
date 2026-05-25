@@ -12,7 +12,9 @@ const KEY_CHALLENGE = () => {
   const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   return `daily:${today}`;
 };
-const TOP = 10;
+const KEY_CHALLENGE_ALLTIME = 'challenge:alltime'; // permanent — no TTL, trimmed to top 100
+const TOP = 10;          // TODAY / WEEKLY / CHALLENGE-TODAY leaderboards
+const TOP_ALLTIME = 20;  // ALL TIME leaderboards (marathon + challenge)
 const DAILY_TTL = 60 * 60 * 26; // 26 hours so the key survives the full day + buffer
 const WEEKLY_TTL = 60 * 60 * 24 * 8; // 8 days
 
@@ -30,8 +32,8 @@ function parseMember(member) {
   return idx === -1 ? decoded : decoded.slice(0, idx);
 }
 
-async function getBoard(key) {
-  const data = await redis(`zrange/${key}/0/${TOP - 1}/rev/withscores`);
+async function getBoard(key, limit = TOP) {
+  const data = await redis(`zrange/${key}/0/${limit - 1}/rev/withscores`);
   const raw = data.result || [];
   const board = [];
   for (let i = 0; i < raw.length; i += 2) {
@@ -56,11 +58,14 @@ export default async function handler(req, res) {
                         (url && (url.searchParams.get('mode') === 'daily' || url.searchParams.get('challenge') === '1'));
 
     if (isChallenge) {
-      const challengeBoard = await getBoard(KEY_CHALLENGE());
-      return res.status(200).json({ challengeBoard });
+      const [challengeBoard, challengeAlltimeBoard] = await Promise.all([
+        getBoard(KEY_CHALLENGE()),
+        getBoard(KEY_CHALLENGE_ALLTIME, TOP_ALLTIME),
+      ]);
+      return res.status(200).json({ challengeBoard, challengeAlltimeBoard });
     }
 
-    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily), getBoard(weekly)]);
+    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL, TOP_ALLTIME), getBoard(daily), getBoard(weekly)]);
     return res.status(200).json({ board, dailyBoard, weeklyBoard });
   }
 
@@ -77,14 +82,27 @@ export default async function handler(req, res) {
 
     if (isChallenge) {
       const key = KEY_CHALLENGE();
-      await redis(`zadd/${key}/${score}/${member}`);
-      await redis(`expire/${key}/${DAILY_TTL}`);
-      
-      const challengeBoard = await getBoard(key);
+      // Write to today's challenge board and all-time challenge board in parallel
+      await Promise.all([
+        redis(`zadd/${key}/${score}/${member}`),
+        redis(`zadd/${KEY_CHALLENGE_ALLTIME}/${score}/${member}`),
+      ]);
+      // Set TTL on today's key; trim alltime to top 100
+      await Promise.all([
+        redis(`expire/${key}/${DAILY_TTL}`),
+        redis(`zremrangebyrank/${KEY_CHALLENGE_ALLTIME}/0/-101`),
+      ]);
+
+      const [challengeBoard, challengeAlltimeBoard] = await Promise.all([
+        getBoard(key),
+        getBoard(KEY_CHALLENGE_ALLTIME, TOP_ALLTIME),
+      ]);
       const rankData = await redis(`zcount/${key}/${score + 1}/+inf`);
       const challengeRank = (rankData.result || 0) + 1;
+      const alltimeRankData = await redis(`zcount/${KEY_CHALLENGE_ALLTIME}/${score + 1}/+inf`);
+      const challengeAlltimeRank = (alltimeRankData.result || 0) + 1;
 
-      return res.status(200).json({ challengeBoard, challengeRank });
+      return res.status(200).json({ challengeBoard, challengeRank, challengeAlltimeBoard, challengeAlltimeRank });
     }
 
     // Write to all boards in parallel
@@ -101,7 +119,7 @@ export default async function handler(req, res) {
       redis(`expire/${weekly}/${WEEKLY_TTL}`),
     ]);
 
-    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL), getBoard(daily), getBoard(weekly)]);
+    const [board, dailyBoard, weeklyBoard] = await Promise.all([getBoard(KEY_ALL, TOP_ALLTIME), getBoard(daily), getBoard(weekly)]);
 
     // rank on all-time board
     const rankData = await redis(`zcount/${KEY_ALL}/${score + 1}/+inf`);
