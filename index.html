@@ -1306,6 +1306,8 @@ function drawBackground() {
     bgx.fillRect(0,0,bgc.width,bgc.height);
     return;
   }
+  // Increment frame counter here so both normal and challenge paths share the same throttle
+  _bgFrameCount++;
   if(isDailyMode){ _drawChallengeBg(); return; }
 
   // ── Normal background ────────────────────────────────────────────────────
@@ -1322,7 +1324,6 @@ function drawBackground() {
 
   // Re-render gradient layer every BG_GRAD_INTERVAL frames (~15fps).
   // Nebulae change so slowly the reduced rate is imperceptible.
-  _bgFrameCount++;
   if(_bgFrameCount%BG_GRAD_INTERVAL===0){
     if(!_bgGradCache||_bgGradCache.width!==bgc.width||_bgGradCache.height!==bgc.height){
       _bgGradCache=document.createElement('canvas');
@@ -3374,10 +3375,39 @@ function hideAchTooltip() {
   }, 150);
 }
 
+// ─── Integrated / low-end GPU detection ──────────────────────────────────────
+// Intel HD/UHD iGPU + some AMD APUs cannot handle shadowBlur + canvas gradients
+// at 60fps — Chrome's ANGLE→DirectX path triggers TDR timeout → BSOD.
+// Detect via WebGL renderer string and pre-emptively apply low-perf mode.
+function _detectLowEndGPU(){
+  try{
+    const gl=document.createElement('canvas').getContext('webgl')||
+             document.createElement('canvas').getContext('experimental-webgl');
+    if(!gl)return false;
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    if(!ext)return false;
+    const r=(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'').toLowerCase();
+    // Intel integrated — exclude Iris Xe (sufficiently capable)
+    if(r.includes('intel')&&!r.includes(' xe '))return true;
+    // AMD Vega integrated APU (Ryzen iGPU) — exclude discrete RX Vega
+    if(r.includes('vega')&&!r.includes('rx vega'))return true;
+    return false;
+  }catch(e){return false;}
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 initLayout();
 initStars();
 loadSettings();
+
+// Auto low-perf: if integrated GPU detected and user has not manually set preference,
+// immediately apply low-perf mode to prevent GPU driver TDR crash (BSOD).
+// Does NOT persist to localStorage — re-checked each session so driver updates are respected.
+if(!localStorage.getItem(LS.LOW_PERF)&&_detectLowEndGPU()){
+  setLowPerfMode(true);
+  _perfLocked=true; // keep it for the session; FPS-drop won't fight it
+}
+
 hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
 $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
