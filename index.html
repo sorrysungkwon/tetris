@@ -1361,12 +1361,12 @@ function _drawChallengeBg(){
   cg.addColorStop(1,'transparent');
   bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
 
-  // 5. Subtle dark-purple edge vignette — soft, wide spread, low opacity
-  const vAlpha=0.10+Math.sin(_cBgPulse)*0.03;
+  // 5. Subtle dark-red edge vignette — soft, wide spread, low opacity
+  const vAlpha=0.15+Math.sin(_cBgPulse)*0.04;
   const vg=bgx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,W*0.85);
   vg.addColorStop(0,'transparent');
   vg.addColorStop(0.55,'transparent');
-  vg.addColorStop(1,`rgba(80,0,8,${vAlpha})`);
+  vg.addColorStop(1,`rgba(160,0,10,${vAlpha})`);
   bgx.fillStyle=vg; bgx.fillRect(0,0,W,H);
 }
 
