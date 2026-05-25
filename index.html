@@ -2028,50 +2028,121 @@ function cycleAnimIntensity(){
 }
 
 const _n=s=>440*Math.pow(2,s/12);
-const BGM_FREQS=[
-  // Phrase 1 – A minor descending
-  _n(7),_n(5),_n(3),_n(2),  _n(0),_n(2),_n(3),null,
-  _n(5),_n(3),_n(2),_n(0),  _n(-2),null,_n(0),_n(-5),
-  // Phrase 2 – leaping motif
-  _n(7),_n(10),_n(7),_n(5), _n(3),_n(5),_n(7),null,
-  _n(5),_n(7),_n(5),_n(3),  _n(2),null,_n(0),null,
-  // Phrase 3 – variation
-  _n(7),_n(5),_n(3),_n(2),  _n(0),_n(2),_n(3),_n(5),
-  _n(7),_n(3),_n(0),_n(-2), _n(0),null,null,null,
-  // Phrase 4 – climax / resolve
-  _n(10),_n(7),_n(5),_n(3), _n(2),_n(3),_n(5),_n(7),
-  _n(3), _n(5),_n(3),_n(2), _n(0),null,null,null,
-];
-const BGM_BASS=[_n(0)/4,_n(7)/4,_n(0)/4,_n(3)/4];
 
-// Epic, high-stakes driving minor melody for Daily Challenge
-const CHALLENGE_FREQS=[
-  // Phrase 1 - Driving rhythmic motif
-  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), null,
-  _n(0), _n(3), _n(7), _n(3), _n(10), _n(8), _n(7), null,
-  // Phrase 2 - Heroic ascent
-  _n(3), _n(7), _n(12), _n(7), _n(10), _n(8), _n(7), _n(5),
-  _n(3), _n(2), _n(3), _n(5), _n(7), null, _n(0), null,
-  // Phrase 3 - Intense variation
-  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), _n(7),
-  _n(12), _n(10), _n(8), _n(7), _n(12), null, null, null,
-  // Phrase 4 - Resolution / crescendo
-  _n(14), _n(12), _n(10), _n(8), _n(7), _n(8), _n(10), _n(12),
-  _n(7), _n(8), _n(7), _n(5), _n(0), null, null, null
+// ── NORMAL BGM: A minor, 4 bars × 16 steps = 64 16th-notes ───────────────
+// Melody (square, lead voice)
+const BGM_MELODY=[
+  // Bar 1 – Am arpeggio + descent
+  _n(12),null,_n(7),null,  _n(3),_n(7),null,_n(10),  null,_n(7),null,_n(3),  _n(2),null,_n(0),null,
+  // Bar 2 – F→C ascent
+  _n(8),null,null,_n(10),  _n(12),null,_n(10),null,  _n(8),_n(7),null,null,  _n(5),null,_n(7),null,
+  // Bar 3 – syncopated climb
+  _n(0),_n(3),null,_n(5),  _n(7),null,_n(10),null,  _n(12),null,_n(10),_n(8),  null,_n(7),null,_n(5),
+  // Bar 4 – climax + resolve
+  _n(7),null,_n(10),null,  _n(12),_n(10),_n(8),null,  _n(7),null,_n(5),null,  _n(0),null,null,null,
 ];
-const CHALLENGE_BASS=[_n(0)/4, _n(3)/4, _n(-4)/4, _n(-2)/4];
+// Harmony (triangle, 3rds below melody — softer colour)
+const BGM_HARMONY=[
+  _n(8),null,_n(3),null,  _n(0),_n(3),null,_n(7),  null,_n(3),null,_n(0),  _n(-2),null,_n(-5),null,
+  _n(5),null,null,_n(7),  _n(8),null,_n(7),null,  _n(5),_n(3),null,null,  _n(2),null,_n(3),null,
+  _n(-5),_n(0),null,_n(2),  _n(3),null,_n(7),null,  _n(8),null,_n(7),_n(5),  null,_n(3),null,_n(2),
+  _n(3),null,_n(7),null,  _n(8),_n(7),_n(5),null,  _n(3),null,_n(2),null,  _n(-5),null,null,null,
+];
+// Walking bass (triangle): one note per quarter-note = every 4 steps, 16 notes total
+const BGM_BASS_WALK=[
+  _n(0)/4,_n(7)/4,  _n(0)/4,_n(3)/4,   // Bar 1: A E A C
+  _n(8)/4,_n(8)/4,  _n(3)/4,_n(7)/4,   // Bar 2: F F C E
+  _n(0)/4,_n(0)/4,  _n(-2)/4,_n(-2)/4, // Bar 3: A A G G
+  _n(3)/4,_n(5)/4,  _n(0)/4,_n(0)/4,   // Bar 4: C D A A
+];
+// Drum pattern (16 steps, loops): 1=kick 2=snare 3=hihat
+const BGM_DRUM_PAT=[1,0,3,0, 2,0,3,0, 1,0,3,0, 2,0,3,0];
+
+// ── CHALLENGE BGM: A minor, intense + driving ─────────────────────────────
+const CHALLENGE_MELODY=[
+  // Bar 1 – fast ascending burst
+  _n(0),_n(3),_n(7),_n(10),  _n(12),null,_n(10),null,  _n(8),_n(7),null,_n(5),  _n(7),null,null,null,
+  // Bar 2 – tension build
+  _n(0),null,_n(3),null,  _n(5),_n(7),_n(8),null,  _n(10),null,_n(12),null,  _n(15),null,_n(12),null,
+  // Bar 3 – driving descent
+  _n(12),_n(10),_n(8),null,  _n(7),_n(5),_n(3),null,  _n(5),null,_n(7),null,  _n(8),_n(7),_n(5),null,
+  // Bar 4 – punch + resolve
+  _n(12),null,_n(10),null,  _n(8),null,_n(7),null,  _n(5),_n(3),null,_n(2),  _n(0),null,null,null,
+];
+const CHALLENGE_HARMONY=[
+  _n(-5),_n(0),_n(3),_n(7),  _n(8),null,_n(7),null,  _n(5),_n(3),null,_n(2),  _n(3),null,null,null,
+  _n(-5),null,_n(0),null,  _n(2),_n(3),_n(5),null,  _n(7),null,_n(8),null,  _n(12),null,_n(8),null,
+  _n(8),_n(7),_n(5),null,  _n(3),_n(2),_n(0),null,  _n(2),null,_n(3),null,  _n(5),_n(3),_n(2),null,
+  _n(8),null,_n(7),null,  _n(5),null,_n(3),null,  _n(2),_n(0),null,_n(-2),  _n(-5),null,null,null,
+];
+const CHALLENGE_BASS_WALK=[
+  _n(0)/4, _n(-5)/4, _n(0)/4,  _n(3)/4,   // Bar 1: A D A C
+  _n(-5)/4,_n(-2)/4, _n(3)/4,  _n(7)/4,   // Bar 2: D G C E
+  _n(0)/4, _n(7)/4,  _n(3)/4,  _n(0)/4,   // Bar 3: A E C A
+  _n(3)/4, _n(5)/4,  _n(0)/4,  _n(0)/4,   // Bar 4: C D A A
+];
+// Challenge drums: double-kicks + snare fills = more aggressive
+const CHALLENGE_DRUM_PAT=[1,0,3,0, 2,3,0,3, 1,1,3,0, 2,0,3,0];
+
+// ── Drum synthesis (noise buffer, created lazily per AudioContext) ─────────
+let _drumBuffer=null,_drumBufCtx=null;
+function _getDrumBuf(){
+  if(_drumBuffer&&_drumBufCtx===audioCtx)return _drumBuffer;
+  if(!audioCtx)return null;
+  const sz=Math.ceil(audioCtx.sampleRate*0.15);
+  _drumBuffer=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);
+  const d=_drumBuffer.getChannelData(0);
+  for(let i=0;i<sz;i++)d[i]=Math.random()*2-1;
+  _drumBufCtx=audioCtx;
+  return _drumBuffer;
+}
+function bgmScheduleKick(t){
+  const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+  osc.connect(g);g.connect(masterGain);
+  osc.type='sine';
+  osc.frequency.setValueAtTime(110,t);
+  osc.frequency.exponentialRampToValueAtTime(40,t+0.12);
+  g.gain.setValueAtTime(0.35,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+  osc.start(t);osc.stop(t+0.15);
+  bgmNodes.push(osc);
+  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
+}
+function bgmScheduleSnare(t){
+  const buf=_getDrumBuf();if(!buf)return;
+  const src=audioCtx.createBufferSource(),filt=audioCtx.createBiquadFilter(),g=audioCtx.createGain();
+  src.buffer=buf;src.connect(filt);filt.connect(g);g.connect(masterGain);
+  filt.type='bandpass';filt.frequency.value=3500;filt.Q.value=0.5;
+  g.gain.setValueAtTime(0.18,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+  src.start(t);src.stop(t+0.1);
+  bgmNodes.push(src);
+  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+}
+function bgmScheduleHihat(t){
+  const buf=_getDrumBuf();if(!buf)return;
+  const src=audioCtx.createBufferSource(),filt=audioCtx.createBiquadFilter(),g=audioCtx.createGain();
+  src.buffer=buf;src.connect(filt);filt.connect(g);g.connect(masterGain);
+  filt.type='highpass';filt.frequency.value=9000;
+  g.gain.setValueAtTime(0.07,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
+  src.start(t);src.stop(t+0.04);
+  bgmNodes.push(src);
+  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+}
 
 function getBGMBeat(){
-  const baseBpm = isDailyMode ? 155 : 135;
+  const baseBpm=isDailyMode?155:135;
   const bpm=Math.min(210,baseBpm+(level||1)*5);
   return 60/bpm/4;
 }
 
-function bgmScheduleNote(freq,t,dur,vol){
+// type param: 'square'=melody (bright), 'triangle'=harmony/bass (warm)
+function bgmScheduleNote(freq,t,dur,vol,type='square'){
   const ctx=audioCtx;
   const osc=ctx.createOscillator(),gain=ctx.createGain();
   osc.connect(gain);gain.connect(masterGain);
-  osc.type='square';osc.frequency.setValueAtTime(freq,t);
+  osc.type=type;osc.frequency.setValueAtTime(freq,t);
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
   osc.start(t);osc.stop(t+dur);
@@ -2081,20 +2152,32 @@ function bgmScheduleNote(freq,t,dur,vol){
 
 function bgmScheduleLoop(){
   if(!bgmPlaying||!audioCtx)return;
-  const freqs = isDailyMode ? CHALLENGE_FREQS : BGM_FREQS;
-  const bassline = isDailyMode ? CHALLENGE_BASS : BGM_BASS;
+  const melody=isDailyMode?CHALLENGE_MELODY:BGM_MELODY;
+  const harmony=isDailyMode?CHALLENGE_HARMONY:BGM_HARMONY;
+  const bassWalk=isDailyMode?CHALLENGE_BASS_WALK:BGM_BASS_WALK;
+  const drumPat=isDailyMode?CHALLENGE_DRUM_PAT:BGM_DRUM_PAT;
   while(bgmNextTime<audioCtx.currentTime+0.5){
     const beat=getBGMBeat();
-    const idx=bgmBeat%freqs.length;
-    const f=freqs[idx];
-    if(f)bgmScheduleNote(f,bgmNextTime,beat*0.85,0.12);
-    if(bgmBeat%16===0){
-      const bass=bassline[Math.floor(bgmBeat/16)%bassline.length];
-      bgmScheduleNote(bass,bgmNextTime,beat*14,0.08);
+    const idx=bgmBeat%melody.length;
+    // Melody: square wave, lead voice
+    const mf=melody[idx];
+    if(mf)bgmScheduleNote(mf,bgmNextTime,beat*0.8,0.12);
+    // Harmony: triangle wave, softer colour
+    const hf=harmony[idx];
+    if(hf)bgmScheduleNote(hf,bgmNextTime,beat*0.8,0.07,'triangle');
+    // Walking bass: triangle, every quarter-note (4 steps)
+    if(bgmBeat%4===0){
+      const bassIdx=Math.floor(bgmBeat/4)%bassWalk.length;
+      bgmScheduleNote(bassWalk[bassIdx],bgmNextTime,beat*3.6,0.10,'triangle');
     }
+    // Drums
+    const d=drumPat[bgmBeat%16];
+    if(d===1)bgmScheduleKick(bgmNextTime);
+    else if(d===2)bgmScheduleSnare(bgmNextTime);
+    else if(d===3)bgmScheduleHihat(bgmNextTime);
     bgmNextTime+=beat;
     bgmBeat++;
-    if(bgmBeat>=freqs.length)bgmBeat=0;
+    if(bgmBeat>=melody.length)bgmBeat=0;
   }
   bgmScheduler=setTimeout(bgmScheduleLoop,100);
 }
