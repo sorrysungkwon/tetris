@@ -226,6 +226,7 @@
 
   /* Overlay */
   #overlay {
+    display:flex;  /* visible by default — hides game UI on first paint before JS runs */
     position:fixed; inset:0;
     flex-direction:column; align-items:center; justify-content:center;
     background:rgba(0,0,20,0.86);
@@ -793,7 +794,7 @@
 <canvas id="bg-canvas"></canvas>
 <div id="screen-flash"></div>
 <div id="perf-indicator">⚡ PERF MODE</div>
-<div id="overlay" style="display:none"></div>
+<div id="overlay"></div>
 
 <div id="htp-overlay" style="display:none" onclick="closeHowToPlay()">
   <div id="htp-box" onclick="event.stopPropagation()">
@@ -1262,61 +1263,119 @@ window.addEventListener('resize', () => {
 });
 
 // ─── Background starfield ─────────────────────────────────────────────────────
-let stars=[], nebulae=[], bgHue=0;
+let stars=[], nebulae=[], bgHue=0, _cBgPulse=0;
 function initStars() {
   stars=[];
   const numStars = isMobile ? 80 : 150;
-  for(let i=0;i<numStars;i++) stars.push({x:Math.random()*bgc.width,y:Math.random()*bgc.height,r:Math.random()*1.5+0.2,speed:Math.random()*0.3+0.05});
-  
-  // 3 ambient large color-shifting gas nebulae
+  for(let i=0;i<numStars;i++) stars.push({
+    x:Math.random()*bgc.width, y:Math.random()*bgc.height,
+    r:Math.random()*1.5+0.2,  speed:Math.random()*0.3+0.05,
+    vx:Math.random()*0.18+0.06  // used for diagonal meteor trail in challenge mode
+  });
   const w = bgc.width, h = bgc.height;
   nebulae = [
-    { x: w * 0.25, y: h * 0.3, r: Math.min(w, h) * 0.45, vx: 0.15, vy: 0.08, hue: 190 },
-    { x: w * 0.75, y: h * 0.6, r: Math.min(w, h) * 0.55, vx: -0.1, vy: -0.12, hue: 280 },
-    { x: w * 0.5, y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07, vy: -0.07, hue: 330 }
+    { x: w * 0.25, y: h * 0.3,  r: Math.min(w, h) * 0.45, vx: 0.15,  vy: 0.08,  hue: 190 },
+    { x: w * 0.75, y: h * 0.6,  r: Math.min(w, h) * 0.55, vx: -0.1,  vy: -0.12, hue: 280 },
+    { x: w * 0.5,  y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07,  vy: -0.07, hue: 330 }
   ];
 }
+
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
   if(lowPerfMode){
-    // Completely static dark background — no gradients, no stars, no nebulae.
-    // Saves all bg-canvas GPU work so every frame goes to gameplay rendering.
-    bgx.fillStyle='#000010';
+    bgx.fillStyle=isDailyMode?'#0a0002':'#000010';
     bgx.fillRect(0,0,bgc.width,bgc.height);
     return;
   }
-  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
+  if(isDailyMode){ _drawChallengeBg(); return; }
 
+  // ── Normal background ────────────────────────────────────────────────────
+  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
   for(const neb of nebulae) {
     neb.x += neb.vx; neb.y += neb.vy;
     if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
     if(neb.y - neb.r < 0 || neb.y + neb.r > bgc.height) neb.vy *= -1;
     neb.hue = (neb.hue + 0.02) % 360;
-    
-    bgx.save();
     const gr = bgx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
     gr.addColorStop(0, `hsla(${neb.hue}, 85%, 25%, 0.045)`);
     gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360}, 80%, 15%, 0.02)`);
     gr.addColorStop(1, 'transparent');
     bgx.fillStyle = gr;
-    // Fill only the nebula bounding box — transparent outside anyway
     const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
     bgx.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
-    bgx.restore();
   }
-  
   const gr=bgx.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
   gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
   bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
-  
   bgx.fillStyle='rgba(180,220,255,0.5)';
   bgx.beginPath();
   for(const s of stars){
     s.y+=s.speed; if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}
-    bgx.moveTo(s.x+s.r,s.y);
-    bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    bgx.moveTo(s.x+s.r,s.y); bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
   }
   bgx.fill();
+}
+
+// ── Challenge-exclusive background: crimson arena ─────────────────────────
+function _drawChallengeBg(){
+  _cBgPulse=(_cBgPulse+0.022)%(Math.PI*2);
+  const W=bgc.width,H=bgc.height;
+
+  // 1. Dark crimson fade (replaces blue)
+  bgx.fillStyle='rgba(10,0,3,0.22)';
+  bgx.fillRect(0,0,W,H);
+
+  // 2. Red/amber nebulae — faster drift, clamped to hue 0-55 (red→amber→gold)
+  for(const neb of nebulae){
+    neb.x+=neb.vx*1.7; neb.y+=neb.vy*1.7;
+    if(neb.x-neb.r<0||neb.x+neb.r>W) neb.vx*=-1;
+    if(neb.y-neb.r<0||neb.y+neb.r>H) neb.vy*=-1;
+    neb.hue=(neb.hue+0.06)%55;
+    const gr=bgx.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+    gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
+    gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
+    gr.addColorStop(1,'transparent');
+    bgx.fillStyle=gr;
+    const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
+    bgx.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
+  }
+
+  // 3. Diagonal meteor shower with amber glow trails
+  for(const s of stars){
+    s.y+=s.speed*2.8; s.x+=s.vx*2.8;
+    if(s.y>H||s.x>W){s.y=Math.random()*H*0.4; s.x=Math.random()*W*0.6;}
+    const tLen=s.speed*22;
+    const tg=bgx.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
+    tg.addColorStop(0,'transparent');
+    tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
+    bgx.strokeStyle=tg; bgx.lineWidth=s.r*0.9;
+    bgx.beginPath(); bgx.moveTo(s.x-s.vx*22,s.y-tLen); bgx.lineTo(s.x,s.y); bgx.stroke();
+  }
+
+  // 4. Slow-pulsing central glow — deep amber core rising from below
+  const coreY=H*0.82;
+  const pulse=0.5+Math.sin(_cBgPulse)*0.5;  // 0→1→0 smooth pulse
+  const cg=bgx.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
+  cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
+  cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
+  cg.addColorStop(1,'transparent');
+  bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
+
+  // 5. Thin dark-red edge vignette — 4 linear gradients, portrait-safe
+  const vA=0.07+Math.sin(_cBgPulse)*0.02;
+  const vc=`rgba(160,0,10,${vA})`;
+  const vTop=bgx.createLinearGradient(0,0,0,H*0.14);
+  vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
+  bgx.fillStyle=vTop; bgx.fillRect(0,0,W,H*0.14);
+  const vBot=bgx.createLinearGradient(0,H,0,H*0.86);
+  vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
+  bgx.fillStyle=vBot; bgx.fillRect(0,H*0.86,W,H*0.14);
+  const vLft=bgx.createLinearGradient(0,0,W*0.10,0);
+  vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
+  bgx.fillStyle=vLft; bgx.fillRect(0,0,W*0.10,H);
+  const vRgt=bgx.createLinearGradient(W,0,W*0.90,0);
+  vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
+  bgx.fillStyle=vRgt; bgx.fillRect(W*0.90,0,W*0.10,H);
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
@@ -2028,50 +2087,126 @@ function cycleAnimIntensity(){
 }
 
 const _n=s=>440*Math.pow(2,s/12);
-const BGM_FREQS=[
-  // Phrase 1 – A minor descending
-  _n(7),_n(5),_n(3),_n(2),  _n(0),_n(2),_n(3),null,
-  _n(5),_n(3),_n(2),_n(0),  _n(-2),null,_n(0),_n(-5),
-  // Phrase 2 – leaping motif
-  _n(7),_n(10),_n(7),_n(5), _n(3),_n(5),_n(7),null,
-  _n(5),_n(7),_n(5),_n(3),  _n(2),null,_n(0),null,
-  // Phrase 3 – variation
-  _n(7),_n(5),_n(3),_n(2),  _n(0),_n(2),_n(3),_n(5),
-  _n(7),_n(3),_n(0),_n(-2), _n(0),null,null,null,
-  // Phrase 4 – climax / resolve
-  _n(10),_n(7),_n(5),_n(3), _n(2),_n(3),_n(5),_n(7),
-  _n(3), _n(5),_n(3),_n(2), _n(0),null,null,null,
-];
-const BGM_BASS=[_n(0)/4,_n(7)/4,_n(0)/4,_n(3)/4];
 
-// Epic, high-stakes driving minor melody for Daily Challenge
-const CHALLENGE_FREQS=[
-  // Phrase 1 - Driving rhythmic motif
-  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), null,
-  _n(0), _n(3), _n(7), _n(3), _n(10), _n(8), _n(7), null,
-  // Phrase 2 - Heroic ascent
-  _n(3), _n(7), _n(12), _n(7), _n(10), _n(8), _n(7), _n(5),
-  _n(3), _n(2), _n(3), _n(5), _n(7), null, _n(0), null,
-  // Phrase 3 - Intense variation
-  _n(0), _n(3), _n(7), _n(3), _n(8), _n(7), _n(3), _n(7),
-  _n(12), _n(10), _n(8), _n(7), _n(12), null, null, null,
-  // Phrase 4 - Resolution / crescendo
-  _n(14), _n(12), _n(10), _n(8), _n(7), _n(8), _n(10), _n(12),
-  _n(7), _n(8), _n(7), _n(5), _n(0), null, null, null
+// ── NORMAL BGM: A minor, 4 bars × 16 steps = 64 16th-notes ───────────────
+// Melody (square, lead voice)
+const BGM_MELODY=[
+  // Bar 1 – Am arpeggio + descent
+  _n(12),null,_n(7),null,  _n(3),_n(7),null,_n(10),  null,_n(7),null,_n(3),  _n(2),null,_n(0),null,
+  // Bar 2 – F→C ascent
+  _n(8),null,null,_n(10),  _n(12),null,_n(10),null,  _n(8),_n(7),null,null,  _n(5),null,_n(7),null,
+  // Bar 3 – syncopated climb
+  _n(0),_n(3),null,_n(5),  _n(7),null,_n(10),null,  _n(12),null,_n(10),_n(8),  null,_n(7),null,_n(5),
+  // Bar 4 – climax + resolve
+  _n(7),null,_n(10),null,  _n(12),_n(10),_n(8),null,  _n(7),null,_n(5),null,  _n(0),null,null,null,
 ];
-const CHALLENGE_BASS=[_n(0)/4, _n(3)/4, _n(-4)/4, _n(-2)/4];
+// Harmony (triangle, 3rds below melody — softer colour)
+const BGM_HARMONY=[
+  _n(8),null,_n(3),null,  _n(0),_n(3),null,_n(7),  null,_n(3),null,_n(0),  _n(-2),null,_n(-5),null,
+  _n(5),null,null,_n(7),  _n(8),null,_n(7),null,  _n(5),_n(3),null,null,  _n(2),null,_n(3),null,
+  _n(-5),_n(0),null,_n(2),  _n(3),null,_n(7),null,  _n(8),null,_n(7),_n(5),  null,_n(3),null,_n(2),
+  _n(3),null,_n(7),null,  _n(8),_n(7),_n(5),null,  _n(3),null,_n(2),null,  _n(-5),null,null,null,
+];
+// Walking bass (triangle): one note per quarter-note = every 4 steps, 16 notes total
+const BGM_BASS_WALK=[
+  _n(0)/4,_n(7)/4,  _n(0)/4,_n(3)/4,   // Bar 1: A E A C
+  _n(8)/4,_n(8)/4,  _n(3)/4,_n(7)/4,   // Bar 2: F F C E
+  _n(0)/4,_n(0)/4,  _n(-2)/4,_n(-2)/4, // Bar 3: A A G G
+  _n(3)/4,_n(5)/4,  _n(0)/4,_n(0)/4,   // Bar 4: C D A A
+];
+// Drum bit-flags (16 steps, loops): bit0=kick bit1=snare bit2=hihat (combinable)
+// e.g. 5=kick+hihat(1+4), 6=snare+hihat(2+4)
+const BGM_DRUM_PAT=[1,0,4,0, 2,0,4,0, 1,0,4,0, 2,0,4,0];
+
+// ── CHALLENGE BGM: A harmonic minor, chaotic + exhilarating ──────────────
+// Uses G#(_n(11)) leading tone + wide leaps + chromatic tension
+const CHALLENGE_MELODY=[
+  // Bar 1 – explosive harmonic-minor burst (G# leading tone)
+  _n(0),_n(7),_n(12),_n(11), _n(12),_n(15),_n(12),_n(11), _n(12),null,_n(7),null, _n(11),_n(12),_n(15),null,
+  // Bar 2 – wild chromatic descent from high D
+  _n(17),_n(15),null,_n(12), _n(11),null,_n(10),null, _n(8),null,_n(7),null, _n(11),_n(12),null,null,
+  // Bar 3 – octave leaps + syncopation
+  _n(0),null,_n(12),null, _n(7),_n(11),_n(12),null, _n(19),_n(17),_n(15),null, _n(12),_n(11),_n(12),null,
+  // Bar 4 – full ascending run → crash
+  _n(0),_n(3),_n(7),_n(11), _n(12),_n(14),_n(15),_n(17), _n(19),null,_n(15),null, _n(12),_n(7),_n(0),null,
+];
+// Harmony: mix of tritones (6 semi) and dissonant 2nds for chaos
+const CHALLENGE_HARMONY=[
+  _n(-5),_n(3),_n(6),_n(7), _n(6),_n(9),_n(8),_n(7), _n(6),null,_n(3),null, _n(7),_n(6),_n(9),null,
+  _n(11),_n(9),null,_n(8), _n(7),null,_n(6),null, _n(5),null,_n(3),null, _n(7),_n(8),null,null,
+  _n(-5),null,_n(8),null, _n(3),_n(7),_n(8),null, _n(15),_n(13),_n(11),null, _n(8),_n(7),_n(8),null,
+  _n(-5),_n(0),_n(3),_n(7), _n(8),_n(10),_n(11),_n(13), _n(15),null,_n(11),null, _n(8),_n(3),_n(-5),null,
+];
+// Bass: G# leading tone creates harmonic-minor tension on every bar
+const CHALLENGE_BASS_WALK=[
+  _n(0)/4,  _n(7)/4,  _n(0)/4,  _n(11)/4,  // Bar 1: A E A G#
+  _n(8)/4,  _n(5)/4,  _n(1)/4,  _n(11)/4,  // Bar 2: F D Bb G#
+  _n(0)/4,  _n(5)/4,  _n(7)/4,  _n(11)/4,  // Bar 3: A D E G#
+  _n(0)/4,  _n(11)/4, _n(7)/4,  _n(0)/4,   // Bar 4: A G# E A
+];
+// Challenge drums: 16th-note hihat wall + double kicks on every beat = maximum intensity
+// 5=kick+hihat, 6=snare+hihat, 4=hihat only
+const CHALLENGE_DRUM_PAT=[5,4,5,4, 6,4,5,4, 5,5,4,4, 6,4,5,6];
+
+// ── Drum synthesis (noise buffer, created lazily per AudioContext) ─────────
+let _drumBuffer=null,_drumBufCtx=null;
+function _getDrumBuf(){
+  if(_drumBuffer&&_drumBufCtx===audioCtx)return _drumBuffer;
+  if(!audioCtx)return null;
+  const sz=Math.ceil(audioCtx.sampleRate*0.15);
+  _drumBuffer=audioCtx.createBuffer(1,sz,audioCtx.sampleRate);
+  const d=_drumBuffer.getChannelData(0);
+  for(let i=0;i<sz;i++)d[i]=Math.random()*2-1;
+  _drumBufCtx=audioCtx;
+  return _drumBuffer;
+}
+function bgmScheduleKick(t){
+  const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
+  osc.connect(g);g.connect(masterGain);
+  osc.type='sine';
+  osc.frequency.setValueAtTime(110,t);
+  osc.frequency.exponentialRampToValueAtTime(40,t+0.12);
+  g.gain.setValueAtTime(0.35,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
+  osc.start(t);osc.stop(t+0.15);
+  bgmNodes.push(osc);
+  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
+}
+function bgmScheduleSnare(t){
+  const buf=_getDrumBuf();if(!buf)return;
+  const src=audioCtx.createBufferSource(),filt=audioCtx.createBiquadFilter(),g=audioCtx.createGain();
+  src.buffer=buf;src.connect(filt);filt.connect(g);g.connect(masterGain);
+  filt.type='bandpass';filt.frequency.value=3500;filt.Q.value=0.5;
+  g.gain.setValueAtTime(0.18,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
+  src.start(t);src.stop(t+0.1);
+  bgmNodes.push(src);
+  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+}
+function bgmScheduleHihat(t){
+  const buf=_getDrumBuf();if(!buf)return;
+  const src=audioCtx.createBufferSource(),filt=audioCtx.createBiquadFilter(),g=audioCtx.createGain();
+  src.buffer=buf;src.connect(filt);filt.connect(g);g.connect(masterGain);
+  filt.type='highpass';filt.frequency.value=9000;
+  g.gain.setValueAtTime(0.07,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
+  src.start(t);src.stop(t+0.04);
+  bgmNodes.push(src);
+  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+}
 
 function getBGMBeat(){
-  const baseBpm = isDailyMode ? 155 : 135;
+  const baseBpm=isDailyMode?165:135;
   const bpm=Math.min(210,baseBpm+(level||1)*5);
   return 60/bpm/4;
 }
 
-function bgmScheduleNote(freq,t,dur,vol){
+// type param: 'square'=melody (bright), 'triangle'=harmony/bass (warm)
+function bgmScheduleNote(freq,t,dur,vol,type='square'){
   const ctx=audioCtx;
   const osc=ctx.createOscillator(),gain=ctx.createGain();
   osc.connect(gain);gain.connect(masterGain);
-  osc.type='square';osc.frequency.setValueAtTime(freq,t);
+  osc.type=type;osc.frequency.setValueAtTime(freq,t);
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
   osc.start(t);osc.stop(t+dur);
@@ -2081,20 +2216,32 @@ function bgmScheduleNote(freq,t,dur,vol){
 
 function bgmScheduleLoop(){
   if(!bgmPlaying||!audioCtx)return;
-  const freqs = isDailyMode ? CHALLENGE_FREQS : BGM_FREQS;
-  const bassline = isDailyMode ? CHALLENGE_BASS : BGM_BASS;
+  const melody=isDailyMode?CHALLENGE_MELODY:BGM_MELODY;
+  const harmony=isDailyMode?CHALLENGE_HARMONY:BGM_HARMONY;
+  const bassWalk=isDailyMode?CHALLENGE_BASS_WALK:BGM_BASS_WALK;
+  const drumPat=isDailyMode?CHALLENGE_DRUM_PAT:BGM_DRUM_PAT;
   while(bgmNextTime<audioCtx.currentTime+0.5){
     const beat=getBGMBeat();
-    const idx=bgmBeat%freqs.length;
-    const f=freqs[idx];
-    if(f)bgmScheduleNote(f,bgmNextTime,beat*0.85,0.12);
-    if(bgmBeat%16===0){
-      const bass=bassline[Math.floor(bgmBeat/16)%bassline.length];
-      bgmScheduleNote(bass,bgmNextTime,beat*14,0.08);
+    const idx=bgmBeat%melody.length;
+    // Melody: square wave, lead voice
+    const mf=melody[idx];
+    if(mf)bgmScheduleNote(mf,bgmNextTime,beat*0.8,0.12);
+    // Harmony: triangle wave, softer colour
+    const hf=harmony[idx];
+    if(hf)bgmScheduleNote(hf,bgmNextTime,beat*0.8,0.07,'triangle');
+    // Walking bass: triangle, every quarter-note (4 steps)
+    if(bgmBeat%4===0){
+      const bassIdx=Math.floor(bgmBeat/4)%bassWalk.length;
+      bgmScheduleNote(bassWalk[bassIdx],bgmNextTime,beat*3.6,0.10,'triangle');
     }
+    // Drums (bit-flags: bit0=kick, bit1=snare, bit2=hihat — combinable)
+    const d=drumPat[bgmBeat%16];
+    if(d&1)bgmScheduleKick(bgmNextTime);
+    if(d&2)bgmScheduleSnare(bgmNextTime);
+    if(d&4)bgmScheduleHihat(bgmNextTime);
     bgmNextTime+=beat;
     bgmBeat++;
-    if(bgmBeat>=freqs.length)bgmBeat=0;
+    if(bgmBeat>=melody.length)bgmBeat=0;
   }
   bgmScheduler=setTimeout(bgmScheduleLoop,100);
 }

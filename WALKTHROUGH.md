@@ -216,3 +216,143 @@ If Option B is chosen, ensure the resize skip guard is also relaxed (raise toler
 ### 🔮 Next Steps (For Claude Code)
 - The user will test both live PWA environments on their real iOS device and make the final choice.
 - **Master Branch Merge:** Once selected, checkout `master`, merge the chosen branch (`hotfix/option-a-arithmetic` or `hotfix/option-b-polling`), bump the version to `v1.0.9.1` in `index.html` and the global dashboard (`/home/ubuntu/index.html`), commit, tag `v1.0.9.1`, and push!
+
+---
+
+# Walkthrough Report: v1.0.9.2 Session — by Claude (2026-05-25)
+
+## Session Summary
+
+This session covered: Challenge ALL TIME leaderboard, leaderboard TOP-N split, pre-v1.1 refactor, BGM 4-track upgrade, Challenge BGM chaotic overhaul, challenge-exclusive background, first-load flash fix, and vignette tuning.
+
+---
+
+## 1. Challenge ALL TIME Leaderboard (api/leaderboard.js)
+
+- New Redis key `challenge:alltime` — permanent (no TTL), trimmed to top 100 via `ZREMRANGEBYRANK ... 0 -101` after each POST
+- GET `?mode=daily` now returns `{ challengeBoard, challengeAlltimeBoard }`
+- POST challenge now writes to both today's key AND `challenge:alltime` in parallel; returns `challengeRank` + `challengeAlltimeRank`
+- Frontend: new "ALL TIME" tab in challenge mode (`renderLbTab('challenge-all')`); `_lbCache` extended with `challengeAlltimeBoard` + `challengeAlltimeRank`
+
+## 2. Leaderboard TOP-N Split (api/leaderboard.js)
+
+```js
+const TOP = 10;         // TODAY / WEEKLY / CHALLENGE-TODAY
+const TOP_ALLTIME = 20; // MARATHON ALL TIME / CHALLENGE ALL TIME
+```
+
+- `getBoard(key, limit=TOP)` — added optional `limit` param
+- `KEY_ALL` and `KEY_CHALLENGE_ALLTIME` call sites use `TOP_ALLTIME`; all others use default `TOP`
+- Merged to master via PR #2
+
+## 3. BGM 4-Track Upgrade (index.html)
+
+### Architecture change
+- Old: single melody array + sparse bass (every 16 steps)
+- New: 4 independent tracks scheduled per 16th-note step:
+  1. **Melody** — square wave, 0.12 vol
+  2. **Harmony** — triangle wave, 0.07 vol, parallel 3rds below melody
+  3. **Walking bass** — triangle wave, 0.10 vol, fires every 4 steps (quarter note)
+  4. **Drums** — noise buffer (kick=sine sweep, snare=bandpass noise, hihat=highpass noise)
+
+### Drum bit-flag system
+Pattern values are bitmasks: `bit0=kick, bit1=snare, bit2=hihat`
+- `1`=kick, `2`=snare, `4`=hihat, `5`=kick+hihat, `6`=snare+hihat
+- Scheduling: `if(d&1)kick; if(d&2)snare; if(d&4)hihat;` — allows simultaneous hits
+
+### Noise buffer
+```js
+let _drumBuffer=null, _drumBufCtx=null;
+function _getDrumBuf() { /* lazy init per AudioContext, 0.15s white noise */ }
+```
+Invalidated automatically when `audioCtx` changes.
+
+### Normal BGM (A minor, 64 steps = 4 bars)
+- Melody: arpeggio + ascent + syncopation + climax
+- Harmony: computed as melody −3/4 semitones (stays in A minor scale)
+- Bass walk: A E A C / F F C E / A A G G / C D A A
+- Drums: `[1,0,4,0, 2,0,4,0, 1,0,4,0, 2,0,4,0]` (kick 1&3, snare 2&4, hihat off-beats)
+
+### Challenge BGM (A harmonic minor — more chaotic)
+- Uses G# (`_n(11)`) leading tone throughout for harmonic minor tension
+- Bb (`_n(1)`) for Phrygian darkness; high range up to `_n(19)` = E6
+- Octave leap pattern: low A → high A or high E → descent
+- Harmony: tritone intervals (6 semitones) for maximum dissonance
+- Bass: G# leading tone on every bar (A E A **G#** / F D Bb **G#** / A D E **G#** / A **G#** E A)
+- Drums: `[5,4,5,4, 6,4,5,4, 5,5,4,4, 6,4,5,6]` — 16th-note hihat wall + double kicks
+- Base BPM: 155 → **165** (scales to 210+ with level)
+
+## 4. Challenge-Exclusive Background (_drawChallengeBg)
+
+`drawBackground()` now checks `isDailyMode` and branches to `_drawChallengeBg()`:
+
+1. **Dark crimson fade** — `rgba(10,0,3,0.22)` per frame (vs `rgba(0,0,8,0.18)` normal)
+2. **Red/amber nebulae** — same `nebulae` array for position, but hue clamped `(h+0.06)%55` (red→amber→gold), 1.7× drift speed, brighter opacity
+3. **Diagonal meteor shower** — stars use `.vx` property (added in `initStars`), fall at angle with amber glow trails via `createLinearGradient`
+4. **Pulsing amber core** — radial gradient rising from `H*0.82`, sin-wave opacity
+5. **Dark-red edge vignette** — `rgba(160,0,10)` at `0.15±0.04` opacity, wide radius `W*0.85`, transparent zone to `0.55`
+
+Low-perf mode: `#0a0002` in challenge vs `#000010` normal.
+
+## 5. First-Load Flash Fix (index.html)
+
+**Root cause:** `<div id="overlay" style="display:none">` — browser first paint showed game panels before JS ran `showStartScreen()`.
+
+**Fix:**
+```css
+#overlay { display:flex; /* CSS default — covers game UI from first paint */ }
+```
+```html
+<div id="overlay"></div>  <!-- no inline style -->
+```
+Game start: `$overlay.style.display='none'` (inline overrides CSS). Game over / start screen: `$overlay.style.display='flex'`.
+
+## 6. Vignette Color Tuning
+
+Iterated through user feedback:
+- v1: `rgba(190,0,25)` at 0.20 opacity → too strong, too bright red
+- v2: `rgba(60,0,90)` → purple, rejected
+- v3: `rgba(80,0,8)` at 0.10 opacity → correct direction but too subtle / still read as purple on device
+- **v4 (current, not yet deployed):** `rgba(160,0,10)` at 0.15 opacity → higher R channel, clearly red
+
+---
+
+## 7. Open PR & Deployment Status
+
+- **PR #3** (`preview` → `master`): open at https://github.com/sorrysungkwon/glowtris/pull/3
+- **`preview` branch** (GitHub): commit `441b653` — latest vignette fix ✓
+- **`prevglow.vercel.app`**: points to commit `87cb1d2` — one commit behind
+- **Blocked**: Vercel free plan 100 deployments/day limit reached. Retry tomorrow (midnight UTC = 09:00 KST) or use Vercel dashboard → Deployments → Redeploy.
+
+---
+
+## 8. Pending Feature Requests (not yet started)
+
+### A. Leaderboard Deduplication
+**Request:** If the same username submits a new personal best, remove their old entry and keep only their top score on the leaderboard.
+
+**Suggested approach (backend):**
+- On POST, before ZADD: scan `ZRANGEBYSCORE key -inf +inf WITHSCORES` filtered by member name prefix, find and `ZREM` the old entry, then `ZADD` the new one.
+- Or: use `ZSCAN` to find all members starting with `encodeURIComponent(clean + '#')` pattern and remove lower scores.
+- Note: current member format is `encodeURIComponent("name#timestamp")` — name matching needs to strip the `#timestamp` suffix.
+
+### B. OG Image / Social Meta Tags
+**Request:** Ensure the game link shows rich previews on Twitter, KakaoTalk, Discord, Line, and other SNS.
+
+**Current state:** `og.svg` exists as the OG image, and some `<meta>` tags are present. Need to verify:
+- `twitter:card = summary_large_image`
+- `twitter:image` pointing to a served PNG (SVG may not render on all platforms)
+- `og:image` with absolute URL
+- Correct `og:title`, `og:description`, `og:url`
+
+---
+
+## 9. Branch & Alias State (as of 2026-05-25)
+
+| Branch | Purpose | Vercel URL |
+|---|---|---|
+| `master` | Production | https://glowtris.vercel.app |
+| `preview` | Staging | https://prevglow.vercel.app |
+| `hotfix/option-a` | Testing only | https://prevglow-a.vercel.app |
+| `hotfix/option-b` | Testing only | https://prevglow-b.vercel.app |
+| `feature/bgm-upgrade` | Merged into preview | (no alias) |

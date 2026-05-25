@@ -244,6 +244,65 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
+## ✅ Completed: v1.0.9.1 (iOS PWA Canvas Sizing Fix) — merged to master (2026-05-25)
+
+- [x] Option A (arithmetic) merged: hardcoded safe area values per device using `navigator.standalone` + `screen.height`
+- [x] Dynamic Island (ph≥852→59px), large notch (ph≥844→47px), small notch (ph≥780→44px), no notch (<780→20px), Face ID iPad (ph≥1100→24px)
+- [x] ResizeObserver and RAF polling loop removed; `_applyTouchCELL()` is now fully synchronous on cold start
+- [x] Min cell size lowered 18→10px to handle split-screen/landscape short viewports
+
+---
+
+## ✅ Completed: Challenge ALL TIME Leaderboard + TOP split — by Claude (2026-05-25)
+
+- [x] **Challenge ALL TIME board** (`challenge:alltime` Redis key, permanent, trimmed to top 100): new tab in challenge mode alongside TODAY
+- [x] **Leaderboard TOP split**: TODAY / WEEKLY / CHALLENGE-TODAY → top 10; MARATHON ALL TIME / CHALLENGE ALL TIME → top 20
+- [x] `getBoard(key, limit=TOP)` updated with optional limit param; all call sites updated
+- [x] Merged to master via PR #2
+
+---
+
+## ✅ Completed: Pre-v1.1 Refactor & English Cleanup — by Claude (2026-05-25)
+
+- [x] Extracted `_saveGameStats()` from `endGame()` for single-responsibility
+- [x] Extracted `_renderGameOverScreen(stats)` from `endGame()`
+- [x] `LS` constant object centralising all 21 localStorage key strings
+- [x] All Korean strings in README.md / TODO.md / WALKTHROUGH.md translated to English
+
+---
+
+## ✅ Completed: v1.0.9.2 (BGM Upgrade + Challenge Background + Flash Fix) — by Claude (2026-05-25)
+
+### PR #3 open (preview → master) — awaiting merge
+
+- [x] **BGM 4-Track Upgrade (Normal)**: melody (square wave) + harmony (triangle, parallel 3rds) + walking bass (quarter-note changes: A-E-A-C / F-F-C-E / A-A-G-G / C-D-A-A) + kick/snare/hihat drums
+- [x] **Challenge BGM Overhaul**: A harmonic minor (G# leading tone), tritone dissonance in harmony, chromatic bass (Bb/G# each bar), double-kick + 16th-note hihat wall, base BPM 135→165
+- [x] **Drum bit-flags**: pattern values are now bitmasks (bit0=kick, bit1=snare, bit2=hihat) allowing simultaneous hits (e.g. 5=kick+hihat, 6=snare+hihat)
+- [x] **Challenge-exclusive background** (`_drawChallengeBg()`):
+  - Dark crimson fade `rgba(10,0,3,0.22)` instead of cool blue
+  - Red/amber nebulae (hue clamped 0-55, 1.7× drift speed)
+  - Diagonal meteor shower with amber glow trails
+  - Pulsing amber core glow rising from bottom
+  - Subtle dark-red edge vignette `rgba(160,0,10)` at 0.15 opacity, soft wide spread
+- [x] **First-load flash fix**: `#overlay` was `display:none` in HTML → game panels visible on first browser paint before JS ran. Fixed by moving `display:flex` into CSS default; overlay covers game UI from frame 0.
+- [x] Stars gain `.vx` property for diagonal meteor rain (ignored in normal mode)
+- [x] Low-perf mode uses `#0a0002` dark red background in challenge vs `#000010` normal
+
+### ⚠️ Deployment status
+- Code is on GitHub `preview` branch (commit `441b653`) ✓
+- `prevglow.vercel.app` alias points to commit `87cb1d2` (one commit behind — `rgba(80,0,8)` vignette)
+- **Vercel free plan hit 100 deployments/day limit** — latest vignette fix (`rgba(160,0,10)`, opacity 0.15) NOT yet deployed
+- Re-deploy when limit resets (midnight UTC = 09:00 KST) or via Vercel dashboard Redeploy button
+
+---
+
+## 🔲 Pending (requested but not yet started) — by Claude (2026-05-25)
+
+- [ ] **Leaderboard deduplication**: if same username submits a better score, remove their old entry and keep only their personal best. Detection logic: match by name (localStorage username) + score comparison. Backend: Redis ZRANGEBYSCORE + ZREM before ZADD, or client-side filter on response.
+- [ ] **OG image / social meta tags**: ensure Twitter Card (`twitter:card`, `twitter:image`, etc.) and Open Graph tags are present and correct so previews appear on Twitter, KakaoTalk, Discord, Line, and other SNS platforms.
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
