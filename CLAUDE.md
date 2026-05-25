@@ -21,6 +21,11 @@
   - `hotfix/option-a` — keep, do NOT delete. Testing only → **https://prevglow-a.vercel.app**
   - `hotfix/option-b` — keep, do NOT delete. Testing only → **https://prevglow-b.vercel.app**
   - `feature/*` — regular feature branches; Vercel auto-creates random preview URLs per push.
-- **Workflow**: work on `feature/xxx` → merge into `preview` to verify at prevglow → open PR to `master` → production deploys on merge.
+- **Workflow (mandatory — no exceptions)**:
+  1. Work on `feature/xxx`
+  2. Merge into `preview` and verify at **https://prevglow.vercel.app**
+  3. Only after preview is confirmed OK → open PR to `master`
+  4. Production deploys automatically on merge
+  > ⚠️ NEVER open a PR to `master` without first verifying on `preview`. Always confirm with the user that preview looks good before proceeding.
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
