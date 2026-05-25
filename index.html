@@ -1046,7 +1046,7 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
-let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0};
+let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0,challengeAlltimeBoard:[],challengeAlltimeRank:0};
 let isDailyMode=false;
 let _prng=null;
 let lbMode='marathon'; // 'marathon' | 'daily'
@@ -2722,14 +2722,19 @@ async function submitScore(){
         ..._lbCache,
         challengeBoard: data.challengeBoard || [],
         challengeRank: data.challengeRank || 0,
+        challengeAlltimeBoard: data.challengeAlltimeBoard || [],
+        challengeAlltimeRank: data.challengeAlltimeRank || 0,
         myName: name, myScore: score
       };
-      
-      const rankMsg = `<div class="sub" style="color:#ffe600;margin-bottom:6px">CHALLENGE RANK: #${data.challengeRank}</div>`;
+
+      const rankMsg = `
+        <div class="sub" style="color:#ffe600;margin-bottom:2px">TODAY: #${data.challengeRank}</div>
+        <div class="sub" style="color:#00c8ff;margin-bottom:6px">ALL TIME: #${data.challengeAlltimeRank}</div>`;
       inp.style.display='none';
       btn.closest('.btn-row').style.display='none';
       const tabs=`<div class="lb-tabs">
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
+        <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, score)}</div>`;
       res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }
@@ -2950,6 +2955,7 @@ function renderLbTab(tab){
   if(tab==='daily') { entries=_lbCache.dailyBoard||[]; myRank=_lbCache.dailyRank; }
   else if(tab==='weekly') { entries=_lbCache.weeklyBoard||[]; myRank=_lbCache.weeklyRank; }
   else if(tab==='challenge') { entries=_lbCache.challengeBoard||[]; myRank=_lbCache.challengeRank; }
+  else if(tab==='challenge-all') { entries=_lbCache.challengeAlltimeBoard||[]; myRank=_lbCache.challengeAlltimeRank; }
   else { entries=_lbCache.board||[]; myRank=_lbCache.rank; }
   
   document.querySelectorAll('.lb-tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
@@ -2966,7 +2972,10 @@ function setLbMode(mode) {
   const tc=document.querySelector('.lb-tabs-container');
   if(tc){
     if(mode==='daily'){
-      tc.innerHTML=`<button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>`;
+      tc.innerHTML=`
+        <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
+        <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
+      `;
     }else{
       tc.innerHTML=`
         <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
@@ -2991,6 +3000,7 @@ function showStartScreen(){
         <div class="lb-tabs-container lb-tabs">
           ${lbMode === 'daily' ? `
             <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
+            <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
           ` : `
             <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
             <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
