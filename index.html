@@ -2544,20 +2544,20 @@ function triggerLevelUpVisuals() {
 }
 
 function startGame(){
+  // Hide overlay immediately so browser paints the click response (INP fix)
+  $overlay.style.display='none';
+  $combo.textContent='';
+
   loadSettings();
-  if (!isDailyMode) {
-    _prng = null;
-  }
+  if (!isDailyMode) { _prng = null; }
   // Restore perf mode from localStorage (persists across games + sessions).
-  // If _perfLocked was set mid-game, honour it — don't reset just because a new game started.
-  // A device that couldn't hit 28fps won't suddenly become faster next round.
   const savedPerf = localStorage.getItem(LS.LOW_PERF)==='1';
   if(!_perfLocked && !savedPerf){ setLowPerfMode(false); }
   else { setLowPerfMode(true); }
   _fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
-  _perfHold=_perfLocked||savedPerf?0:3; // Already confirmed slow? Skip hold-off.
-  _lastBorderColor=null; // Force border refresh on first piece
-  // Pre-warm all 7 piece sprites now so first-frame creation doesn't spike FPS
+  _perfHold=_perfLocked||savedPerf?0:3;
+  _lastBorderColor=null;
+  // Sprites are pre-warmed at idle time (page load); this is a fast cache hit
   for(const k of Object.keys(PIECES))getCellSprite(PIECES[k].color);
   board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
@@ -2566,8 +2566,6 @@ function startGame(){
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
   spawnPiece();drawNext();drawHold();updateUI();
-  $overlay.style.display='none';
-  $combo.textContent='';
   if(animFrame)cancelAnimationFrame(animFrame);
   prevTs=0;lastDropTs=performance.now();
   startBGM();
@@ -3286,6 +3284,10 @@ $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
 animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 showStartScreen();
+// Pre-warm cell sprites during idle so startGame() click doesn't block (INP fix)
+(window.requestIdleCallback||function(cb){setTimeout(cb,200);})(function(){
+  for(var k in PIECES)getCellSprite(PIECES[k].color);
+},{timeout:8000});
 </script>
 </body>
 </html>
