@@ -2443,7 +2443,7 @@ document.addEventListener('keydown',e=>{
   switch(e.code){
     case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(2,0);break;
     case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-2,0);break;
-    case'ArrowDown': softDrop();break;
+    case'ArrowDown': softDrop();startDASDown();e.preventDefault();break;
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
@@ -2452,10 +2452,15 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{
   updateKeyGuideState(e.code, false);
-  KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
+  KEYS[e.code]=false;
+  if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
+  if(e.code==='ArrowDown')clearDASDown();
 });
 function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
+let dasDownTimer=null;
+function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{dasDownTimer=setInterval(()=>{if(gameRunning&&!gamePaused)softDrop();},arr);},das);}
+function clearDASDown(){clearTimeout(dasDownTimer);clearInterval(dasDownTimer);dasDownTimer=null;}
 
 function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
 function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
