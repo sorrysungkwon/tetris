@@ -1290,23 +1290,31 @@ function _buildLowPerfBg(W, H, isChallenge) {
   // Deep base fill
   c.fillStyle = isChallenge ? '#060001' : '#00000e';
   c.fillRect(0, 0, W, H);
-  // Subtle radial vignette — lighter in centre, darker at edges
-  const cg = c.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H)*0.75);
+  // Radial centre glow — stronger, wider
+  const cg = c.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H)*0.85);
   if(isChallenge){
-    cg.addColorStop(0,   'rgba(60,4,8,0.55)');
-    cg.addColorStop(0.5, 'rgba(28,2,4,0.35)');
+    cg.addColorStop(0,   'rgba(90,6,12,0.85)');
+    cg.addColorStop(0.4, 'rgba(50,3,7,0.55)');
+    cg.addColorStop(0.75,'rgba(18,1,3,0.25)');
     cg.addColorStop(1,   'rgba(0,0,0,0)');
   } else {
-    cg.addColorStop(0,   'rgba(4,6,40,0.55)');
-    cg.addColorStop(0.5, 'rgba(2,3,22,0.35)');
+    cg.addColorStop(0,   'rgba(6,10,60,0.85)');
+    cg.addColorStop(0.4, 'rgba(3,6,35,0.55)');
+    cg.addColorStop(0.75,'rgba(1,2,15,0.25)');
     cg.addColorStop(1,   'rgba(0,0,0,0)');
   }
   c.fillStyle = cg; c.fillRect(0, 0, W, H);
-  // Very faint colour accent at top — cyan tint (normal) / amber tint (challenge)
-  const tg = c.createLinearGradient(0, 0, 0, H*0.3);
-  tg.addColorStop(0,   isChallenge ? 'rgba(100,20,0,0.10)' : 'rgba(0,40,80,0.10)');
+  // Top colour accent — cyan (normal) / amber-red (challenge)
+  const tg = c.createLinearGradient(0, 0, 0, H*0.45);
+  tg.addColorStop(0,   isChallenge ? 'rgba(160,30,0,0.22)' : 'rgba(0,60,120,0.22)');
+  tg.addColorStop(0.5, isChallenge ? 'rgba(80,10,0,0.08)' : 'rgba(0,30,70,0.08)');
   tg.addColorStop(1,   'rgba(0,0,0,0)');
   c.fillStyle = tg; c.fillRect(0, 0, W, H);
+  // Bottom darkening vignette
+  const bg = c.createLinearGradient(0, H*0.6, 0, H);
+  bg.addColorStop(0, 'rgba(0,0,0,0)');
+  bg.addColorStop(1, 'rgba(0,0,0,0.45)');
+  c.fillStyle = bg; c.fillRect(0, 0, W, H);
   return oc;
 }
 
