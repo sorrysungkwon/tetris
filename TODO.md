@@ -355,6 +355,32 @@ A cascade of mistakes hit both the GitHub deployment rate limit AND Vercel's 100
 - Next push after midnight UTC will deploy `c07f206` (memory fixes) + all subsequent commits automatically
 - PR #4 (`preview` → `master`) is open and ready to merge once preview is verified post-reset
 
+### 🔁 Post-UTC-Midnight Release Checklist (User Action Plan)
+Once Vercel's daily limit resets, follow these precise steps to complete the release:
+
+1. **Verify Preview Deployment:**
+   - Confirm `prevglow.vercel.app` is successfully auto-deployed with the latest memory leak and stability fixes.
+2. **Merge PR #4 on GitHub:**
+   - Merge `preview` → `master` on GitHub.
+   - This automatically triggers the production build and deploys to `glowtris.vercel.app`.
+3. **Checkout and Pull Master Locally:**
+   ```bash
+   git checkout master
+   git pull
+   ```
+4. **Create & Push Dual Release Tags:**
+   ```bash
+   git tag -a v1.0.9.3 -m "T-Spin Mini + leaderboard dedup + OG image"
+   git tag -a v1.0.9.4 -m "Hotfix: PC panel overflow + perf + memory leaks"
+   git push origin v1.0.9.3 v1.0.9.4
+   ```
+5. **Sync Preview Branch Back to Master:**
+   ```bash
+   git checkout preview
+   git merge master
+   git push origin preview
+   ```
+
 ### Confirmed mandatory workflow going forward
 ```
 feature/xxx → preview (verify) → PR to master (user approves) → merge → (tag if versioned)
