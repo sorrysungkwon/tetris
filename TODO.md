@@ -291,10 +291,13 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
-## 🔲 Pending (requested but not yet started) — by Claude (2026-05-25)
+## ✅ Completed: v1.0.9.3 (T-Spin Mini + Leaderboard Dedup + OG Image) — by Claude (2026-05-25)
 
-- [ ] **Leaderboard deduplication**: if same username submits a better score, remove their old entry and keep only their personal best. Detection logic: match by name (localStorage username) + score comparison. Backend: Redis ZRANGEBYSCORE + ZREM before ZADD, or client-side filter on response.
-- [ ] **OG image / social meta tags**: ensure Twitter Card (`twitter:card`, `twitter:image`, etc.) and Open Graph tags are present and correct so previews appear on Twitter, KakaoTalk, Discord, Line, and other SNS platforms.
+- [x] **T-Spin Mini detection**: `checkTSpin()` now returns `'full'` / `'mini'` / `false` by inferring T-piece rotation from shape matrix and applying front/back corner distinction. Mini T-Spin scores: 0/200/400×level (vs Full: 400/800/1200/1600×level). `showScorePopup()` shows distinct "T-SPIN MINI" label.
+- [x] **Leaderboard deduplication**: `deduplicateAndAdd()` helper scans each sorted set for entries matching `cleanName`, removes stale ones via `ZREM`, then adds the new entry — but only if the new score is a personal best. Applied to all 5 boards (ALL TIME, daily, weekly, challenge-today, challenge-alltime).
+- [x] **OG image PNG endpoint** (`/api/og`): Edge Function using `@vercel/og` renders a 1200×630 PNG with neon block grid mark, GLOW+TRIS title with glow effects, and grid background. No JSX or React dependency — VNodes built with plain `h()` helper.
+- [x] **Social meta tags**: updated `og:image` and `twitter:image` to `/api/og` (PNG). Added `og:site_name`, `og:locale`, `og:image:alt`, `twitter:image:alt`, `og:image:type`. Works on Twitter/X, KakaoTalk, Discord, Line, Slack, Facebook.
+- [x] Version bumped to v1.0.9.3.
 
 ---
 
