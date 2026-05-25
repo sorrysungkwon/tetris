@@ -196,7 +196,7 @@ If Option B is chosen, ensure the resize skip guard is also relaxed (raise toler
 
 ### The Mistake (Rushing the Merge)
 - **What happened:** The agent (Antigravity) completely misunderstood the user's strategic intent. The user wanted to keep both `hotfix/option-a-arithmetic` and `hotfix/option-b-polling` branches separate to compare their real-device behaviors. However, the agent rushed to merge Option A into `master`, bumped the version to `v1.0.9.1`, and tagged it.
-- **The Reversal:** Following the user's strict intervention ("아니 뒤로 돌아가"), the agent reset `master` back to `f0a414d` (pre-merge), force-pushed the rollback, reverted `/home/ubuntu/index.html` (the global dashboard), and completely deleted the `v1.0.9.1` tag both locally and on GitHub to restore the clean state.
+- **The Reversal:** Following the user's strict intervention ("roll it back"), the agent reset `master` back to `f0a414d` (pre-merge), force-pushed the rollback, reverted `/home/ubuntu/index.html` (the global dashboard), and completely deleted the `v1.0.9.1` tag both locally and on GitHub to restore the clean state.
 
 ### The 404 Deployment Rescue
 - **The Issue:** The user noticed that the preview URLs `https://prevglow-a.vercel.app` and `https://prevglow-b.vercel.app` were returning `DEPLOYMENT_NOT_FOUND` (404) because no successful branch deployments existed on Vercel.
