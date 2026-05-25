@@ -27,5 +27,21 @@
   3. Only after preview is confirmed OK → open PR to `master`
   4. Production deploys automatically on merge
   > ⚠️ NEVER open a PR to `master` without first verifying on `preview`. Always confirm with the user that preview looks good before proceeding.
+
+## 🚨 DEPLOYMENT DISCIPLINE — Minimize Deployments (applies to ALL agents incl. Antigravity)
+
+Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL deployments until midnight UTC. Every agent must treat each deployment as expensive.
+
+### Forbidden actions (each wastes a deployment):
+1. **NEVER run `vercel`, `vercel deploy`, or `vercel --prod` manually via CLI** — the GitHub integration auto-deploys on every `git push`. Running the CLI on top doubles the count.
+2. **NEVER push micro-fixes directly to `preview`** — e.g. "adjust color → push → check → adjust again → push" burns 3+ deployments for one tweak. Do ALL iteration on a `feature/*` branch first.
+3. **NEVER push to `preview` more than once per feature** — accumulate every change in `feature/*`, test locally, then do a single merge-to-preview when the feature is truly complete.
+
+### Required habits:
+- **Batch all changes**: finish the entire feature (including all fine-tuning) on `feature/*` before merging to `preview`.
+- **Test locally** whenever possible (open `index.html` in browser, use `npx serve .` etc.) before pushing.
+- **One feature → one merge to preview → one deployment**. If a review reveals issues, fix on `feature/*` and merge once more — not repeatedly.
+- **Count your deploys**: if you're about to push and it would be the 3rd+ push for the same feature, stop and batch the remaining fixes first.
+
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
