@@ -108,12 +108,14 @@ Vercel's build environment uses **shallow git clones** — `HEAD^` (parent commi
 
 If you need to skip builds conditionally, use a script that doesn't rely on git history, or leave the field empty (cleared = build always runs).
 
-### 4. When the Vercel team slug changes, update ALL references
+### 4. Always use the stable TEAM ID and PROJECT ID in API calls — never the slug
 
-The team was renamed `seonqwer-3337s-projects` → `sgkwon-team` on 2026-05-25. Any hardcoded `teamId` or `teamSlug` in workflow files, API calls, or docs will silently fail (403 or empty results) if not updated. Always check:
-- `.github/workflows/vercel-status.yml` — `teamId=` query params in curl calls
-- `CLAUDE.md` — Team slug and Team ID
-- `README.md` — Dashboard URL
+The team slug is a display name that can change (e.g. `seonqwer-3337s-projects` → `sgkwon-team`). The team ID (`team_pb1objuXoHlJIv67jumHZrg8`) and project ID (`prj_V1lhSONnxAM9K2hpk5VLtemldWnm`) are permanent and never change.
+
+Always check:
+- `.github/workflows/vercel-status.yml` — use `VERCEL_TEAM_ID`/`VERCEL_PROJECT_ID` env vars
+- `CLAUDE.md` — Team slug (for dashboard URLs only) and Team ID (for API calls)
+- `README.md` — Dashboard URL (slug-based, update when renamed)
 
 ### 5. Empty commits are a last resort, not a debugging tool
 
@@ -124,4 +126,47 @@ The team was renamed `seonqwer-3337s-projects` → `sgkwon-team` on 2026-05-25. 
 If the 100/day limit is hit:
 - Wait until **midnight UTC** (not midnight local time) for the counter to reset
 - Do NOT attempt `vercel deploy` CLI — it will fail with the same error and waste the next day's slot if the reset happened
-- Use `vercel ls --team sgkwon-team` to check if auto-deploy has recovered before manually intervening
+- Use `vercel ls --scope sgkwon-team` to check if auto-deploy has recovered before manually intervening
+- Signs of limit hit: Vercel deployments show `CANCELED` with 0s build time, `canceledAt === buildingAt`, `canceler: null`
+
+### 7. Vercel Deployment Checks — what they are and what to do
+
+**What they are**: Vercel Deployment Checks gate **production domain aliasing** — they do NOT affect builds or preview deployments. If configured, a production build completes successfully but stays on a unique URL (e.g. `glowtris-xxxx.vercel.app`) until all configured checks pass, THEN gets aliased to `glowtris.vercel.app`.
+
+**Do we need them?** No. Our PR-based workflow already provides this gate:
+1. Build and review on `preview` (prevglow.vercel.app)
+2. Open PR to `master` — user confirms it looks good
+3. Merge PR → production auto-aliases
+
+There is nothing to configure in Vercel Dashboard → Settings → Build & Deployment → Deployment Checks for this project. Leave it empty.
+
+**The only gotcha**: if you ever DO configure a Deployment Check and the check fails, production promotion is blocked (but the build still "succeeds"). You can bypass with Force Promote in the Vercel dashboard.
+
+## 🔁 Mandatory Release Workflow (no exceptions)
+
+Every feature, hotfix, or change follows this exact sequence:
+
+```
+feature/xxx  →  preview  →  PR to master  →  master  →  (tag if versioned)
+```
+
+### Step-by-step:
+
+1. **Create feature branch**: `git checkout -b feature/xxx`
+2. **Develop & iterate**: all changes on `feature/*` only. Test locally (`npx serve .`). No pushes to `preview` yet.
+3. **Batch commit**: when the feature is 100% done including fine-tuning, `git add . && git commit -m "feat: ..."`.
+4. **Push to feature branch**: `git push origin feature/xxx` (Vercel creates a random preview URL — use for a final sanity check if needed, but this is optional).
+5. **Merge to `preview`**: `git checkout preview && git merge feature/xxx && git push origin preview`
+   - Vercel auto-deploys to **https://prevglow.vercel.app** (one deployment slot used)
+   - Confirm with user that it looks good on prevglow.vercel.app
+6. **Open PR**: `gh pr create --base master --head preview --title "feat: ..."` (or via GitHub UI)
+   - NEVER open a PR to master without user confirmation that preview is OK
+7. **User approves and merges PR** → Vercel auto-deploys to **https://glowtris.vercel.app** (production)
+8. **Tag if versioned**: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
+9. **Update `git checkout preview && git merge master`** to keep preview in sync with master after the PR merge.
+
+### Critical rules:
+- **ONE merge to preview per feature** — no iterative fixes on preview
+- **NEVER merge directly to master** — always via PR with preview verification
+- **NEVER run `vercel` CLI** for deploys — GitHub integration handles it
+- **Docs always follow code**: update `TODO.md` + `README.md` roadmap in the same commit as the feature

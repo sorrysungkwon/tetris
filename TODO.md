@@ -328,6 +328,40 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
+## ✅ Completed: Post-v1.0.9.4 CI/Infra Hardening — by Claude (2026-05-25)
+
+### Incident recap (2026-05-25)
+A cascade of mistakes hit both the GitHub deployment rate limit AND Vercel's 100/day cap simultaneously:
+1. `vercel-status.yml` v1 used `repos.createDeployment()` — doubled Vercel GitHub App's deployment records, hit GitHub's rate limit ("deployment rate limited - retry 24 hours").
+2. Iterative `vercel` CLI runs + empty commits + rapid pushes burned through Vercel's 100/day cap.
+3. `commandForIgnoringBuildStep` was set to `git diff HEAD^ HEAD --quiet` — Vercel shallow clone has no `HEAD^`, so every build was silently skipped.
+4. Team rename (`seonqwer-3337s-projects` → `sgkwon-team`) left hardcoded slug references in the workflow that silently broke API calls.
+
+### What was fixed
+- [x] **`vercel-status.yml` rewritten (v2)**: uses `repos.createCommitStatus()` (Commit Status API) instead of `repos.createDeployment()`. Zero conflict with Vercel GitHub App, zero duplicate records, no rate limit risk.
+- [x] **`vercel-status.yml` v3 — stable IDs**: replaced `teamId=sgkwon-team` (slug, breaks on rename) with env vars `VERCEL_TEAM_ID=team_pb1objuXoHlJIv67jumHZrg8` and `VERCEL_PROJECT_ID=prj_V1lhSONnxAM9K2hpk5VLtemldWnm` (permanent IDs). Added `projectId` filter to deployments list API to avoid picking up other projects.
+- [x] **`commandForIgnoringBuildStep` cleared**: set to `null` via Vercel PATCH API. NEVER re-add `git diff HEAD^ HEAD --quiet`.
+- [x] **CLAUDE.md hardened**: added 7 rules covering GitHub Actions + Vercel integration, plus `🔁 Mandatory Release Workflow` section with full step-by-step process.
+
+### Vercel Deployment Checks — analysed, no action needed
+- Deployment Checks gate **production domain aliasing** only (not builds, not preview deploys).
+- They require checks to pass before `glowtris.vercel.app` gets updated after a production build.
+- Our PR-based workflow (prevglow → user confirms → PR merge) already provides this exact gate manually.
+- **Decision**: leave Vercel Dashboard → Settings → Deployment Checks empty. Current process is sufficient.
+
+### Pipeline status at close of session (2026-05-25 ~06:00 UTC)
+- `prevglow.vercel.app` is on commit `5f402981` (04:59 UTC) — **memory leak fixes from `c07f206` NOT yet deployed**
+- All subsequent pushes are `CANCELED` (Vercel 100/day limit still active, resets midnight UTC 2026-05-26)
+- Next push after midnight UTC will deploy `c07f206` (memory fixes) + all subsequent commits automatically
+- PR #4 (`preview` → `master`) is open and ready to merge once preview is verified post-reset
+
+### Confirmed mandatory workflow going forward
+```
+feature/xxx → preview (verify) → PR to master (user approves) → merge → (tag if versioned)
+```
+
+---
+
 ## 🔮 Planned: v1.1 (Sprint Mode)
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
