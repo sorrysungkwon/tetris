@@ -34,7 +34,7 @@
 - **Team ID**: `team_pb1objuXoHlJIv67jumHZrg8`
 - **Project**: `glowtris` / `prj_V1lhSONnxAM9K2hpk5VLtemldWnm`
 - **Dashboard**: https://vercel.com/sgkwon-team/glowtris
-- **Ignored Build Step**: `git diff HEAD^ HEAD --quiet` — skips builds with no file changes (empty commits are automatically canceled; this is intentional)
+- **Ignored Build Step**: **CLEARED** (set to `null` on 2026-05-25). Do NOT re-add `git diff HEAD^ HEAD --quiet` — Vercel uses shallow clones where `HEAD^` is unavailable, so the command always exits 0 and skips every build.
 
 ### Environment Variables (set in Vercel dashboard — do NOT hardcode)
 
@@ -67,3 +67,61 @@ Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL d
 
 - After every task: `git add . && git commit -m "description" && git push`
 - **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
+
+## 🚨 GITHUB ACTIONS & VERCEL INTEGRATION — NEVER REPEAT THESE MISTAKES
+
+These rules exist because of an incident on 2026-05-25 where bad GitHub Actions config + excessive CLI usage hit BOTH GitHub's deployment rate limit AND Vercel's 100/day deployment cap simultaneously, blocking all deployments for 24 hours and preventing memory-leak hotfixes from shipping.
+
+### 1. NEVER use the GitHub Deployment API in Actions workflows
+
+**Forbidden pattern:**
+```js
+// ❌ DO NOT DO THIS
+await github.rest.repos.createDeployment({ ... });
+await github.rest.repos.createDeploymentStatus({ ... });
+```
+
+**Why it's fatal**: The Vercel GitHub App already creates one GitHub Deployment record per push. Any workflow that also calls `createDeployment()` doubles the records. GitHub has a per-repo deployment creation rate limit — hitting it returns "deployment rate limited - retry 24 hours" on every subsequent PR and commit.
+
+**The correct pattern** (already in `.github/workflows/vercel-status.yml`):
+```js
+// ✅ Use Commit Status API instead — no rate limit conflict with Vercel
+await github.rest.repos.createCommitStatus({ state: 'pending', context: 'Vercel / Preview', ... });
+```
+Commit statuses are a completely separate API from Deployments. They show up as ● checks on commits/PRs without touching the Deployment records.
+
+### 2. Vercel 100 deployments/day limit — count EVERYTHING
+
+Every single one of these consumes a slot from the 100/day cap:
+- Each `git push` to `preview` or `master` (even if files haven't changed — CANCELED still counts)
+- Each `git push` to any branch with Vercel auto-deploy enabled
+- Each `vercel` or `vercel deploy` CLI invocation (doubles the count on top of GitHub push!)
+- Empty commits (`git commit --allow-empty`) pushed to trigger builds
+
+**When the limit is hit**: ALL deployments to ALL branches are blocked until midnight UTC. There is no way around it on the free plan.
+
+**Never run the Vercel CLI manually** — the GitHub integration handles all deployments automatically. The only valid CLI uses are read-only (`vercel ls`, `vercel inspect`, `vercel env ls`).
+
+### 3. NEVER set `commandForIgnoringBuildStep` to `git diff HEAD^ HEAD --quiet`
+
+Vercel's build environment uses **shallow git clones** — `HEAD^` (parent commit) does not exist. The diff command exits 0 (success = "no changes") every time, causing Vercel to skip every single build. This is silently catastrophic.
+
+If you need to skip builds conditionally, use a script that doesn't rely on git history, or leave the field empty (cleared = build always runs).
+
+### 4. When the Vercel team slug changes, update ALL references
+
+The team was renamed `seonqwer-3337s-projects` → `sgkwon-team` on 2026-05-25. Any hardcoded `teamId` or `teamSlug` in workflow files, API calls, or docs will silently fail (403 or empty results) if not updated. Always check:
+- `.github/workflows/vercel-status.yml` — `teamId=` query params in curl calls
+- `CLAUDE.md` — Team slug and Team ID
+- `README.md` — Dashboard URL
+
+### 5. Empty commits are a last resort, not a debugging tool
+
+`git commit --allow-empty -m "trigger build"` burns one deployment slot. Use it only when Vercel's GitHub integration missed a real commit (rare). Never use it iteratively to test build configuration — fix the config first, then push once.
+
+### 6. Deployment limit recovery
+
+If the 100/day limit is hit:
+- Wait until **midnight UTC** (not midnight local time) for the counter to reset
+- Do NOT attempt `vercel deploy` CLI — it will fail with the same error and waste the next day's slot if the reset happened
+- Use `vercel ls --team sgkwon-team` to check if auto-deploy has recovered before manually intervening
