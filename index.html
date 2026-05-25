@@ -1361,13 +1361,21 @@ function _drawChallengeBg(){
   cg.addColorStop(1,'transparent');
   bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
 
-  // 5. Subtle dark-red edge vignette — soft, wide spread, low opacity
-  const vAlpha=0.15+Math.sin(_cBgPulse)*0.04;
-  const vg=bgx.createRadialGradient(W/2,H/2,H*0.35,W/2,H/2,W*0.85);
-  vg.addColorStop(0,'transparent');
-  vg.addColorStop(0.55,'transparent');
-  vg.addColorStop(1,`rgba(160,0,10,${vAlpha})`);
-  bgx.fillStyle=vg; bgx.fillRect(0,0,W,H);
+  // 5. Thin dark-red edge vignette — 4 linear gradients, portrait-safe
+  const vA=0.13+Math.sin(_cBgPulse)*0.03;
+  const vc=`rgba(160,0,10,${vA})`;
+  const vTop=bgx.createLinearGradient(0,0,0,H*0.14);
+  vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
+  bgx.fillStyle=vTop; bgx.fillRect(0,0,W,H*0.14);
+  const vBot=bgx.createLinearGradient(0,H,0,H*0.86);
+  vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
+  bgx.fillStyle=vBot; bgx.fillRect(0,H*0.86,W,H*0.14);
+  const vLft=bgx.createLinearGradient(0,0,W*0.10,0);
+  vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
+  bgx.fillStyle=vLft; bgx.fillRect(0,0,W*0.10,H);
+  const vRgt=bgx.createLinearGradient(W,0,W*0.90,0);
+  vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
+  bgx.fillStyle=vRgt; bgx.fillRect(W*0.90,0,W*0.10,H);
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
