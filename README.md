@@ -50,7 +50,35 @@ A neon-styled block stacking game built as a single HTML file.
 - PWA: installable on iOS/Android home screen (manifest + icons)
 - OG image + social meta tags for rich SNS sharing preview
 
+## Growth Milestones
+
+| Milestone | Target DAU | Target Version | Key Driver |
+|---|---:|---|---|
+| 🌱 Launch Stable | 100 | v1.0.9.4 ✅ | Core gameplay complete |
+| 🚀 Sprint Launch | 500 | v1.1 | Sprint Mode viral sharing |
+| 📈 Multi-Mode | 1,000 | v1.2 | Ultra Mode + mode variety |
+| 🎓 Skill Depth | 1,500 | v1.3 | Training mode, finesse tracking |
+| 🎨 Identity | 2,000 | v1.4 | Visual customization |
+| 🔥 Daily Habit | 3,000 | v1.5 | Streak system + weekly events |
+| 👻 Self-Competition | 4,500 | v1.6 | Ghost race / personal replay |
+| 📊 Meta Game | 5,500 | v1.7 | Advanced stats dashboard |
+| 🏆 Ranked Play | 7,000 | v1.8 | Season & rank tier system |
+| 👥 Social Graph | 9,000 | v1.9 | Friend codes + async challenge |
+| ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle |
+
+### Infrastructure Upgrade Triggers
+| Trigger | Action | Est. Monthly Cost |
+|---|---|---|
+| DAU > 700 | Upstash Free → Pay-as-you-go | +$1 |
+| DAU > 1,000 | Vercel Hobby → Pro | +$20 |
+| DAU > 50,000 | Upstash PAYG → Pro plan review | +$30~ |
+| v2.0 launch | Add WebSocket service (Pusher/Ably) | +$49~ |
+
+---
+
 ## Roadmap
+
+### ✅ Completed
 
 | Version | Features |
 |---|---|
@@ -77,7 +105,21 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.9.2~~ ✅ | **BGM Upgrade + Challenge Background + Flash Fix**: Full BGM system with 3 synthwave tracks, dynamic intensity layers, volume fade in/out; Challenge mode gets distinct crimson/dark-red starfield background; hold `<canvas>` flash on game-over fixed. |
 | ~~v1.0.9.3~~ ✅ | **T-Spin Mini + Leaderboard Dedup + OG Image**: T-Spin Mini detection (1 front corner = mini, score 0/200/400×level; 2 front corners = full T-Spin); leaderboard deduplication — same username keeps only personal best across all 5 boards; `/api/og` Edge Function generates 1200×630 PNG for Twitter/KakaoTalk/Discord/Line previews; soft-drop DAS fix (holding ↓ properly accelerates, lock timer not reset while grounded). |
 | ~~v1.0.9.4~~ ✅ | **Hotfix — Hold/Next Panel Overflow + PC Perf**: Fixed hold/next canvas overflowing panel container on desktop (box-sizing:border-box → panel widened 132→150px, canvas dims passed correctly to drawMiniPiece). PC background gradient caching (every 4 frames), auto low-perf mode for Intel iGPU (WEBGL_debug_renderer_info), static gradient background in low-perf mode. |
-| v1.1 | **Sprint Mode**: Clear 40 lines as fast as possible. Stopwatch timer + remaining-lines HUD, Marathon vs Sprint mode selector on start screen, dedicated time-based Redis leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint stats & Canvas Share image. |
+
+### 🔮 Planned
+
+| Version | Theme | Features | DAU Goal |
+|---|---|---|---:|
+| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD + remaining-lines counter, mode selector on start screen (Marathon / Sprint), time-based leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint Canvas Share card with time + LPM. | **500** |
+| v1.2 | **Ultra Mode** | 2-minute score attack. Score multiplier ramps as time runs out, Ultra-exclusive leaderboard. Mode selector expands to Marathon / Sprint / Ultra. | 800 |
+| v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |
+| v1.4 | **Visual Customization** | Board skin selector (Neon / Midnight / Pastel / Classic). Piece colour palette presets. BGM track selection saved to localStorage. | 1,800 |
+| v1.5 | **Daily Streak & Events** | Daily login streak badge (consecutive-day counter). Weekly special challenge (rotating rule modifiers: invisible pieces, 20-line board, etc.). Monthly event leaderboard with Redis TTL. | 2,500 |
+| v1.6 | **Ghost & Replay** | Best-run ghost stored in Redis (serialised input log). Ghost race mode — race against your own personal best. Shareable replay link via short code. | 3,500 |
+| v1.7 | **Advanced Stats** | Expanded STATS overlay: PPS, finesse rate, T-spin %, all-clear %, average combo. Session graph (score over last 10 games). Weekly personal report card. | 4,500 |
+| v1.8 | **Season & Rank** | Monthly season resets leaderboard. 7-tier rank system (Bronze → Radiant) based on season score. Season-exclusive title badges and board borders unlock at each tier. | 6,000 |
+| v1.9 | **Social Layer** | Friend code system (6-char code → follow mutual). Friend-only leaderboard tab. Async challenge — share a seeded run; recipient plays same sequence, results compared on a shared card. | 8,000 |
+| v2.0 | **Real-time Multiplayer** | 1v1 battle via WebSocket (Pusher/Ably). Garbage line mechanic. Live spectator mode. Elo-based matchmaking queue. Battle-exclusive leaderboard. | **15,000+** |
 
 ## Infrastructure
 
@@ -101,7 +143,7 @@ Set in Vercel Dashboard → Settings → Environment Variables. Never commit to 
 
 ### Vercel Ignored Build Step
 
-`git diff HEAD^ HEAD --quiet` — Vercel skips the build when there are no file changes (empty commits are auto-canceled). Real commits with file changes always deploy.
+**Cleared** (`null`) — every push triggers a build. Do NOT re-add `git diff HEAD^ HEAD --quiet`; Vercel uses shallow clones where `HEAD^` is unavailable, causing every build to be silently skipped.
 
 ## Rules
 

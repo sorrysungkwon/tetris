@@ -7,6 +7,32 @@
 
 ---
 
+## 🎯 Growth Goals & Milestones
+
+| Milestone | DAU Target | Version | Key Driver | Status |
+|---|---:|---|---|---|
+| 🌱 Stable launch | 100 | v1.0.9.4 | Core gameplay | ✅ Done |
+| 🚀 Sprint viral | 500 | v1.1 | Sprint share card | 🔲 Next |
+| 📈 Multi-mode | 1,000 | v1.2 | Ultra Mode variety | 🔲 |
+| 🎓 Skill depth | 1,500 | v1.3 | Training + finesse | 🔲 |
+| 🎨 Identity | 2,000 | v1.4 | Visual customization | 🔲 |
+| 🔥 Daily habit | 3,000 | v1.5 | Streak + weekly events | 🔲 |
+| 👻 Self-compete | 4,500 | v1.6 | Ghost race / replay | 🔲 |
+| 📊 Meta game | 5,500 | v1.7 | Advanced stats | 🔲 |
+| 🏆 Ranked play | 7,000 | v1.8 | Season & rank tier | 🔲 |
+| 👥 Social graph | 9,000 | v1.9 | Friend codes + async challenge | 🔲 |
+| ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle | 🔲 |
+
+### Infrastructure Upgrade Triggers
+| DAU Threshold | Action |
+|---:|---|
+| > 700 | Upstash Free → Pay-as-you-go (+$1/mo) |
+| > 1,000 | Vercel Hobby → Pro (+$20/mo) |
+| > 50,000 | Review Upstash Pro plan |
+| v2.0 launch | Add WebSocket service — Pusher/Ably (+$49/mo) |
+
+---
+
 ## ✅ Completed: v1.0.2 (Subtle Design & Polish) — by Antigravity
 
 - [x] Task 1: Revert Hard Drop shockwave rings in `hardDrop()` (keep only standard spark particles)
@@ -388,11 +414,109 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
-## 🔮 Planned: v1.1 (Sprint Mode)
+## 🔮 Planned: v1.1 — Sprint Mode
+> DAU goal: **500** | Key driver: sprint time share card virality
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
 - [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
-- [ ] Task 3: **Mode Selector** — Marathon vs Sprint toggle on start screen; selection persists to `localStorage`.
+- [ ] Task 3: **Mode Selector** — Marathon / Sprint / Daily Challenge buttons on start screen; selection persists to `localStorage`.
 - [ ] Task 4: **Sprint Leaderboard** — separate Redis leaderboard, ascending sort (fastest wins), TODAY / WEEKLY / ALL TIME tabs, rank shown after submission.
-- [ ] Task 5: **Sprint Stats & Canvas Share** — STATS overlay and share image format sprint results (time, lines/min, rank) correctly.
-- [ ] Task 6: Update `README.md` roadmap and this file after completion.
+- [ ] Task 5: **Sprint Canvas Share card** — large time display + LPM (lines per minute) + rank; "Can you beat XX.XXs?" caption for SNS viral sharing.
+- [ ] Task 6: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
+
+---
+
+## 🔮 Planned: v1.2 — Ultra Mode
+> DAU goal: **800** | Key driver: time-pressure score variety
+
+- [ ] Task 1: **Ultra Mode Engine** — 2-minute countdown; score as many points as possible; game ends at 00:00.
+- [ ] Task 2: **Ultra HUD** — countdown timer replaces remaining-lines HUD; score multiplier ramps in final 30 seconds.
+- [ ] Task 3: **Mode Selector expanded** — Marathon / Sprint / Ultra / Daily Challenge on start screen.
+- [ ] Task 4: **Ultra Leaderboard** — separate Redis leaderboard, descending sort (highest score wins), TODAY / WEEKLY / ALL TIME.
+- [ ] Task 5: **Ultra Canvas Share card** — score + time survived + rank.
+- [ ] Task 6: Update docs and push version tag `v1.2`.
+
+---
+
+## 🔮 Planned: v1.3 — Training & Finesse
+> DAU goal: **1,200** | Key driver: skill progression loop
+
+- [ ] Task 1: **Practice Mode** — no game over, no timer; press Escape to exit; pieces reset board every 200 lines.
+- [ ] Task 2: **Finesse Counter** — track wasted keypresses vs optimal input per piece; display finesse error count on game over.
+- [ ] Task 3: **Speed Metrics** — PPS (pieces per second) and LPM (lines per minute) displayed on game over and STATS overlay.
+- [ ] Task 4: **Per-piece heatmap** (STATS overlay) — show which pieces caused the most finesse errors.
+- [ ] Task 5: Update docs and push version tag `v1.3`.
+
+---
+
+## 🔮 Planned: v1.4 — Visual Customization
+> DAU goal: **1,800** | Key driver: personal expression & shareability
+
+- [ ] Task 1: **Board skin selector** — 4 themes: Neon (current default) / Midnight / Pastel / Classic. Affects background, grid, and panel colours. Persisted to `localStorage`.
+- [ ] Task 2: **Piece colour palette presets** — 3 palettes: Vivid (current) / Muted / Monochrome. Rebuilds cell sprite cache on change.
+- [ ] Task 3: **BGM track selection** — user can pin a preferred track (Track 1 / Track 2 / Track 3 / Shuffle). Persisted to `localStorage`.
+- [ ] Task 4: Update docs and push version tag `v1.4`.
+
+---
+
+## 🔮 Planned: v1.5 — Daily Streak & Events
+> DAU goal: **2,500** | Key driver: return-visit habit
+
+- [ ] Task 1: **Daily streak counter** — track consecutive days played; badge displayed on start screen and game over; streak lost if a day is missed.
+- [ ] Task 2: **Weekly special challenge** — rotating rule modifier seeded per week (e.g., invisible pieces, narrower board, no hold). Separate Redis leaderboard with 7-day TTL.
+- [ ] Task 3: **Monthly event leaderboard** — all-month leaderboard with Redis TTL; top 3 display gold/silver/bronze badge on profile.
+- [ ] Task 4: Update docs and push version tag `v1.5`.
+
+---
+
+## 🔮 Planned: v1.6 — Ghost & Replay
+> DAU goal: **3,500** | Key driver: self-competition loop
+
+- [ ] Task 1: **Personal best ghost** — serialise input log of personal best run to Redis; render ghost piece trail 1 frame behind real piece during replay.
+- [ ] Task 2: **Ghost race mode** — race against your own ghost in real time; ghost moves at your recorded pace.
+- [ ] Task 3: **Shareable replay link** — encode input log as short-code; recipient can watch the run play out in a read-only spectator view.
+- [ ] Task 4: Update docs and push version tag `v1.6`.
+
+---
+
+## 🔮 Planned: v1.7 — Advanced Stats
+> DAU goal: **4,500** | Key driver: deep engagement for competitive players
+
+- [ ] Task 1: **Expanded STATS overlay** — PPS, finesse rate (%), T-spin %, all-clear %, average combo, max combo, average score per game.
+- [ ] Task 2: **Session history graph** — score sparkline for last 10 games; trend arrow (improving / declining).
+- [ ] Task 3: **Weekly personal report** — auto-generated summary card each Monday: best time (Sprint), best score (Marathon), most achievements unlocked.
+- [ ] Task 4: Update docs and push version tag `v1.7`.
+
+---
+
+## 🔮 Planned: v1.8 — Season & Rank System
+> DAU goal: **6,000** | Key driver: long-term competitive ladder
+
+- [ ] Task 1: **Monthly season** — season leaderboard resets on the 1st of each month; previous season rank archived to player profile.
+- [ ] Task 2: **7-tier rank system** — Bronze / Silver / Gold / Platinum / Diamond / Master / Radiant; rank determined by season score percentile.
+- [ ] Task 3: **Season rewards** — tier-exclusive title badge and board border unlock at end of each season; displayed permanently on profile.
+- [ ] Task 4: **Season banner** on start screen — countdown to season end + current rank.
+- [ ] Task 5: Update docs and push version tag `v1.8`.
+
+---
+
+## 🔮 Planned: v1.9 — Social Layer
+> DAU goal: **8,000** | Key driver: word-of-mouth and friend competition
+
+- [ ] Task 1: **Friend code system** — each user gets a 6-char code (derived from username hash); enter a code to follow; mutual follows create a friend pair stored in Redis.
+- [ ] Task 2: **Friend leaderboard tab** — new tab in leaderboard overlay showing only followed players' scores.
+- [ ] Task 3: **Async challenge** — "Challenge a Friend" button on game over shares a seeded run as a link; recipient plays the exact same sequence; results compared on a shared card.
+- [ ] Task 4: Update docs and push version tag `v1.9`.
+
+---
+
+## 🔮 Planned: v2.0 — Real-time Multiplayer
+> DAU goal: **15,000+** | Key driver: the platform shift
+
+- [ ] Task 1: **WebSocket infrastructure** — integrate Pusher or Ably for real-time bidirectional communication; add API route for session management.
+- [ ] Task 2: **1v1 Battle Mode** — matchmaking queue; garbage line mechanic (cleared lines send junk to opponent); first to top out loses.
+- [ ] Task 3: **Battle HUD** — opponent board preview (mini, right panel); incoming garbage meter; attack/defence counter.
+- [ ] Task 4: **Elo rating system** — per-player Elo stored in Redis; updated after each ranked battle; displayed on profile.
+- [ ] Task 5: **Live spectator mode** — watch any ongoing public match; spectator count shown on match screen.
+- [ ] Task 6: **Battle leaderboard** — ranked by Elo; TODAY (most battles) / ALL TIME (highest Elo) tabs.
+- [ ] Task 7: Update docs, push version tag `v2.0`, upgrade infrastructure (Vercel Pro + Pusher).
