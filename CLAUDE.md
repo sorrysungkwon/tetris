@@ -5,8 +5,11 @@
 
 The user will say **"sync"** at the start of a session. When this happens (or at the start of any new session before any task):
 
-1. **Read** `README.md` → `TODO.md` → `CLAUDE.md` (this file) → `AGENTS.md`
-2. **Check recent changes**: `git log --oneline -10` to see what has changed since the last session
+1. **Read in this order**:
+   - `CLAUDE.md` (this file) — all deployment rules, project info, and workflow
+   - `TODO.md` — active tasks and version pipeline
+   - `README.md` — optional, for high-level feature/roadmap context only
+2. **Check recent changes**: `git log --oneline -10`
 3. **Report to the user**:
    - Current branch and latest commit
    - What changed since the last session (docs, features, fixes)
@@ -14,7 +17,7 @@ The user will say **"sync"** at the start of a session. When this happens (or at
    - What the next task is (first `🔲 Next` item in TODO.md)
 4. **Flag any inconsistencies** between documents before starting work
 
-> Both Claude and Antigravity follow this exact protocol so they always share the same understanding of project state. Never start coding or editing before completing sync when asked.
+> `CLAUDE.md` is the agent's source of truth — not `README.md`. README.md is a human-facing project page. All operational rules live here.
 
 ## 🚨 SAFETY HARNESS: STRICT CONSTRAINT RULES (Must follow!)
 - **NO Autonomous Merging/Tagging/Destructive Acts**: NEVER perform any git merges to `master`, `git tag` creations/pushes, `git reset --hard`, or `git push --force` autonomously. You MUST present your design/findings to the user first and obtain EXPLICIT verbal approval (e.g., "merge it" or "tag it") in the chat before running these commands.
@@ -25,8 +28,8 @@ The user will say **"sync"** at the start of a session. When this happens (or at
 
 > **Naming note:** This project was previously located at `/home/ubuntu/projects/tetris` and called "Neon Tetris". It was renamed to **Glowtris** at v1.0.1. As of 2026-05-23, all "tetris" references have been purged from files, config, and git history. Always use "Glowtris" / "glowtris" — never "tetris".
 
-- Always read README.md first, then TODO.md before starting any task
-- Update TODO.md task progress (`[x]`) and README.md roadmap after each task is completed
+- Always read `CLAUDE.md` first, then `TODO.md` before starting any task. `README.md` is human-facing — refer to it for feature context only, not for operational rules.
+- Update TODO.md task progress (`[x]`) after each task is completed. Update README.md roadmap only when releasing a new version.
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).
 - **Unified Workspace Integration**: Keep all technical specifications, tasks, and walkthrough reports inside the shared project directory (using `TODO.md` and `WALKTHROUGH.md` in the project root) to maintain 100% transparent and synchronized collaboration with Antigravity.
 - Keep single file structure (`index.html` only)
