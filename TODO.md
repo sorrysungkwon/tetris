@@ -410,9 +410,22 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
-## 🔮 Planned: Pre-v1.1 — Donation UI
-> DAU goal: — | Key driver: monetization foundation before viral launch
+## ✅ Completed: Pre-v1.1 API Hardening — by Claude (2026-05-29)
 
+- [x] **60s edge cache**: GET `/api/leaderboard` now sets `Cache-Control: s-maxage=60, stale-while-revalidate=30`. Vercel edge network serves cached responses, reducing Redis reads ~50%. Extends Upstash free ceiling from ~416 DAU to ~700 DAU at zero cost — v1.1's 500 DAU target is now safely within the free tier.
+- [x] **Rate limiting**: IP-based limit of 5 POST submissions per 60s window. Uses a Redis `INCR` key with `EXPIRE` TTL (costs 1–2 commands on hot path). Returns HTTP 429 on violation.
+- [x] **Score validation**: Rejects submissions where score is not a positive integer ≤ 10,000,000 (≈ 4+ hours of perfect play). Prevents obvious spoofed entries without server-side game simulation.
+
+---
+
+## 🔮 Planned: Pre-v1.1 — Domain + Donation UI
+> DAU goal: — | Key driver: custom domain before launch + monetization foundation
+
+### Domain Setup (user action)
+- [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
+- [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
+
+### Donation UI
 - [ ] Task 1: **`SUPPORT_URL` constant** — add `const SUPPORT_URL = 'https://ko-fi.com/xxx';` at top of `index.html`. When empty string, all donation UI is hidden with zero layout impact.
 - [ ] Task 2: **Game over donation button** — ☕ gold-toned "BUY ME A COFFEE" button below the leaderboard submission form; only rendered when `SUPPORT_URL` is set.
 - [ ] Task 3: **Stats overlay footer card** — dashed gold box at the bottom of the STATS overlay with "Buy me a coffee to keep Glowtris 100% ad-free!" copy and ☕ link; only rendered when `SUPPORT_URL` is set.
@@ -422,7 +435,7 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ## 🔮 Planned: v1.1 — Sprint Mode
 > DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
-> ⚠️ **Before releasing v1.1**: Upstash free tier exhausts at ~357 DAU. Switch to Upstash PAYG (~$1/mo) OR apply 60s leaderboard cache to `api/leaderboard.js` **before** the Reddit launch post goes live.
+> ✅ **Infrastructure ready**: 60s edge cache extends Upstash free ceiling to ~700 DAU — v1.1's 500 DAU target is within the free tier. No upgrade required before launch.
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
 - [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
@@ -431,6 +444,19 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 - [ ] Task 5: **Sprint Canvas Share card** — large time display + LPM (lines per minute) + rank; "Can you beat XX.XXs?" caption for SNS viral sharing.
 - [ ] Task 6: **Reddit r/webgames launch post** — post to r/webgames on release day: ad-free, PWA, leaderboard, Sprint Mode highlight. Title: "I made a free neon Tetris PWA — no ads, just score attack".
 - [ ] Task 7: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
+
+---
+
+## 🔮 Planned: Pre-v1.2 — Architecture Review
+> DAU goal: — | Key driver: code health before multi-mode complexity
+> ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
+
+`index.html` will be ~4,000+ lines by this point (3,535 now + Ultra + streak code). Decide the code architecture before adding more game modes:
+
+- [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
+- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable).
+- [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
+- [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
 
 ---
 

@@ -62,10 +62,12 @@ A neon-styled block stacking game built as a single HTML file.
 ### Infrastructure Upgrade Triggers
 | DAU | Upgrade |
 |---:|---|
-| > 300 | Upstash Free → Pay-as-you-go (~+$2/mo) |
+| > 700 | Upstash Free → Pay-as-you-go (~+$1/mo) ¹ |
 | > 600 | Vercel Hobby → Pro (+$20/mo) |
 | > 50,000 | Upstash Pro plan review |
 | v2.0 | WebSocket service — Pusher or Ably (+$49/mo) |
+
+¹ 60s edge cache is live — Upstash free ceiling extended from ~416 to ~700 DAU.
 
 ---
 
@@ -103,7 +105,7 @@ A neon-styled block stacking game built as a single HTML file.
 
 | Version | Theme | Features | DAU Goal |
 |---|---|---|---:|
-| Pre-v1.1 | **Donation Support** | ☕ Ko-fi button on game over screen and stats overlay — keeps the game 100% ad-free. | — |
+| Pre-v1.1 | **Foundation** | Custom domain setup. API hardening: 60s edge cache (extends Upstash free tier to ~700 DAU), rate limiting, score validation. ☕ Donation UI (Ko-fi) on game over + stats overlay. | — |
 | v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD, remaining-lines counter, mode selector (Marathon / Sprint), time-based leaderboard (ascending), shareable Sprint result card with time + LPM. | **500** |
 | v1.2 | **Ultra Mode + Streak** | 2-minute score attack with a score multiplier that ramps as time runs out. Daily streak badge — tracks consecutive days played, resets on a missed day. | **700** |
 | v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |

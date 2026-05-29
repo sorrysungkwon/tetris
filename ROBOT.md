@@ -143,6 +143,42 @@ Deployment Checks gate production domain aliasing only. Our PR-based workflow (p
 
 ---
 
+## 📋 Session Notes — 2026-05-29 Part 2 (Architecture & Infra Hardening)
+
+Decisions and changes made in the second half of 2026-05-29.
+
+### Document architecture: ROBOT.md introduced
+`CLAUDE.md` and `AGENTS.md` were 90% identical, creating divergence risk. Restructured:
+- `ROBOT.md` (this file) — single source of truth for all shared rules (~150 lines)
+- `CLAUDE.md` — Claude-specific sync protocol + local dev notes (~30 lines)
+- `AGENTS.md` — Antigravity-specific sync protocol (~30 lines)
+Update `ROBOT.md` to change rules for both agents simultaneously. Agent-specific overrides go in the respective agent doc.
+
+### Cold assessment findings (2026-05-29)
+1. **Upstash free ceiling was ~416 DAU** (not 700 as previously assumed) — corrected
+2. **API had no rate limiting or score validation** — fixed
+3. **No 60s edge cache** — fixed; now extends free ceiling to ~700 DAU
+4. **Vercel Analytics + Speed Insights already in `index.html`** — monitoring exists
+5. **`index.html` at 3,535 lines** — architecture checkpoint added before v1.2
+
+### API hardening (implemented 2026-05-29)
+- `api/leaderboard.js` GET: `Cache-Control: s-maxage=60, stale-while-revalidate=30` — edge cache at Vercel CDN
+- `api/leaderboard.js` POST: IP-based rate limit (5 req/60s) via Redis INCR + EXPIRE
+- `api/leaderboard.js` POST: Score validation (integer, 0 < score ≤ 10,000,000)
+- Rate limit is POST-only (score submission) — GET (game load, leaderboard view) is unrestricted
+
+### Domain purchase pending
+User is purchasing a custom domain (likely `glowtris.com`). After setup:
+- Update `og:url` in `index.html`
+- Update `README.md` production URL
+- Update this file's dashboard URL references
+- Full task list in `TODO.md` → Pre-v1.1 → Domain Setup
+
+### Architecture checkpoint added (Pre-v1.2)
+`index.html` will be ~4,000+ lines after v1.1. Before v1.2 implementation, agents must decide: keep pure single-file OR introduce a build step (esbuild: source modules → bundled `index.html`). The current "single file" rule applies to the **output**, not the source — a build step is acceptable if the Vercel build output remains a single `index.html`. This decision must be made and documented before v1.2 work begins.
+
+---
+
 ## 📋 Session Notes — 2026-05-29 (Strategy & Roadmap Overhaul)
 
 The following decisions were made on 2026-05-29.
@@ -156,11 +192,10 @@ The project pivoted from Google AdSense to a voluntary donation model (Ko-fi / B
 ### Real break-even point
 Monthly fixed costs include developer tools (Claude Pro $22/mo, Moshi $4/mo, domain ~$1/mo) = ~$28/mo total overhead. The true break-even is **DAU ~558** (standard scenario: 0.25% conversion, $4 avg donation). See `MONETIZATION.md` for full P&L.
 
-### Infrastructure capacity wall — CRITICAL
-The Upstash free tier exhausts at **~357 DAU** (10K commands/day ÷ 28 commands/DAU). Vercel Hobby exhausts at **~667 DAU**. Corrected upgrade triggers (updated in README.md):
-- **DAU > 300**: Switch Upstash to Pay-as-you-go (~$1/mo) — do this BEFORE v1.1 launch
-- **DAU > 600**: Switch Vercel to Pro ($20/mo)
-- **Free mitigation**: 60s server-side leaderboard cache in `api/leaderboard.js` cuts Redis commands ~50%, extending free ceiling to ~700 DAU at zero cost.
+### Infrastructure capacity wall
+Without caching, the Upstash free tier exhausted at ~416 DAU (10K commands/day ÷ ~24 commands/DAU). **60s edge cache is now live** (`api/leaderboard.js`), cutting GET Redis reads ~50%. Updated free ceilings:
+- **Upstash free**: ~700 DAU (with cache) — upgrade to Pay-as-you-go (~$1/mo) before or at v1.2 launch (DAU 700 target)
+- **Vercel Hobby**: ~667 DAU — upgrade to Pro ($20/mo) at DAU > 600
 
 ### Roadmap changes
 - **Pre-v1.1 added**: Donation UI task (`SUPPORT_URL` constant + ☕ game over button + Stats footer card)
