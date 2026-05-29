@@ -159,30 +159,34 @@ There is nothing to configure in Vercel Dashboard → Settings → Build & Deplo
 
 ## 🔁 Mandatory Release Workflow (no exceptions)
 
-Every feature, hotfix, or change follows this exact sequence:
+### Push rules — read this first
+
+Every `git push` to `preview` or `master` triggers a Vercel deployment and consumes one slot from the 100/day free limit.
+
+| Change type | Commit | Push |
+|---|---|---|
+| **Code / feature** | Agent commits | Agent pushes **only when user says "push해" or equivalent** |
+| **Docs-only** (README, TODO, CLAUDE, AGENTS…) | Agent commits | **Accumulate locally. Push together with the next code change — never push docs alone.** |
+
+### Workflow: Code changes
 
 ```
-feature/xxx  →  preview  →  PR to master  →  master  →  (tag if versioned)
+feature/xxx  →  preview (verify)  →  PR to master  →  production
 ```
-
-### Step-by-step:
 
 1. **Create feature branch**: `git checkout -b feature/xxx`
-2. **Develop & iterate**: all changes on `feature/*` only. Test locally (`npx serve .`). No pushes yet.
-3. **Batch commit**: when the feature is 100% done, `git add . && git commit -m "feat: ..."` — **stop here and report to user. Do NOT push.**
-4. **User pushes**: `git push origin feature/xxx` — user decides when to spend a deployment slot.
-5. **User merges to `preview`**: `git checkout preview && git merge feature/xxx && git push origin preview`
-   - Vercel auto-deploys to **https://prevglow.vercel.app** (one deployment slot used)
-   - User confirms it looks good on prevglow.vercel.app
-6. **Open PR**: `gh pr create --base master --head preview --title "feat: ..."` (or via GitHub UI)
-   - NEVER open a PR to master without user confirmation that preview is OK
-7. **User approves and merges PR** → Vercel auto-deploys to **https://glowtris.vercel.app** (production)
-8. **Tag if versioned**: present `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` to user — do not run autonomously.
-9. **Sync preview**: `git checkout preview && git merge master && git push origin preview` — user runs after PR merge.
+2. **Develop & iterate**: all changes on `feature/*` only. Test locally (`npx serve .`).
+3. **Batch commit**: when 100% done, `git add . && git commit -m "feat: ..."` — report to user and **wait for push instruction**.
+4. **On "push해"**: `git push origin feature/xxx` then `git checkout preview && git merge feature/xxx && git push origin preview`
+5. Vercel auto-deploys to **https://prevglow.vercel.app** — confirm with user.
+6. **Open PR**: `gh pr create --base master --head preview --title "feat: ..."` — only after user confirms preview is OK.
+7. **User merges PR** → Vercel auto-deploys to **https://glowtris.vercel.app** (production).
+8. **Tag if versioned**: prepare `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` — present to user, do not run autonomously.
+9. **Sync preview**: `git checkout preview && git merge master && git push origin preview` — run after user confirms PR is merged.
 
 ### Critical rules:
-- **Claude commits only — user pushes**: every `git push` triggers a Vercel deployment and consumes a daily slot. Only the user decides when to push.
-- **ONE push to preview per feature** — no iterative pushes
-- **NEVER merge directly to master** — always via PR with preview verification
-- **NEVER run `vercel` CLI** for deploys — GitHub integration handles it
-- **Docs always follow code**: update `TODO.md` + `README.md` roadmap in the same commit as the feature
+- **Agent never pushes without user instruction** — wait for "push해" or equivalent
+- **Docs commits accumulate** — never push docs alone; bundle with next code push
+- **ONE push to preview per feature** — no iterative preview pushes
+- **NEVER merge directly to master** — always via PR
+- **NEVER run `vercel` CLI** for deploys

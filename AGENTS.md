@@ -69,8 +69,10 @@ Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL d
 - **One feature → one merge to preview → one deployment**. If a review reveals issues, fix on `feature/*` and merge once more — not repeatedly.
 - **Count your deploys**: if you're about to push and it would be the 3rd+ push for the same feature, stop and batch the remaining fixes first.
 
-- After every task: `git add . && git commit -m "description"` — **commit only, do NOT push**. Report the commit to the user and stop. The user controls all `git push` operations.
-- **Git Release Tagging**: Present `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` to the user — do not run autonomously.
+- After every task: `git add . && git commit -m "description"` — report to user and **wait for push instruction**.
+- **Docs-only commits** (README, TODO, AGENTS, CLAUDE…): commit and accumulate locally. **Never push docs alone** — bundle with the next code push to avoid wasting a deployment slot.
+- **Push only when user says "push해" or equivalent** — then push and proceed with the release workflow.
+- **Git Release Tagging**: prepare `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` and present to user — do not run autonomously.
 
 ## 🚨 GITHUB ACTIONS & VERCEL INTEGRATION — NEVER REPEAT THESE MISTAKES
 
@@ -154,10 +156,10 @@ feature/xxx  →  preview  →  PR to master  →  master  →  (tag if versione
 ```
 
 1. Create `feature/xxx`, develop and iterate locally
-2. When 100% done: `git add . && git commit -m "feat: ..."` — **stop here. Do NOT push. Report to user.**
-3. **User** pushes and merges to preview: `git push origin feature/xxx && git checkout preview && git merge feature/xxx && git push origin preview`
-4. Verify at **https://prevglow.vercel.app** — user confirms
+2. When 100% done: `git add . && git commit -m "feat: ..."` — report to user and **wait for "push해"**.
+3. **On "push해"**: `git push origin feature/xxx` → `git checkout preview && git merge feature/xxx && git push origin preview`
+4. Verify at **https://prevglow.vercel.app** — confirm with user
 5. Open PR to master (only after user confirms preview is OK)
 6. User approves and merges PR → production auto-deploys
-7. Tag if versioned: present the command to user — do not run autonomously
-8. Sync preview: user runs `git checkout preview && git merge master && git push origin preview`
+7. Tag if versioned: prepare command and present to user — do not run autonomously
+8. Sync preview after merge: `git checkout preview && git merge master && git push origin preview`
