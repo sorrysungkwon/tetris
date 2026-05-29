@@ -7,29 +7,25 @@
 
 ---
 
-## 🎯 Growth Goals & Milestones
+## 🎯 Version Pipeline (current → next)
 
-| Milestone | DAU Target | Version | Key Driver | Status |
-|---|---:|---|---|---|
-| 🌱 Stable launch | 100 | v1.0.9.4 | Core gameplay | ✅ Done |
-| 🚀 Sprint viral | 500 | v1.1 | Sprint share card | 🔲 Next |
-| 📈 Multi-mode + Streak | 700 | v1.2 | Ultra Mode + daily streak | 🔲 |
-| 🎓 Skill depth | 1,500 | v1.3 | Training + finesse | 🔲 |
-| 🎨 Identity | 2,000 | v1.4 | Visual customization | 🔲 |
-| 🔥 Weekly events | 3,000 | v1.5 | Weekly challenges + monthly leaderboard | 🔲 |
-| 👻 Self-compete | 4,500 | v1.6 | Ghost race / replay | 🔲 |
-| 📊 Meta game | 5,500 | v1.7 | Advanced stats | 🔲 |
-| 🏆 Ranked play | 7,000 | v1.8 | Season & rank tier | 🔲 |
-| 👥 Social graph | 9,000 | v1.9 | Friend codes + async challenge | 🔲 |
-| ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle | 🔲 |
+| Version | DAU Goal | Status |
+|---|---:|---|
+| v1.0.9.4 | 100 | ✅ Done |
+| Pre-v1.1 (Donation UI) | — | 🔲 Next |
+| v1.1 Sprint Mode | 500 | 🔲 |
+| v1.2 Ultra + Streak | 700 | 🔲 |
+| v1.3 Training & Finesse | 1,500 | 🔲 |
+| v1.4 Visual Customization | 2,000 | 🔲 |
+| v1.5 Weekly Events | 3,000 | 🔲 |
+| v1.6 Ghost & Replay | 3,500 | 🔲 |
+| v1.7 Advanced Stats | 4,500 | 🔲 |
+| v1.8 Season & Rank | 6,000 | 🔲 |
+| v1.9 Social Layer | 8,000 | 🔲 |
+| v2.0 Multiplayer | 15,000+ | 🔲 |
 
-### Infrastructure Upgrade Triggers
-| DAU Threshold | Action |
-|---:|---|
-| > 700 | Upstash Free → Pay-as-you-go (+$1/mo) |
-| > 1,000 | Vercel Hobby → Pro (+$20/mo) |
-| > 50,000 | Review Upstash Pro plan |
-| v2.0 launch | Add WebSocket service — Pusher/Ably (+$49/mo) |
+> Full roadmap, DAU milestones, and infrastructure upgrade triggers → see `README.md`.
+> Marketing strategy and growth plan → see `GROWTHPLAN.md` (local only).
 
 ---
 
@@ -426,6 +422,7 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ## 🔮 Planned: v1.1 — Sprint Mode
 > DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
+> ⚠️ **Before releasing v1.1**: Upstash free tier exhausts at ~357 DAU. Switch to Upstash PAYG (~$1/mo) OR apply 60s leaderboard cache to `api/leaderboard.js` **before** the Reddit launch post goes live.
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
 - [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.

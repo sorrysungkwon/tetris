@@ -67,12 +67,14 @@ A neon-styled block stacking game built as a single HTML file.
 | ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle |
 
 ### Infrastructure Upgrade Triggers
-| Trigger | Action | Est. Monthly Cost |
-|---|---|---|
-| DAU > 700 | Upstash Free → Pay-as-you-go | +$1 |
-| DAU > 1,000 | Vercel Hobby → Pro | +$20 |
-| DAU > 50,000 | Upstash PAYG → Pro plan review | +$30~ |
-| v2.0 launch | Add WebSocket service (Pusher/Ably) | +$49~ |
+| Trigger | Action | Est. Monthly Cost | Note |
+|---|---|---|---|
+| DAU > 300 | **Upstash Free → Pay-as-you-go** | +$1~2 | ⚠️ Free tier exhausted at ~357 DAU (10K cmd/day ÷ 28 cmd/DAU). Upgrade **before** v1.1 viral push to prevent leaderboard errors at peak. |
+| DAU > 600 | **Vercel Hobby → Pro** | +$20 | Free tier exhausted at ~667 DAU (100K invocations/month ÷ 5 calls/DAU/day). |
+| DAU > 50,000 | Upstash PAYG → Pro plan review | +$30~ | |
+| v2.0 launch | Add WebSocket service (Pusher/Ably) | +$49~ | |
+
+> **Free-tier extension option (zero cost):** Add 60s server-side leaderboard cache in `api/leaderboard.js` — cuts Redis commands ~50%, pushing the Upstash free ceiling from ~357 → ~700 DAU. Implement before v1.1 if Upstash PAYG upgrade is not yet done.
 
 ---
 
