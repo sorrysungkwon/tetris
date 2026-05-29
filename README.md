@@ -1,20 +1,13 @@
 # Glowtris
 
-> **DEPLOY & RELEASE RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production. When completing/releasing a new version, always tag it: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
-
-> **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
-
 A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://glowtris.vercel.app
 
-### Vercel Environments
-| URL | Branch | Purpose |
-|-----|--------|---------|
-| https://glowtris.vercel.app | `master` | 🚀 Production (PR required) |
-| https://prevglow.vercel.app | `preview` | 🔍 Staging — auto-deploys on push |
-| https://prevglow-a.vercel.app | `hotfix/option-a` | 🧪 Testing only |
-| https://prevglow-b.vercel.app | `hotfix/option-b` | 🧪 Testing only |
+| | |
+|---|---|
+| Production | https://glowtris.vercel.app |
+| Staging | https://prevglow.vercel.app |
 
 ## Stack
 
@@ -67,14 +60,12 @@ A neon-styled block stacking game built as a single HTML file.
 | ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle |
 
 ### Infrastructure Upgrade Triggers
-| Trigger | Action | Est. Monthly Cost | Note |
-|---|---|---|---|
-| DAU > 300 | **Upstash Free → Pay-as-you-go** | +$1~2 | ⚠️ Free tier exhausted at ~357 DAU (10K cmd/day ÷ 28 cmd/DAU). Upgrade **before** v1.1 viral push to prevent leaderboard errors at peak. |
-| DAU > 600 | **Vercel Hobby → Pro** | +$20 | Free tier exhausted at ~667 DAU (100K invocations/month ÷ 5 calls/DAU/day). |
-| DAU > 50,000 | Upstash PAYG → Pro plan review | +$30~ | |
-| v2.0 launch | Add WebSocket service (Pusher/Ably) | +$49~ | |
-
-> **Free-tier extension option (zero cost):** Add 60s server-side leaderboard cache in `api/leaderboard.js` — cuts Redis commands ~50%, pushing the Upstash free ceiling from ~357 → ~700 DAU. Implement before v1.1 if Upstash PAYG upgrade is not yet done.
+| DAU | Upgrade |
+|---:|---|
+| > 300 | Upstash Free → Pay-as-you-go (~+$2/mo) |
+| > 600 | Vercel Hobby → Pro (+$20/mo) |
+| > 50,000 | Upstash Pro plan review |
+| v2.0 | WebSocket service — Pusher or Ably (+$49/mo) |
 
 ---
 
@@ -112,9 +103,9 @@ A neon-styled block stacking game built as a single HTML file.
 
 | Version | Theme | Features | DAU Goal |
 |---|---|---|---:|
-| Pre-v1.1 | **Donation UI** | `SUPPORT_URL` constant + ☕ button on game over screen + Stats overlay footer card. Hidden entirely when `SUPPORT_URL = ''`. | — |
-| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD + remaining-lines counter, mode selector on start screen (Marathon / Sprint), time-based leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint Canvas Share card with time + LPM. **Reddit r/webgames launch post on release.** | **500** |
-| v1.2 | **Ultra Mode + Streak** | 2-minute score attack. Score multiplier ramps as time runs out, Ultra-exclusive leaderboard. Mode selector expands to Marathon / Sprint / Ultra. **Basic daily streak counter** — consecutive-day badge on start screen and game over; streak resets on missed day. | **700** |
+| Pre-v1.1 | **Donation Support** | ☕ Ko-fi button on game over screen and stats overlay — keeps the game 100% ad-free. | — |
+| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD, remaining-lines counter, mode selector (Marathon / Sprint), time-based leaderboard (ascending), shareable Sprint result card with time + LPM. | **500** |
+| v1.2 | **Ultra Mode + Streak** | 2-minute score attack with a score multiplier that ramps as time runs out. Daily streak badge — tracks consecutive days played, resets on a missed day. | **700** |
 | v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |
 | v1.4 | **Visual Customization** | Board skin selector (Neon / Midnight / Pastel / Classic). Piece colour palette presets. BGM track selection saved to localStorage. | 1,800 |
 | v1.5 | **Weekly Events** | Weekly special challenge (rotating rule modifiers: invisible pieces, 20-line board, etc.) with 7-day Redis TTL leaderboard. Monthly event leaderboard. | 2,500 |
@@ -128,27 +119,22 @@ A neon-styled block stacking game built as a single HTML file.
 
 | Item | Value |
 |---|---|
-| Hosting | Vercel (Hobby) — team `sgkwon-team` |
-| Production URL | https://glowtris.vercel.app |
-| Preview URL | https://prevglow.vercel.app |
+| Hosting | Vercel (Hobby) |
 | Leaderboard DB | Upstash Redis (REST API) |
 | OG Image | `/api/og` Edge Function (`@vercel/og`) |
-| CI | GitHub Actions — `.github/workflows/vercel-status.yml` |
+| CI | GitHub Actions |
 
 ### Environment Variables
 
-| Variable | Target | Description |
-|---|---|---|
-| `UPSTASH_REDIS_REST_URL` | production, preview | Upstash Redis REST endpoint |
-| `UPSTASH_REDIS_REST_TOKEN` | production, preview | Upstash Redis auth token |
+| Variable | Description |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis auth token |
 
-Set in Vercel Dashboard → Settings → Environment Variables. Never commit to repo.
+Set in Vercel Dashboard → Settings → Environment Variables.
 
-### Vercel Ignored Build Step
+## Contributing
 
-**Cleared** (`null`) — every push triggers a build. Do NOT re-add `git diff HEAD^ HEAD --quiet`; Vercel uses shallow clones where `HEAD^` is unavailable, causing every build to be silently skipped.
-
-## Rules
-
-- Maintain single `index.html` file structure
-- No external frontend libraries allowed
+- Single-file architecture — all game code lives in `index.html`
+- No external frontend libraries
+- API routes in `api/` (Vercel serverless functions)
