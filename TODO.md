@@ -131,8 +131,8 @@
 
 ## ✅ Completed: v1.0.6 Post-fixes & Additions — by Claude (2026-05-23)
 
-- [x] Feat: **Privacy Policy page** (`privacy.html`) — cookie/AdSense disclosure, no-personal-data statement, third-party service list (Vercel, Upstash, Google), contact info; neon Glowtris design.
-- [x] Feat: **Terms of Service page** (`terms.html`) — usage rules, leaderboard rules, ad disclosure, no-warranty disclaimer; neon Glowtris design with "Play Glowtris" CTA button.
+- [x] Feat: **Privacy Policy page** (`privacy.html`) — cookie/patronage disclosure, no-personal-data statement, third-party service list (Vercel, Upstash, Google), contact info; neon Glowtris design.
+- [x] Feat: **Terms of Service page** (`terms.html`) — usage rules, leaderboard rules, patronage disclosure, no-warranty disclaimer; neon Glowtris design with "Play Glowtris" CTA button.
 - [x] Feat: **Footer links** — PRIVACY · TERMS links added to start screen glass panel.
 - [x] Feat: **Automatic performance mode** — monitors FPS every second; below 30 FPS enables low-perf mode (skip nebulae/gradients, remove all canvas shadowBlur, halve/disable particles, strip CSS glow/backdrop-filter); above 50 FPS restores effects; ⚡ PERF MODE corner indicator fades in/out; 3-second cooldown prevents rapid toggling.
 
