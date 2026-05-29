@@ -439,6 +439,9 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [ ] Set up Ko-fi account with PayPal payout.
 - [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
 
+### Developer Experience DX (Antigravity Suggestion)
+- [ ] **Local Dev Shortcut**: Add a `"scripts"` section in `package.json` with a `"start"` or `"dev"` command (e.g. using `serve` or a simple HTTP server) to simplify launching the local development environment.
+
 ---
 
 ## 🔮 Planned: v1.1 — Sprint Mode
@@ -462,7 +465,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 `index.html` will be ~4,000+ lines by this point (3,535 now + Ultra + streak code). Decide the code architecture before adding more game modes:
 
 - [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
-- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable).
+- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable). *(Antigravity Suggestion: Highly recommended to avoid massive single-file bloat before introducing multi-mode complexity in v1.2)*.
 - [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
 - [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
 
