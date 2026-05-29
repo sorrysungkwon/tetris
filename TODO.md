@@ -12,7 +12,7 @@
 | Version | DAU Goal | Status |
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
-| Pre-v1.1 (Donation UI) | — | 🔲 Next |
+| Pre-v1.1 | — | 🔲 (domain + donation pending) |
 | v1.1 Sprint Mode | 500 | 🔲 |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
@@ -440,7 +440,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
 
 ### Developer Experience DX (Antigravity Suggestion)
-- [ ] **Local Dev Shortcut**: Add a `"scripts"` section in `package.json` with a `"start"` or `"dev"` command (e.g. using `serve` or a simple HTTP server) to simplify launching the local development environment.
+- [x] **Local Dev Shortcut**: Added `"scripts": { "dev": "npx serve . -p 3000" }` to `package.json`. Run `npm run dev` to serve locally at http://localhost:3000.
 
 ---
 
