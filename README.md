@@ -57,13 +57,13 @@ A neon-styled block stacking game built as a single HTML file.
 | 🌱 Launch Stable | 100 | v1.0.9.4 ✅ | Core gameplay complete |
 | 🚀 Sprint Launch | 500 | v1.1 | Sprint Mode viral sharing |
 | 📈 Multi-Mode | 700 | v1.2 | Ultra Mode + basic daily streak |
-| 🎓 Skill Depth | 1,500 | v1.3 | Training mode, finesse tracking |
-| 🎨 Identity | 2,000 | v1.4 | Visual customization |
-| 🔥 Weekly Events | 3,000 | v1.5 | Weekly challenges + monthly leaderboard |
-| 👻 Self-Competition | 4,500 | v1.6 | Ghost race / personal replay |
-| 📊 Meta Game | 5,500 | v1.7 | Advanced stats dashboard |
-| 🏆 Ranked Play | 7,000 | v1.8 | Season & rank tier system |
-| 👥 Social Graph | 9,000 | v1.9 | Friend codes + async challenge |
+| 🎓 Skill Depth | 1,200 | v1.3 | Training mode, finesse tracking |
+| 🎨 Identity | 1,800 | v1.4 | Visual customization |
+| 🔥 Weekly Events | 2,500 | v1.5 | Weekly challenges + monthly leaderboard |
+| 👻 Self-Competition | 3,500 | v1.6 | Ghost race / personal replay |
+| 📊 Meta Game | 4,500 | v1.7 | Advanced stats dashboard |
+| 🏆 Ranked Play | 6,000 | v1.8 | Season & rank tier system |
+| 👥 Social Graph | 8,000 | v1.9 | Friend codes + async challenge |
 | ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle |
 
 ### Infrastructure Upgrade Triggers

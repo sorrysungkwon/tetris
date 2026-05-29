@@ -108,24 +108,7 @@ Slug (`sgkwon-team`) can change; these IDs never do. Use IDs in all curl/API cal
 
 ### 5. Vercel Deployment Checks — no action needed
 
-## 🔄 The Sync Protocol (Mandatory before starting any task)
-
-Before starting *any* new task or development session, all AI agents (including Claude, Antigravity, or any future assistant) **MUST** perform a "Sync" process:
-1. **Read all key documents**: Retrieve and review `README.md`, `TODO.md`, `AGENTS.md`, and local gitignored plans (`MONETIZATION.md`, `GROWTHPLAN.md`) to thoroughly understand the latest codebase status, roadmap adjustments, and cost limits.
-2. **Identify latest changes**: Summarize current progress and recent commit differences.
-3. **Align with the USER**: Present a concise and identical summary of modifications in Korean to the USER to verify alignment before doing any coding or architecture work.
-
-This protocol ensures all models maintain an identical mental model, preventing logical mismatches across sessions.
-
----
-
-## ⚠️ Commit-Only Restriction (Absolutely NO Automatic Pushing)
-
-All AI agents **MUST NEVER** execute `git push` under any circumstances unless explicitly and dynamically instructed by the USER.
-- **Rule**: Test the code, stage changes via `git add`, and record the work with a clean, local `git commit` only.
-- **Stop & Report**: Immediately stop calling tools after the local commit is complete. Present the results and wait for the USER to review and handle pushing to the remote repository.
-
----
+Deployment Checks gate production domain aliasing only. Our PR-based workflow (preview verification → user approves → PR merge) provides the same gate manually. Leave Vercel Dashboard → Settings → Deployment Checks empty.
 
 ## 📋 Session Notes — 2026-05-29 (Strategy & Roadmap Overhaul)
 

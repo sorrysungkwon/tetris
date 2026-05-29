@@ -3,7 +3,7 @@
 ## 🚨 Behavioral Guidelines (Must read first!)
 - **Single File Rule**: Always maintain the single `index.html` structure. No external frontend libraries allowed.
 - **English-Only Rule**: All code changes, comments, logs, documentation, and Git commit messages MUST be written entirely in English.
-- **Workflow Integrity**: Before starting any task, read this file and `README.md` first. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then execute `git add . && git commit -m "description" && git push`. When releasing a new version, always create and push an annotated tag: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
+- **Workflow Integrity**: Before starting any task, read `README.md` first, then this file. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then execute `git add . && git commit -m "description" && git push`. When releasing a new version, always create and push an annotated tag: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
 
 ---
 
@@ -15,9 +15,9 @@
 | Pre-v1.1 (Donation UI) | — | 🔲 Next |
 | v1.1 Sprint Mode | 500 | 🔲 |
 | v1.2 Ultra + Streak | 700 | 🔲 |
-| v1.3 Training & Finesse | 1,500 | 🔲 |
-| v1.4 Visual Customization | 2,000 | 🔲 |
-| v1.5 Weekly Events | 3,000 | 🔲 |
+| v1.3 Training & Finesse | 1,200 | 🔲 |
+| v1.4 Visual Customization | 1,800 | 🔲 |
+| v1.5 Weekly Events | 2,500 | 🔲 |
 | v1.6 Ghost & Replay | 3,500 | 🔲 |
 | v1.7 Advanced Stats | 4,500 | 🔲 |
 | v1.8 Season & Rank | 6,000 | 🔲 |
