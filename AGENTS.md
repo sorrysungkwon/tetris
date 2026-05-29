@@ -1,6 +1,23 @@
 # Instructions for Antigravity
 > Read this file at the start of every session.
 
+## 🔄 SYNC — Mandatory Session Start Protocol
+
+The user will say **"sync"** at the start of a session. When this happens (or at the start of any new session before any task):
+
+1. **Read** `README.md` → `TODO.md` → `AGENTS.md` (this file) → `CLAUDE.md`
+2. **Check recent changes**: `git log --oneline -10` to see what has changed since the last session
+3. **Report to the user**:
+   - Current branch and latest commit
+   - What changed since the last session (docs, features, fixes)
+   - Any open PRs or pending release actions
+   - What the next task is (first `🔲 Next` item in TODO.md)
+4. **Flag any inconsistencies** between documents before starting work
+
+> Both Claude and Antigravity follow this exact protocol so they always share the same understanding of project state. Never start coding or editing before completing sync when asked.
+
+---
+
 ## 🚨 SAFETY HARNESS: STRICT CONSTRAINT RULES (Must follow!)
 - **NO Autonomous Merging/Tagging/Destructive Acts**: NEVER perform any git merges to `master`, `git tag` creations/pushes, `git reset --hard`, or `git push --force` autonomously. You MUST present your design/findings to the user first and obtain EXPLICIT verbal approval (e.g., "merge it" or "tag it") in the chat before running these commands.
 - **Respect Multi-Branch Previews**: When the user wants to compare multiple implementation routes (e.g., Option A vs Option B), do NOT rush to resolve them or force a single solution into `master`. Maintain the branch isolation, ensure preview environments are fully built and functioning, and act strictly as an observer/helper until a decision is declared by the user.
@@ -99,6 +116,14 @@ Before starting *any* new task or development session, all AI agents (including 
 3. **Align with the USER**: Present a concise and identical summary of modifications in Korean to the USER to verify alignment before doing any coding or architecture work.
 
 This protocol ensures all models maintain an identical mental model, preventing logical mismatches across sessions.
+
+---
+
+## ⚠️ Commit-Only Restriction (Absolutely NO Automatic Pushing)
+
+All AI agents **MUST NEVER** execute `git push` under any circumstances unless explicitly and dynamically instructed by the USER.
+- **Rule**: Test the code, stage changes via `git add`, and record the work with a clean, local `git commit` only.
+- **Stop & Report**: Immediately stop calling tools after the local commit is complete. Present the results and wait for the USER to review and handle pushing to the remote repository.
 
 ---
 
