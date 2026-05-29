@@ -12,7 +12,7 @@
 | Version | DAU Goal | Status |
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
-| Pre-v1.1 (Donation UI) | — | 🔲 Next |
+| Pre-v1.1 | — | 🔲 (domain + donation pending) |
 | v1.1 Sprint Mode | 500 | 🔲 |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
@@ -418,18 +418,29 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
-## 🔮 Planned: Pre-v1.1 — Domain + Donation UI
-> DAU goal: — | Key driver: custom domain before launch + monetization foundation
+## ✅ Completed: Pre-v1.1 INP Fix — by Claude (2026-05-29)
+
+Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms). The existing `// Hide overlay immediately` comment in `startGame()` was a false fix — `display='none'` does not trigger an immediate paint; the browser batches style changes until the JS call stack empties. All synchronous init work (loadSettings, sprite cache warm, canvas draws, BGM init) was blocking the main thread before the browser could paint the click response.
+
+- [x] **`startGame()` split**: DOM change (`$overlay.style.display='none'`) + `setTimeout(_doStartGame, 0)`. The browser now paints overlay-hidden state before any init runs. Estimated INP: 568ms → <50ms.
+- [x] **`openStats()` split**: `display='flex'` fires immediately; achievement HTML (20-badge template string) generated in `requestAnimationFrame` callback. Overlay appears instantly; content fills in within one frame (~16ms).
+- [x] Root cause documented: `setTimeout(0)` empties the JS call stack, allowing the browser's rendering pipeline (style recalc → layout → paint → composite) to run before the next macrotask.
+
+---
+
+## 🔮 Planned: Pre-v1.1 — Domain + Donation URL
 
 ### Domain Setup (user action)
 - [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
 - [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
 
-### Donation UI
-- [x] Task 1: **`SUPPORT_URL` constant** — add `const SUPPORT_URL = 'https://ko-fi.com/xxx';` at top of `index.html`. When empty string, all donation UI is hidden with zero layout impact.
-- [x] Task 2: **Game over donation button** — ☕ gold-toned "BUY ME A COFFEE" button below the leaderboard submission form; only rendered when `SUPPORT_URL` is set.
-- [x] Task 3: **Stats overlay footer card** — dashed gold box at the bottom of the STATS overlay with "Buy me a coffee to keep Glowtris 100% ad-free!" copy and ☕ link; only rendered when `SUPPORT_URL` is set.
-- [x] Task 4: Update `README.md` roadmap and `TODO.md` after completion.
+### Donation URL (user action)
+> Donation UI code was removed from codebase (2026-05-29). Will be re-implemented when Ko-fi URL is ready.
+- [ ] Set up Ko-fi account with PayPal payout.
+- [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
+
+### Developer Experience DX (Antigravity Suggestion)
+- [x] **Local Dev Shortcut**: Added `"scripts": { "dev": "npx serve . -p 3000" }` to `package.json`. Run `npm run dev` to serve locally at http://localhost:3000.
 
 ---
 
@@ -454,7 +465,7 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 `index.html` will be ~4,000+ lines by this point (3,535 now + Ultra + streak code). Decide the code architecture before adding more game modes:
 
 - [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
-- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable).
+- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable). *(Antigravity Suggestion: Highly recommended to avoid massive single-file bloat before introducing multi-mode complexity in v1.2)*.
 - [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
 - [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
 

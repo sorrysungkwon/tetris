@@ -2706,10 +2706,16 @@ function triggerLevelUpVisuals() {
 }
 
 function startGame(){
-  // Hide overlay immediately so browser paints the click response (INP fix)
+  // Hide overlay and yield to browser so it can PAINT before heavy init runs.
+  // A lone display='none' does NOT trigger an immediate paint — the browser
+  // batches style changes until the JS call stack empties. setTimeout(0)
+  // empties the stack first, so the paint (overlay gone) happens before any
+  // init work. This is the real INP fix; the previous inline comment was wrong.
   $overlay.style.display='none';
   $combo.textContent='';
-
+  setTimeout(_doStartGame, 0);
+}
+function _doStartGame(){
   loadSettings();
   if (!isDailyMode) { _prng = null; }
   // Restore perf mode from localStorage (persists across games + sessions).
@@ -3353,56 +3359,61 @@ function closeHowToPlay(){
 
 let _statsOpenTs=0;
 function openStats(){
-  const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES)||'0');
-  const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE)||'0');
-  const sLevel  = parseInt(localStorage.getItem(LS.BEST_LEVEL)||'0');
-  const sLines  = parseInt(localStorage.getItem(LS.TOTAL_LINES)||'0');
-  const sCombo  = parseInt(localStorage.getItem(LS.MAX_COMBO)||'0');
-  const sMaxLn  = parseInt(localStorage.getItem(LS.MAX_LINES)||'0');
-  const sHi     = parseInt(localStorage.getItem(LS.HI)||'0');
-  const avgScore = sGames > 0 ? Math.round(sScore / sGames) : 0;
-
-  const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
-
-  const el = document.getElementById('stats-scroll');
-  if(el) {
-    const mainStatsHTML = `
-      <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${sGames.toLocaleString()}</span></div>
-      <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${sHi.toLocaleString()}</span></div>
-      <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
-      <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${sLevel}</span></div>
-      <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${sLines.toLocaleString()}</span></div>
-      <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${sMaxLn.toLocaleString()}</span></div>
-      <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${sCombo}</span></div>
-    `;
-    
-    const achHTML = `
-      <div class="htp-section" style="margin-top:20px;margin-bottom:10px">🏆 ACHIEVEMENTS</div>
-      <div class="ach-gallery" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;justify-items:center;padding:5px 0;">
-        ${ACHIEVEMENTS.map(ach => {
-          const entry = achieved.find(a => (typeof a === 'string' ? a === ach.id : a.id === ach.id));
-          const isUnlocked = !!entry;
-          const dateStr = entry && typeof entry === 'object' && entry.date ? entry.date : '';
-          const cleanLabel = ach.label.replace(/'/g, "\\'");
-          const cleanDesc = ach.description.replace(/'/g, "\\'");
-          return `
-            <div class="ach-badge-wrap" style="position:relative;cursor:pointer" 
-                 onmouseenter="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')" 
-                 onmouseleave="hideAchTooltip()" 
-                 onclick="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')">
-              <div class="ach-badge ${isUnlocked ? 'unlocked' : 'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked ? 'rgba(0,200,255,0.1)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked ? '0 0 10px rgba(0,200,255,0.3)' : 'none'};opacity:${isUnlocked ? 1 : 0.25}">
-                ${ach.icon}
-              </div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    `;
-    
-    el.innerHTML = mainStatsHTML + achHTML;
-  }
-  document.getElementById('stats-overlay').style.display='flex';
+  // Show overlay immediately (INP fix: paint first, then compute HTML in next frame).
+  // Without this split, the ~20-achievement template string generation blocks the
+  // main thread before display='flex' is painted, causing visible INP delay.
   _statsOpenTs=Date.now();
+  document.getElementById('stats-overlay').style.display='flex';
+  requestAnimationFrame(()=>{
+    const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES)||'0');
+    const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE)||'0');
+    const sLevel  = parseInt(localStorage.getItem(LS.BEST_LEVEL)||'0');
+    const sLines  = parseInt(localStorage.getItem(LS.TOTAL_LINES)||'0');
+    const sCombo  = parseInt(localStorage.getItem(LS.MAX_COMBO)||'0');
+    const sMaxLn  = parseInt(localStorage.getItem(LS.MAX_LINES)||'0');
+    const sHi     = parseInt(localStorage.getItem(LS.HI)||'0');
+    const avgScore = sGames > 0 ? Math.round(sScore / sGames) : 0;
+
+    const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
+
+    const el = document.getElementById('stats-scroll');
+    if(el) {
+      const mainStatsHTML = `
+        <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${sGames.toLocaleString()}</span></div>
+        <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${sHi.toLocaleString()}</span></div>
+        <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
+        <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${sLevel}</span></div>
+        <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${sLines.toLocaleString()}</span></div>
+        <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${sMaxLn.toLocaleString()}</span></div>
+        <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${sCombo}</span></div>
+      `;
+
+      const achHTML = `
+        <div class="htp-section" style="margin-top:20px;margin-bottom:10px">🏆 ACHIEVEMENTS</div>
+        <div class="ach-gallery" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;justify-items:center;padding:5px 0;">
+          ${ACHIEVEMENTS.map(ach => {
+            const entry = achieved.find(a => (typeof a === 'string' ? a === ach.id : a.id === ach.id));
+            const isUnlocked = !!entry;
+            const dateStr = entry && typeof entry === 'object' && entry.date ? entry.date : '';
+            const cleanLabel = ach.label.replace(/'/g, "\\'");
+            const cleanDesc = ach.description.replace(/'/g, "\\'");
+            return `
+              <div class="ach-badge-wrap" style="position:relative;cursor:pointer"
+                   onmouseenter="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')"
+                   onmouseleave="hideAchTooltip()"
+                   onclick="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')">
+                <div class="ach-badge ${isUnlocked ? 'unlocked' : 'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked ? 'rgba(0,200,255,0.1)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked ? '0 0 10px rgba(0,200,255,0.3)' : 'none'};opacity:${isUnlocked ? 1 : 0.25}">
+                  ${ach.icon}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      el.innerHTML = mainStatsHTML + achHTML;
+    }
+  });
 }
 function closeStats(){
   if(Date.now()-_statsOpenTs<350)return;

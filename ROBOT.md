@@ -143,6 +143,30 @@ Deployment Checks gate production domain aliasing only. Our PR-based workflow (p
 
 ---
 
+## 🚨 VERCEL DEPLOYMENT — ADDITIONAL KNOWN ISSUE
+
+### `requireVerifiedCommits` flag (discovered 2026-05-29)
+
+**Symptom**: All deployments show `CANCELED` with `readyStateReason: "The Deployment was canceled because it was created with an unverified commit"` and `alwaysRefuseToBuild: true`. `canceledAt === buildingAt` (instant cancellation). Only 6 deployments in a day, so it is NOT the 100/day limit.
+
+**Root cause**: Vercel's `gitProviderOptions.requireVerifiedCommits` was set to `true` — likely auto-enabled by Vercel's security system after the force-push history rewrite on 2026-05-25. This requires all commits to be GPG-signed before Vercel will deploy them. Our commits are not GPG-signed.
+
+**Fix (one-time API call)**:
+```bash
+curl -X PATCH "https://api.vercel.com/v9/projects/prj_V1lhSONnxAM9K2hpk5VLtemldWnm?teamId=team_pb1objuXoHlJIv67jumHZrg8" \
+  -H "Authorization: Bearer $VERCEL_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"gitProviderOptions": {"requireVerifiedCommits": false}}'
+```
+Then push an empty commit to retrigger deployment: `git commit --allow-empty -m "ci: retrigger" && git push origin preview`
+
+**How to diagnose**: Check `readyStateReason` on a specific deployment:
+```bash
+curl "https://api.vercel.com/v13/deployments/DEPLOY_ID?teamId=team_pb1objuXoHlJIv67jumHZrg8" -H "Authorization: Bearer $VERCEL_TOKEN" | python3 -c "import sys,json,d; d=json.load(sys.stdin); print(d.get('readyStateReason'), d.get('alwaysRefuseToBuild'))"
+```
+
+---
+
 ## 📋 Session Notes — 2026-05-29 Part 2 (Architecture & Infra Hardening)
 
 Decisions and changes made in the second half of 2026-05-29.
