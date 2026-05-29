@@ -963,9 +963,6 @@ document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefa
 const COLS = 10, ROWS = 20;
 let CELL = 30; // recalculated on init & resize
 
-// Donation / creator support URL (Buy Me a Coffee, Ko-fi, etc.)
-// Set to your link to display a beautiful glowing donation button across the game!
-const SUPPORT_URL = ''; // Set to your Ko-fi/BMaC URL to enable donation UI
 
 const PIECES = {
   I:{shape:[[1,1,1,1]],color:'#00d8ff'},
@@ -2951,7 +2948,6 @@ function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLe
           <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
           <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
-        ${SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : ''}
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
     </div>`;
@@ -3047,7 +3043,7 @@ async function submitScore(){
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + (SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : '');
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }
     else if(data.board){
       _lbCache = {
@@ -3069,7 +3065,7 @@ async function submitScore(){
         <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + (SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : '');
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
@@ -3338,10 +3334,6 @@ function showStartScreen(){
         <a href="/privacy.html" class="footer-link">PRIVACY</a>
         <span style="color:rgba(255,255,255,0.12)">·</span>
         <a href="/terms.html" class="footer-link">TERMS</a>
-        ${SUPPORT_URL ? `
-          <span style="color:rgba(255,255,255,0.12)">·</span>
-          <a href="${SUPPORT_URL}" target="_blank" class="footer-link" style="color:rgba(255,220,0,0.85);text-shadow:0 0 6px rgba(255,220,0,0.3)">☕ SUPPORT ME</a>
-        ` : ''}
       </div>
     </div>`;
   $overlay.style.display='flex';
@@ -3407,13 +3399,7 @@ function openStats(){
       </div>
     `;
     
-    const supportHTML = SUPPORT_URL ? `
-      <div style="margin-top:15px;text-align:center;padding:10px;background:rgba(255,230,0,0.04);border:1px dashed rgba(255,230,0,0.2);border-radius:10px;cursor:pointer" onclick="window.open('${SUPPORT_URL}','_blank')">
-        <span style="font-size:10px;font-weight:900;color:#ffe600;letter-spacing:1px">☕ SUPPORT THE CREATOR</span>
-        <div style="font-size:7px;color:rgba(255,255,255,0.6);margin-top:2px">Buy me a coffee to keep Glowtris 100% ad-free!</div>
-      </div>
-    ` : '';
-    el.innerHTML = mainStatsHTML + achHTML + supportHTML;
+    el.innerHTML = mainStatsHTML + achHTML;
   }
   document.getElementById('stats-overlay').style.display='flex';
   _statsOpenTs=Date.now();
