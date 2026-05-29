@@ -1067,6 +1067,24 @@ let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0,_perfLocked=false,_fpsLow
 let _cellSprites={};
 // ─── Border/boxShadow cache (avoid CSS recalc 60x/s) ─────────────────────────
 let _lastBorderColor=null;
+// ─── In-memory caches for hot-path localStorage reads ────────────────────────
+// unlockAchievement() and lockPiece() were each doing JSON.parse(localStorage.getItem())
+// on every piece lock / line clear — 5–10 reads per second at high combos.
+// These caches are loaded lazily on first access and kept in sync on write.
+let _achievementsCache=null; // mirrors LS.ACHIEVEMENTS
+let _lifetimeCache=null;     // mirrors LS.LIFETIME
+function _getAchievements(){
+  if(!_achievementsCache)_achievementsCache=JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS)||'[]');
+  return _achievementsCache;
+}
+function _getLifetime(){
+  if(!_lifetimeCache)_lifetimeCache=JSON.parse(localStorage.getItem(LS.LIFETIME)||'{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+  return _lifetimeCache;
+}
+// ─── Particle cap ─────────────────────────────────────────────────────────────
+// Unbounded particle growth during rapid combos can push the particle canvas to
+// 500+ objects/frame.  Cap at 400 — excess spawns are silently dropped.
+const MAX_PARTICLES=400;
 function measureFPS(ts){
   _fpsCnt++;
   if(ts-_fpsLast>=1000){
@@ -1131,6 +1149,7 @@ const $combo    = document.getElementById('combo-display');
 const $overlay  = document.getElementById('overlay');
 const $app      = document.getElementById('app');
 const $flash    = document.getElementById('screen-flash');
+const $scorePopup = document.getElementById('score-popup'); // called on every lock
 
 // ─── Color cache (hexToRgb is called every frame per cell) ────────────────────
 const _rgbCache = new Map();
@@ -1543,8 +1562,8 @@ function lockPiece(){
     addScore(pts,cleared.length,tspin);
     lines+=cleared.length;
     
-    // Update lifetime stats and achievements
-    const lifetime = JSON.parse(localStorage.getItem(LS.LIFETIME) || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+    // Update lifetime stats and achievements (in-memory cache — no JSON.parse per line clear)
+    const lifetime = _getLifetime();
     lifetime.totalLines = (lifetime.totalLines || 0) + cleared.length;
     if (cleared.length === 4) {
       lifetime.totalGlowtris = (lifetime.totalGlowtris || 0) + 1;
@@ -1580,6 +1599,10 @@ function lockPiece(){
     updateUI();
     const snap=[...cleared];
     setTimeout(()=>{
+      // Guard: if game was reset before this fires (e.g. line clear on the frame
+      // of game over → _doStartGame() replaces `board`), bail out immediately.
+      // Without this, the splice would corrupt the NEW game's fresh board.
+      if(!gameRunning&&!gameOver)return;
       for(const r of snap.slice().sort((a,b)=>a-b)){board.splice(r,1);board.unshift(Array(COLS).fill(null));}
       spawnLineClearParticles(snap);
       if(snap.length>=4&&!tspin&&animIntensity==='full'){shakeFrames=25;shakeMag=0.7;}
@@ -1614,7 +1637,7 @@ function addScore(pts,n,tspin=false){
 }
 
 function showScorePopup(pts,n,tspin=false){
-  const popup=document.getElementById('score-popup');
+  const popup=$scorePopup;
   const tspinLabels=['T-SPIN!','T-SPIN SINGLE','T-SPIN DOUBLE!!','T-SPIN TRIPLE!!!'];
   const miniLabels=['T-SPIN MINI','T-SPIN MINI+','T-SPIN MINI DBL'];
   const labels=['','','DOUBLE!','TRIPLE!','GLOWTRIS!!'];
@@ -1944,6 +1967,7 @@ const PAL=['#00c8ff','#a000ff','#ff0080','#ffe600','#00ff88'];
 
 function spawnLineClearParticles(rows){
   if(animIntensity==='off')return;
+  if(particles.length>=MAX_PARTICLES)return; // drop spawn if already at cap
   for(const row of rows) {
     particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*CELL*1.5,type:'radial-ring'});
     particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*CELL*2.3,type:'radial-ring'});
@@ -2046,6 +2070,7 @@ function updateParticles(){
 
 function spawnHardDropParticles(){
   if(animIntensity==='off')return;
+  if(particles.length>=MAX_PARTICLES)return;
   const col=current.color;
   const w=current.shape[0].length;
   const cx=(current.x+w/2)*CELL;
@@ -2137,10 +2162,11 @@ function unlockSpeaker(){
   if(_speakerUnlocked)return;
   _speakerUnlocked=true;
   const a=document.createElement('audio');
-  // minimal silent WAV (0 samples, valid header)
+  // minimal silent WAV (0 samples, valid header) — forces iOS to route Web Audio
+  // to the speaker instead of the earpiece.  Stop after 1s; the routing persists.
   a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
   a.volume=0.001;a.loop=true;
-  a.play().catch(()=>{});
+  a.play().then(()=>setTimeout(()=>{a.pause();a.src='';},1000)).catch(()=>{});
 }
 
 function getAudioCtx(){
@@ -2444,7 +2470,7 @@ function triggerAllClearFlash(){
   }
   if(animIntensity!=='off'&&!lowPerfMode){rainbowBorder=90;shakeFrames=30;shakeMag=0.9;}
   [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
-  if(animIntensity==='full'){
+  if(animIntensity==='full'&&particles.length<MAX_PARTICLES){
     for(let i=0;i<80;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
       particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
@@ -2529,7 +2555,7 @@ function showAchievementToast(ach) {
 }
 
 function unlockAchievement(id) {
-  const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
+  const achieved = _getAchievements(); // in-memory cache — no JSON.parse on every call
   const isAlreadyUnlocked = achieved.some(a => (typeof a === 'string' ? a === id : a.id === id));
   if (isAlreadyUnlocked) return;
 
@@ -2537,8 +2563,9 @@ function unlockAchievement(id) {
   if (!ach) return;
 
   achieved.push({ id, date: new Date().toLocaleDateString() });
+  // _achievementsCache is the same array reference — push above already updated it
   localStorage.setItem(LS.ACHIEVEMENTS, JSON.stringify(achieved));
-  
+
   showAchievementToast(ach);
 }
 
@@ -2576,20 +2603,27 @@ function checkTSpin(){
 
 // ─── Keyboard ─────────────────────────────────────────────────────────────────
 const KEYS={};let dasTimer=null;
+// Key guide DOM refs cached once at startup — getElementById on every keydown was
+// the most frequent DOM query in the hot path (every keydown + keyup event).
+const _keyGuide={
+  move:   document.getElementById('key-move'),
+  rotate: document.getElementById('key-rotate'),
+  soft:   document.getElementById('key-soft'),
+  hard:   document.getElementById('key-hard'),
+  hold:   document.getElementById('key-hold'),
+  pause:  document.getElementById('key-pause'),
+  mute:   document.getElementById('key-mute'),
+};
 function updateKeyGuideState(code, isPressed) {
   let el = null;
-  if (code === 'ArrowLeft' || code === 'ArrowRight') el = document.getElementById('key-move');
-  else if (code === 'ArrowUp') el = document.getElementById('key-rotate');
-  else if (code === 'ArrowDown') el = document.getElementById('key-soft');
-  else if (code === 'Space') el = document.getElementById('key-hard');
-  else if (code === 'KeyC' || code === 'ShiftLeft') el = document.getElementById('key-hold');
-  else if (code === 'KeyP') el = document.getElementById('key-pause');
-  else if (code === 'KeyM') el = document.getElementById('key-mute');
-  
-  if (el) {
-    if (isPressed) el.classList.add('key-pressed');
-    else el.classList.remove('key-pressed');
-  }
+  if (code === 'ArrowLeft' || code === 'ArrowRight') el = _keyGuide.move;
+  else if (code === 'ArrowUp')                        el = _keyGuide.rotate;
+  else if (code === 'ArrowDown')                      el = _keyGuide.soft;
+  else if (code === 'Space')                          el = _keyGuide.hard;
+  else if (code === 'KeyC' || code === 'ShiftLeft')   el = _keyGuide.hold;
+  else if (code === 'KeyP')                           el = _keyGuide.pause;
+  else if (code === 'KeyM')                           el = _keyGuide.mute;
+  if (el) el.classList.toggle('key-pressed', isPressed);
 }
 document.addEventListener('keydown',e=>{
   updateKeyGuideState(e.code, true);
@@ -2899,8 +2933,8 @@ function _saveGameStats() {
   localStorage.setItem(LS.TOTAL_LINES, totalLines);
   localStorage.setItem(LS.MAX_LINES,   maxLines);
 
-  // Track cumulative lifetime game count for achievement thresholds
-  const lifetime = JSON.parse(localStorage.getItem(LS.LIFETIME) || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+  // Track cumulative lifetime game count for achievement thresholds (in-memory cache)
+  const lifetime = _getLifetime();
   lifetime.totalGames = (lifetime.totalGames || 0) + 1;
   localStorage.setItem(LS.LIFETIME, JSON.stringify(lifetime));
 
@@ -3302,6 +3336,7 @@ function setLbMode(mode) {
 
 function showStartScreen(){
   isDailyMode = false; // reset when returning to start screen
+  clearInterval(_gateTimer); _gateTimer = null; // stop daily countdown if active
   // Stop the game loop; switch to lightweight bgOnly loop for the start screen.
   // gameLoop runs full drawBoard()+particles+shake — unnecessary when no game is active.
   gameRunning=false;
