@@ -13,10 +13,10 @@
 |---|---:|---|---|---|
 | 🌱 Stable launch | 100 | v1.0.9.4 | Core gameplay | ✅ Done |
 | 🚀 Sprint viral | 500 | v1.1 | Sprint share card | 🔲 Next |
-| 📈 Multi-mode | 1,000 | v1.2 | Ultra Mode variety | 🔲 |
+| 📈 Multi-mode + Streak | 700 | v1.2 | Ultra Mode + daily streak | 🔲 |
 | 🎓 Skill depth | 1,500 | v1.3 | Training + finesse | 🔲 |
 | 🎨 Identity | 2,000 | v1.4 | Visual customization | 🔲 |
-| 🔥 Daily habit | 3,000 | v1.5 | Streak + weekly events | 🔲 |
+| 🔥 Weekly events | 3,000 | v1.5 | Weekly challenges + monthly leaderboard | 🔲 |
 | 👻 Self-compete | 4,500 | v1.6 | Ghost race / replay | 🔲 |
 | 📊 Meta game | 5,500 | v1.7 | Advanced stats | 🔲 |
 | 🏆 Ranked play | 7,000 | v1.8 | Season & rank tier | 🔲 |
@@ -414,27 +414,39 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
+## 🔮 Planned: Pre-v1.1 — Donation UI
+> DAU goal: — | Key driver: monetization foundation before viral launch
+
+- [ ] Task 1: **`SUPPORT_URL` constant** — add `const SUPPORT_URL = 'https://ko-fi.com/xxx';` at top of `index.html`. When empty string, all donation UI is hidden with zero layout impact.
+- [ ] Task 2: **Game over donation button** — ☕ gold-toned "BUY ME A COFFEE" button below the leaderboard submission form; only rendered when `SUPPORT_URL` is set.
+- [ ] Task 3: **Stats overlay footer card** — dashed gold box at the bottom of the STATS overlay with "Buy me a coffee to keep Glowtris 100% ad-free!" copy and ☕ link; only rendered when `SUPPORT_URL` is set.
+- [ ] Task 4: Update `README.md` roadmap and `TODO.md` after completion.
+
+---
+
 ## 🔮 Planned: v1.1 — Sprint Mode
-> DAU goal: **500** | Key driver: sprint time share card virality
+> DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
 - [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
 - [ ] Task 3: **Mode Selector** — Marathon / Sprint / Daily Challenge buttons on start screen; selection persists to `localStorage`.
 - [ ] Task 4: **Sprint Leaderboard** — separate Redis leaderboard, ascending sort (fastest wins), TODAY / WEEKLY / ALL TIME tabs, rank shown after submission.
 - [ ] Task 5: **Sprint Canvas Share card** — large time display + LPM (lines per minute) + rank; "Can you beat XX.XXs?" caption for SNS viral sharing.
-- [ ] Task 6: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
+- [ ] Task 6: **Reddit r/webgames launch post** — post to r/webgames on release day: ad-free, PWA, leaderboard, Sprint Mode highlight. Title: "I made a free neon Tetris PWA — no ads, just score attack".
+- [ ] Task 7: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
 
 ---
 
-## 🔮 Planned: v1.2 — Ultra Mode
-> DAU goal: **800** | Key driver: time-pressure score variety
+## 🔮 Planned: v1.2 — Ultra Mode + Streak
+> DAU goal: **700** | Key driver: time-pressure mode + daily return habit
 
 - [ ] Task 1: **Ultra Mode Engine** — 2-minute countdown; score as many points as possible; game ends at 00:00.
 - [ ] Task 2: **Ultra HUD** — countdown timer replaces remaining-lines HUD; score multiplier ramps in final 30 seconds.
 - [ ] Task 3: **Mode Selector expanded** — Marathon / Sprint / Ultra / Daily Challenge on start screen.
 - [ ] Task 4: **Ultra Leaderboard** — separate Redis leaderboard, descending sort (highest score wins), TODAY / WEEKLY / ALL TIME.
 - [ ] Task 5: **Ultra Canvas Share card** — score + time survived + rank.
-- [ ] Task 6: Update docs and push version tag `v1.2`.
+- [ ] Task 6: **Basic daily streak counter** — track consecutive days played in `localStorage`; streak badge displayed on start screen and game over screen; streak resets to 0 if a day is missed.
+- [ ] Task 7: Update docs and push version tag `v1.2`.
 
 ---
 
@@ -459,13 +471,13 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
-## 🔮 Planned: v1.5 — Daily Streak & Events
-> DAU goal: **2,500** | Key driver: return-visit habit
+## 🔮 Planned: v1.5 — Weekly Events
+> DAU goal: **2,500** | Key driver: recurring competitive events
+> Note: Basic daily streak counter moved to v1.2.
 
-- [ ] Task 1: **Daily streak counter** — track consecutive days played; badge displayed on start screen and game over; streak lost if a day is missed.
-- [ ] Task 2: **Weekly special challenge** — rotating rule modifier seeded per week (e.g., invisible pieces, narrower board, no hold). Separate Redis leaderboard with 7-day TTL.
-- [ ] Task 3: **Monthly event leaderboard** — all-month leaderboard with Redis TTL; top 3 display gold/silver/bronze badge on profile.
-- [ ] Task 4: Update docs and push version tag `v1.5`.
+- [ ] Task 1: **Weekly special challenge** — rotating rule modifier seeded per week (e.g., invisible pieces, narrower board, no hold). Separate Redis leaderboard with 7-day TTL.
+- [ ] Task 2: **Monthly event leaderboard** — all-month leaderboard with Redis TTL; top 3 display gold/silver/bronze badge on profile.
+- [ ] Task 3: Update docs and push version tag `v1.5`.
 
 ---
 

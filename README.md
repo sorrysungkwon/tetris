@@ -56,10 +56,10 @@ A neon-styled block stacking game built as a single HTML file.
 |---|---:|---|---|
 | 🌱 Launch Stable | 100 | v1.0.9.4 ✅ | Core gameplay complete |
 | 🚀 Sprint Launch | 500 | v1.1 | Sprint Mode viral sharing |
-| 📈 Multi-Mode | 1,000 | v1.2 | Ultra Mode + mode variety |
+| 📈 Multi-Mode | 700 | v1.2 | Ultra Mode + basic daily streak |
 | 🎓 Skill Depth | 1,500 | v1.3 | Training mode, finesse tracking |
 | 🎨 Identity | 2,000 | v1.4 | Visual customization |
-| 🔥 Daily Habit | 3,000 | v1.5 | Streak system + weekly events |
+| 🔥 Weekly Events | 3,000 | v1.5 | Weekly challenges + monthly leaderboard |
 | 👻 Self-Competition | 4,500 | v1.6 | Ghost race / personal replay |
 | 📊 Meta Game | 5,500 | v1.7 | Advanced stats dashboard |
 | 🏆 Ranked Play | 7,000 | v1.8 | Season & rank tier system |
@@ -110,11 +110,12 @@ A neon-styled block stacking game built as a single HTML file.
 
 | Version | Theme | Features | DAU Goal |
 |---|---|---|---:|
-| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD + remaining-lines counter, mode selector on start screen (Marathon / Sprint), time-based leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint Canvas Share card with time + LPM. | **500** |
-| v1.2 | **Ultra Mode** | 2-minute score attack. Score multiplier ramps as time runs out, Ultra-exclusive leaderboard. Mode selector expands to Marathon / Sprint / Ultra. | 800 |
+| Pre-v1.1 | **Donation UI** | `SUPPORT_URL` constant + ☕ button on game over screen + Stats overlay footer card. Hidden entirely when `SUPPORT_URL = ''`. | — |
+| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD + remaining-lines counter, mode selector on start screen (Marathon / Sprint), time-based leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint Canvas Share card with time + LPM. **Reddit r/webgames launch post on release.** | **500** |
+| v1.2 | **Ultra Mode + Streak** | 2-minute score attack. Score multiplier ramps as time runs out, Ultra-exclusive leaderboard. Mode selector expands to Marathon / Sprint / Ultra. **Basic daily streak counter** — consecutive-day badge on start screen and game over; streak resets on missed day. | **700** |
 | v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |
 | v1.4 | **Visual Customization** | Board skin selector (Neon / Midnight / Pastel / Classic). Piece colour palette presets. BGM track selection saved to localStorage. | 1,800 |
-| v1.5 | **Daily Streak & Events** | Daily login streak badge (consecutive-day counter). Weekly special challenge (rotating rule modifiers: invisible pieces, 20-line board, etc.). Monthly event leaderboard with Redis TTL. | 2,500 |
+| v1.5 | **Weekly Events** | Weekly special challenge (rotating rule modifiers: invisible pieces, 20-line board, etc.) with 7-day Redis TTL leaderboard. Monthly event leaderboard. | 2,500 |
 | v1.6 | **Ghost & Replay** | Best-run ghost stored in Redis (serialised input log). Ghost race mode — race against your own personal best. Shareable replay link via short code. | 3,500 |
 | v1.7 | **Advanced Stats** | Expanded STATS overlay: PPS, finesse rate, T-spin %, all-clear %, average combo. Session graph (score over last 10 games). Weekly personal report card. | 4,500 |
 | v1.8 | **Season & Rank** | Monthly season resets leaderboard. 7-tier rank system (Bronze → Radiant) based on season score. Season-exclusive title badges and board borders unlock at each tier. | 6,000 |
