@@ -93,6 +93,44 @@ Slug (`sgkwon-team`) can change; these IDs never do. Use IDs in all curl/API cal
 
 Deployment Checks gate production domain aliasing only. Our PR-based workflow (preview verification → user approves → PR merge) provides the same gate manually. Leave Vercel Dashboard → Settings → Deployment Checks empty.
 
+## 📋 Session Notes — 2026-05-29 (Strategy & Roadmap Overhaul)
+
+The following decisions were made on 2026-05-29. All agents must be aware of these before starting any task.
+
+### Monetization strategy: AdSense → 100% ad-free donation model
+The project pivoted from Google AdSense to a voluntary donation model (Ko-fi / Buy Me a Coffee).
+- `SUPPORT_URL` constant controls all donation UI — set to `''` to hide everything
+- Donation UX placements: game over screen bottom + submission success + Stats overlay footer
+- Full revenue projections in `MONETIZATION.md` (local only, gitignored)
+
+### Real break-even point
+Monthly fixed costs include developer tools (Claude Pro $22/mo, Moshi $4/mo, domain ~$1/mo) = ~$28/mo total overhead. The true break-even is **DAU ~558** (standard scenario: 0.25% conversion, $4 avg donation), not DAU 0 as previously assumed. See `MONETIZATION.md` for full P&L.
+
+### Infrastructure capacity wall — CRITICAL
+The Upstash free tier exhausts at **~357 DAU** (10K commands/day ÷ 28 commands/DAU), NOT 700 as previously documented. Vercel Hobby exhausts at **~667 DAU**, NOT 1000. Upgrade triggers updated in `README.md`. The corrected triggers:
+- **DAU > 300**: Switch Upstash to Pay-as-you-go (~$1/mo) — do this BEFORE v1.1 launch
+- **DAU > 600**: Switch Vercel to Pro ($20/mo)
+- **Free mitigation**: Adding 60s server-side leaderboard cache in `api/leaderboard.js` cuts Redis commands ~50%, extending the free ceiling to ~700 DAU at zero cost.
+
+### Roadmap changes (all reflected in README.md + TODO.md)
+- **Pre-v1.1 added**: Donation UI task (`SUPPORT_URL` constant + ☕ game over button + Stats footer card)
+- **v1.1 updated**: Reddit r/webgames launch post added as a release task
+- **v1.2 updated**: Basic daily streak counter added; DAU target 800 → **700**
+- **v1.5 updated**: Renamed "Weekly Events" — streak counter moved to v1.2; weekly/monthly challenges remain
+
+### New local-only files
+- `GROWTHPLAN.md` (gitignored) — full marketing plan: Reddit channel strategy, Product Hunt timing, DAU phase plans, retention tactics, share card viral hooks
+- `MONETIZATION.md` (gitignored) — updated with full cost breakdown and realistic P&L
+
+### Document language rule
+- **GitHub-tracked files** (README, TODO, CLAUDE, AGENTS, code, comments, commits): **English only**
+- **Gitignored local files** (MONETIZATION.md, GROWTHPLAN.md): Korean is acceptable
+
+### TODO.md scope rule
+TODO.md is for **feature tasks and bug fix records only**. Business metrics, cost tables, and monetization notes do NOT belong in TODO.md — put them in README.md (infra triggers) or local-only files (MONETIZATION.md, GROWTHPLAN.md).
+
+---
+
 ## 🔁 Mandatory Release Workflow (no exceptions)
 
 ```
