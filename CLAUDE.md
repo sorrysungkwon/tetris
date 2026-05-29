@@ -80,8 +80,8 @@ Vercel free plan allows **100 deployments per day**. Exceeding this blocks ALL d
 - **One feature → one merge to preview → one deployment**. If a review reveals issues, fix on `feature/*` and merge once more — not repeatedly.
 - **Count your deploys**: if you're about to push and it would be the 3rd+ push for the same feature, stop and batch the remaining fixes first.
 
-- After every task: `git add . && git commit -m "description" && git push`
-- **Git Release Tagging**: When releasing/completing a new version (e.g. v1.0.9), always create and push an annotated Git tag to document the release milestone: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
+- After every task: `git add . && git commit -m "description"` — **commit only, do NOT push**. Report the commit and stop. The user controls all `git push` operations.
+- **Git Release Tagging**: When a version is ready to tag, prepare the command `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` and present it to the user — do not run it autonomously.
 
 ## 🚨 GITHUB ACTIONS & VERCEL INTEGRATION — NEVER REPEAT THESE MISTAKES
 
@@ -168,20 +168,21 @@ feature/xxx  →  preview  →  PR to master  →  master  →  (tag if versione
 ### Step-by-step:
 
 1. **Create feature branch**: `git checkout -b feature/xxx`
-2. **Develop & iterate**: all changes on `feature/*` only. Test locally (`npx serve .`). No pushes to `preview` yet.
-3. **Batch commit**: when the feature is 100% done including fine-tuning, `git add . && git commit -m "feat: ..."`.
-4. **Push to feature branch**: `git push origin feature/xxx` (Vercel creates a random preview URL — use for a final sanity check if needed, but this is optional).
-5. **Merge to `preview`**: `git checkout preview && git merge feature/xxx && git push origin preview`
+2. **Develop & iterate**: all changes on `feature/*` only. Test locally (`npx serve .`). No pushes yet.
+3. **Batch commit**: when the feature is 100% done, `git add . && git commit -m "feat: ..."` — **stop here and report to user. Do NOT push.**
+4. **User pushes**: `git push origin feature/xxx` — user decides when to spend a deployment slot.
+5. **User merges to `preview`**: `git checkout preview && git merge feature/xxx && git push origin preview`
    - Vercel auto-deploys to **https://prevglow.vercel.app** (one deployment slot used)
-   - Confirm with user that it looks good on prevglow.vercel.app
+   - User confirms it looks good on prevglow.vercel.app
 6. **Open PR**: `gh pr create --base master --head preview --title "feat: ..."` (or via GitHub UI)
    - NEVER open a PR to master without user confirmation that preview is OK
 7. **User approves and merges PR** → Vercel auto-deploys to **https://glowtris.vercel.app** (production)
-8. **Tag if versioned**: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`
-9. **Update `git checkout preview && git merge master`** to keep preview in sync with master after the PR merge.
+8. **Tag if versioned**: present `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` to user — do not run autonomously.
+9. **Sync preview**: `git checkout preview && git merge master && git push origin preview` — user runs after PR merge.
 
 ### Critical rules:
-- **ONE merge to preview per feature** — no iterative fixes on preview
+- **Claude commits only — user pushes**: every `git push` triggers a Vercel deployment and consumes a daily slot. Only the user decides when to push.
+- **ONE push to preview per feature** — no iterative pushes
 - **NEVER merge directly to master** — always via PR with preview verification
 - **NEVER run `vercel` CLI** for deploys — GitHub integration handles it
 - **Docs always follow code**: update `TODO.md` + `README.md` roadmap in the same commit as the feature
