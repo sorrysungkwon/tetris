@@ -418,18 +418,26 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
-## 🔮 Planned: Pre-v1.1 — Domain + Donation UI
-> DAU goal: — | Key driver: custom domain before launch + monetization foundation
+## ✅ Completed: Pre-v1.1 INP Fix — by Claude (2026-05-29)
+
+Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms). The existing `// Hide overlay immediately` comment in `startGame()` was a false fix — `display='none'` does not trigger an immediate paint; the browser batches style changes until the JS call stack empties. All synchronous init work (loadSettings, sprite cache warm, canvas draws, BGM init) was blocking the main thread before the browser could paint the click response.
+
+- [x] **`startGame()` split**: DOM change (`$overlay.style.display='none'`) + `setTimeout(_doStartGame, 0)`. The browser now paints overlay-hidden state before any init runs. Estimated INP: 568ms → <50ms.
+- [x] **`openStats()` split**: `display='flex'` fires immediately; achievement HTML (20-badge template string) generated in `requestAnimationFrame` callback. Overlay appears instantly; content fills in within one frame (~16ms).
+- [x] Root cause documented: `setTimeout(0)` empties the JS call stack, allowing the browser's rendering pipeline (style recalc → layout → paint → composite) to run before the next macrotask.
+
+---
+
+## 🔮 Planned: Pre-v1.1 — Domain + Donation URL
 
 ### Domain Setup (user action)
 - [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
 - [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
 
-### Donation UI
-- [x] Task 1: **`SUPPORT_URL` constant** — add `const SUPPORT_URL = 'https://ko-fi.com/xxx';` at top of `index.html`. When empty string, all donation UI is hidden with zero layout impact.
-- [x] Task 2: **Game over donation button** — ☕ gold-toned "BUY ME A COFFEE" button below the leaderboard submission form; only rendered when `SUPPORT_URL` is set.
-- [x] Task 3: **Stats overlay footer card** — dashed gold box at the bottom of the STATS overlay with "Buy me a coffee to keep Glowtris 100% ad-free!" copy and ☕ link; only rendered when `SUPPORT_URL` is set.
-- [x] Task 4: Update `README.md` roadmap and `TODO.md` after completion.
+### Donation URL (user action)
+> Donation UI code was removed from codebase (2026-05-29). Will be re-implemented when Ko-fi URL is ready.
+- [ ] Set up Ko-fi account with PayPal payout.
+- [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
 
 ---
 
