@@ -1,0 +1,130 @@
+name: Vercel Deployment Status
+
+# Reports Vercel build progress as a GitHub Commit Status (not a Deployment record).
+# Commit Status is a separate API from Deployments — no conflict with the Vercel
+# GitHub App, no duplicate deployment records, no rate-limit issues.
+#
+# Shows up on each commit as:   ● Vercel / Preview — Building… → Deployed ✓
+#
+# ⚠️  API calls use the STABLE TEAM ID (not the slug) so they survive team renames.
+#     Team ID: team_pb1objuXoHlJIv67jumHZrg8 (never changes)
+#     Project ID: prj_V1lhSONnxAM9K2hpk5VLtemldWnm (never changes)
+#
+# Prerequisites — add this repo secret (Settings → Secrets → Actions):
+#   VERCEL_TOKEN : Vercel personal access token (vercel.com → Account Settings → Tokens)
+
+on:
+  push:
+    branches: [preview, master]
+
+permissions:
+  statuses: write   # commit status only — no deployments created
+
+jobs:
+  track:
+    name: Vercel status
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      # ── 1. Mark commit as "pending" immediately ───────────────────────────
+      - name: Set status — pending
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const env = context.ref === 'refs/heads/master' ? 'Production' : 'Preview';
+            await github.rest.repos.createCommitStatus({
+              owner:       context.repo.owner,
+              repo:        context.repo.repo,
+              sha:         context.sha,
+              state:       'pending',
+              context:     `Vercel / ${env}`,
+              description: 'Building on Vercel…',
+              target_url:  'https://vercel.com/sgkwon-team/glowtris',
+            });
+
+      # ── 2. Poll Vercel until the deployment for this SHA is done ──────────
+      - name: Poll Vercel deployment
+        id: poll
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          COMMIT_SHA:   ${{ github.sha }}
+          # Use stable IDs — these never change even if the team/project is renamed
+          VERCEL_TEAM_ID:    team_pb1objuXoHlJIv67jumHZrg8
+          VERCEL_PROJECT_ID: prj_V1lhSONnxAM9K2hpk5VLtemldWnm
+        run: |
+          set -euo pipefail
+          DEPLOY_URL=""
+          FINAL_STATE="error"
+
+          echo "Waiting for Vercel to pick up ${COMMIT_SHA:0:12}…"
+
+          # Look for the deployment (up to ~3 min)
+          # Filter by both teamId AND projectId to avoid picking up other projects' deploys
+          DEPLOY_ID=""
+          for i in $(seq 1 18); do
+            sleep 10
+            RESP=$(curl -sf \
+              "https://api.vercel.com/v6/deployments?limit=10&teamId=${VERCEL_TEAM_ID}&projectId=${VERCEL_PROJECT_ID}" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" 2>/dev/null || echo '{"deployments":[]}')
+
+            DEPLOY_ID=$(echo "$RESP" | jq -r --arg sha "${COMMIT_SHA:0:12}" \
+              '.deployments[]? | select(.meta.githubCommitSha // "" | startswith($sha)) | .uid' \
+              2>/dev/null | head -1)
+
+            [ -n "$DEPLOY_ID" ] && { echo "Found: $DEPLOY_ID (attempt $i)"; break; }
+            echo "  Not found yet (attempt $i)…"
+          done
+
+          if [ -z "$DEPLOY_ID" ]; then
+            echo "final_state=error" >> "$GITHUB_OUTPUT"
+            echo "deploy_url="       >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Poll until READY / ERROR / CANCELED (up to ~5 min)
+          for i in $(seq 1 60); do
+            sleep 5
+            DDATA=$(curl -sf \
+              "https://api.vercel.com/v13/deployments/${DEPLOY_ID}?teamId=${VERCEL_TEAM_ID}" \
+              -H "Authorization: Bearer $VERCEL_TOKEN" 2>/dev/null || echo '{}')
+            READY=$(echo "$DDATA" | jq -r '.readyState // ""')
+            echo "  [$i] $READY"
+            case "$READY" in
+              READY)
+                DEPLOY_URL=$(echo "$DDATA" | jq -r '"https://"+.url' 2>/dev/null)
+                FINAL_STATE="success"; break ;;
+              ERROR)    FINAL_STATE="failure";  break ;;
+              CANCELED) FINAL_STATE="error";    break ;;
+            esac
+          done
+
+          echo "final_state=$FINAL_STATE" >> "$GITHUB_OUTPUT"
+          echo "deploy_url=$DEPLOY_URL"   >> "$GITHUB_OUTPUT"
+
+      # ── 3. Update commit status with final result ─────────────────────────
+      - name: Set status — final
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const env   = context.ref === 'refs/heads/master' ? 'Production' : 'Preview';
+            const state = '${{ steps.poll.outputs.final_state }}' || 'error';
+            const url   = '${{ steps.poll.outputs.deploy_url }}';
+            const desc  = {
+              success: 'Deployed ✓',
+              failure: 'Build failed',
+              error:   'Could not verify deployment',
+            }[state] ?? state;
+
+            await github.rest.repos.createCommitStatus({
+              owner:      context.repo.owner,
+              repo:       context.repo.repo,
+              sha:        context.sha,
+              state,
+              context:    `Vercel / ${env}`,
+              description: desc,
+              target_url: url || 'https://vercel.com/sgkwon-team/glowtris',
+            });

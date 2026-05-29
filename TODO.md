@@ -3,7 +3,29 @@
 ## 🚨 Behavioral Guidelines (Must read first!)
 - **Single File Rule**: Always maintain the single `index.html` structure. No external frontend libraries allowed.
 - **English-Only Rule**: All code changes, comments, logs, documentation, and Git commit messages MUST be written entirely in English.
-- **Workflow Integrity**: Before starting any task, read this file and `README.md` first. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then execute `git add . && git commit -m "description" && git push`. When releasing a new version, always create and push an annotated tag: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
+- **Workflow Integrity**: Before starting any task, read your agent doc (`CLAUDE.md` or `AGENTS.md`) first, then this file. `README.md` is human-facing — use it for feature context only. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then `git add . && git commit -m "description"` — report to user and wait. **Push only when user says "push해".** Docs-only commits accumulate locally and are bundled with the next code push.
+
+---
+
+## 🎯 Version Pipeline (current → next)
+
+| Version | DAU Goal | Status |
+|---|---:|---|
+| v1.0.9.4 | 100 | ✅ Done |
+| Pre-v1.1 (Donation UI) | — | 🔲 Next |
+| v1.1 Sprint Mode | 500 | 🔲 |
+| v1.2 Ultra + Streak | 700 | 🔲 |
+| v1.3 Training & Finesse | 1,200 | 🔲 |
+| v1.4 Visual Customization | 1,800 | 🔲 |
+| v1.5 Weekly Events | 2,500 | 🔲 |
+| v1.6 Ghost & Replay | 3,500 | 🔲 |
+| v1.7 Advanced Stats | 4,500 | 🔲 |
+| v1.8 Season & Rank | 6,000 | 🔲 |
+| v1.9 Social Layer | 8,000 | 🔲 |
+| v2.0 Multiplayer | 15,000+ | 🔲 |
+
+> Full roadmap, DAU milestones, and infrastructure upgrade triggers → see `README.md`.
+> Marketing strategy and growth plan → see `GROWTHPLAN.md` (local only).
 
 ---
 
@@ -105,8 +127,8 @@
 
 ## ✅ Completed: v1.0.6 Post-fixes & Additions — by Claude (2026-05-23)
 
-- [x] Feat: **Privacy Policy page** (`privacy.html`) — cookie/AdSense disclosure, no-personal-data statement, third-party service list (Vercel, Upstash, Google), contact info; neon Glowtris design.
-- [x] Feat: **Terms of Service page** (`terms.html`) — usage rules, leaderboard rules, ad disclosure, no-warranty disclaimer; neon Glowtris design with "Play Glowtris" CTA button.
+- [x] Feat: **Privacy Policy page** (`privacy.html`) — cookie/patronage disclosure, no-personal-data statement, third-party service list (Vercel, Upstash, Google), contact info; neon Glowtris design.
+- [x] Feat: **Terms of Service page** (`terms.html`) — usage rules, leaderboard rules, patronage disclosure, no-warranty disclaimer; neon Glowtris design with "Play Glowtris" CTA button.
 - [x] Feat: **Footer links** — PRIVACY · TERMS links added to start screen glass panel.
 - [x] Feat: **Automatic performance mode** — monitors FPS every second; below 30 FPS enables low-perf mode (skip nebulae/gradients, remove all canvas shadowBlur, halve/disable particles, strip CSS glow/backdrop-filter); above 50 FPS restores effects; ⚡ PERF MODE corner indicator fades in/out; 3-second cooldown prevents rapid toggling.
 
@@ -291,18 +313,245 @@ We must fully implement and polish the actual code on both branches (which are c
 
 ---
 
-## 🔲 Pending (requested but not yet started) — by Claude (2026-05-25)
+## ✅ Completed: v1.0.9.3 (T-Spin Mini + Leaderboard Dedup + OG Image) — by Claude (2026-05-25)
 
-- [ ] **Leaderboard deduplication**: if same username submits a better score, remove their old entry and keep only their personal best. Detection logic: match by name (localStorage username) + score comparison. Backend: Redis ZRANGEBYSCORE + ZREM before ZADD, or client-side filter on response.
-- [ ] **OG image / social meta tags**: ensure Twitter Card (`twitter:card`, `twitter:image`, etc.) and Open Graph tags are present and correct so previews appear on Twitter, KakaoTalk, Discord, Line, and other SNS platforms.
+- [x] **T-Spin Mini detection**: `checkTSpin()` now returns `'full'` / `'mini'` / `false` by inferring T-piece rotation from shape matrix and applying front/back corner distinction. Mini T-Spin scores: 0/200/400×level (vs Full: 400/800/1200/1600×level). `showScorePopup()` shows distinct "T-SPIN MINI" label.
+- [x] **Leaderboard deduplication**: `deduplicateAndAdd()` helper scans each sorted set for entries matching `cleanName`, removes stale ones via `ZREM`, then adds the new entry — but only if the new score is a personal best. Applied to all 5 boards (ALL TIME, daily, weekly, challenge-today, challenge-alltime).
+- [x] **OG image PNG endpoint** (`/api/og`): Edge Function using `@vercel/og` renders a 1200×630 PNG with neon block grid mark, GLOW+TRIS title with glow effects, and grid background. No JSX or React dependency — VNodes built with plain `h()` helper.
+- [x] **Social meta tags**: updated `og:image` and `twitter:image` to `/api/og` (PNG). Added `og:site_name`, `og:locale`, `og:image:alt`, `twitter:image:alt`, `og:image:type`. Works on Twitter/X, KakaoTalk, Discord, Line, Slack, Facebook.
+- [x] Version bumped to v1.0.9.3.
 
 ---
 
-## 🔮 Planned: v1.1 (Sprint Mode)
+## ✅ Completed: v1.0.9.4 (Hotfix — PC Panel Overflow + PC Perf) — by Claude (2026-05-25)
+
+- [x] **Hold/Next panel overflow fix**: With `box-sizing: border-box` globally applied, `.panel { width: 132px; padding: 16px 14px; border: 1px; }` left only 102px content space while `ncD.width = 4 × CELL = 120px` overflowed by 18px. Fixed by widening panel to `width: 150px` (120px canvas + 14px×2 padding + 1px×2 border = 150px exact fit).
+- [x] **drawNext/drawHold hardcoded dims fix**: `drawMiniPiece(ncDx, next, 108, 96)` and `drawMiniPiece(hcDx, held, 108, 80)` used stale hardcoded dimensions mismatched from actual canvas size (120×90). Now use `ncD.width, ncD.height` and `hcD.width, hcD.height` for correct centering.
+- [x] **PC performance**: Background gradient caching (every 4 frames), static low-perf gradient for Intel iGPU (auto-detected via WEBGL_debug_renderer_info), `_perfLocked` removed so user can exit perf mode.
+- [x] Version bumped to v1.0.9.4.
+
+---
+
+## ✅ Completed: Post-v1.0.9.4 Fixes — by Claude (2026-05-25)
+
+- [x] **Low-perf background gradient strengthened**: Centre radial glow opacity 0.55→0.85, radius widened to 0.85×, top accent 0.10→0.22, bottom vignette added. Normal mode: deep navy core; Challenge mode: deep crimson core.
+- [x] **Memory leak fixes (critical — caused browser/OS freeze)**:
+  - Audio node leak: BGM voices (kick/snare/hihat/note) created 2–3 AudioNodes per beat; only source tracked in `bgmNodes[]`; companion GainNode/BiquadFilterNode never `disconnect()`ed → AudioContext accumulated thousands of orphaned nodes per game. Fixed with `_bgmRegister(src, ...rest)` helper that tracks ALL nodes and disconnects all on `onended`. `stopBGM()` now also calls `disconnect()` on every node.
+  - BGM scheduler backlog: tab hidden → RAF pauses but `setTimeout` keeps running → `bgmScheduleLoop` while-loop creates huge backlog on return. Fixed: `visibilitychange` suspends AudioContext + stops scheduler on hide; resumes on show. Added `bgmNextTime` clamp guard.
+  - WebGL context not released: `_detectLowEndGPU()` canvas held GPU memory. Fixed: `WEBGL_lose_context.loseContext()` called immediately after reading renderer string.
+  - `showStartScreen()` now cancels `gameLoop` and switches to lightweight `bgOnly` loop (background-only).
+  - `beforeunload`: explicitly stops BGM, cancels RAF, closes AudioContext.
+- [x] **Vercel team rename**: team slug `seonqwer-3337s-projects` → `sgkwon-team` (same team ID). Updated CLAUDE.md, README.md, and `vercel-status.yml`.
+- [x] **Environment variables documented**: `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (production + preview) documented in CLAUDE.md and README.md Infrastructure section.
+- [x] **GitHub Actions — Vercel status tracking** (`.github/workflows/vercel-status.yml`):
+  - v1: used GitHub Deployment API → created duplicate records (Vercel GitHub App + our workflow) → hit GitHub deployment rate limit.
+  - v2 (current): uses **Commit Status API** (`repos.createCommitStatus`) instead — no deployment records created, zero conflict with Vercel GitHub App. Shows as `Vercel / Preview — Building… → Deployed ✓` on commits. Requires `VERCEL_TOKEN` secret.
+- [x] **Vercel ignored build step cleared**: `git diff HEAD^ HEAD --quiet` was causing all preview deployments to be immediately CANCELED (shallow clone in Vercel build environment → `HEAD^` unavailable → exit 0 → skip). Cleared via PATCH API.
+
+---
+
+## ✅ Completed: Post-v1.0.9.4 CI/Infra Hardening — by Claude (2026-05-25)
+
+### Incident recap (2026-05-25)
+A cascade of mistakes hit both the GitHub deployment rate limit AND Vercel's 100/day cap simultaneously:
+1. `vercel-status.yml` v1 used `repos.createDeployment()` — doubled Vercel GitHub App's deployment records, hit GitHub's rate limit ("deployment rate limited - retry 24 hours").
+2. Iterative `vercel` CLI runs + empty commits + rapid pushes burned through Vercel's 100/day cap.
+3. `commandForIgnoringBuildStep` was set to `git diff HEAD^ HEAD --quiet` — Vercel shallow clone has no `HEAD^`, so every build was silently skipped.
+4. Team rename (`seonqwer-3337s-projects` → `sgkwon-team`) left hardcoded slug references in the workflow that silently broke API calls.
+
+### What was fixed
+- [x] **`vercel-status.yml` rewritten (v2)**: uses `repos.createCommitStatus()` (Commit Status API) instead of `repos.createDeployment()`. Zero conflict with Vercel GitHub App, zero duplicate records, no rate limit risk.
+- [x] **`vercel-status.yml` v3 — stable IDs**: replaced `teamId=sgkwon-team` (slug, breaks on rename) with env vars `VERCEL_TEAM_ID=team_pb1objuXoHlJIv67jumHZrg8` and `VERCEL_PROJECT_ID=prj_V1lhSONnxAM9K2hpk5VLtemldWnm` (permanent IDs). Added `projectId` filter to deployments list API to avoid picking up other projects.
+- [x] **`commandForIgnoringBuildStep` cleared**: set to `null` via Vercel PATCH API. NEVER re-add `git diff HEAD^ HEAD --quiet`.
+- [x] **CLAUDE.md hardened**: added 7 rules covering GitHub Actions + Vercel integration, plus `🔁 Mandatory Release Workflow` section with full step-by-step process.
+
+### Vercel Deployment Checks — analysed, no action needed
+- Deployment Checks gate **production domain aliasing** only (not builds, not preview deploys).
+- They require checks to pass before `glowtris.vercel.app` gets updated after a production build.
+- Our PR-based workflow (prevglow → user confirms → PR merge) already provides this exact gate manually.
+- **Decision**: leave Vercel Dashboard → Settings → Deployment Checks empty. Current process is sufficient.
+
+### Pipeline status at close of session (2026-05-25 ~06:00 UTC)
+- `prevglow.vercel.app` is on commit `5f402981` (04:59 UTC) — **memory leak fixes from `c07f206` NOT yet deployed**
+- All subsequent pushes are `CANCELED` (Vercel 100/day limit still active, resets midnight UTC 2026-05-26)
+- Next push after midnight UTC will deploy `c07f206` (memory fixes) + all subsequent commits automatically
+- PR #4 (`preview` → `master`) is open and ready to merge once preview is verified post-reset
+
+### 🔁 Post-UTC-Midnight Release Checklist (User Action Plan)
+Once Vercel's daily limit resets, follow these precise steps to complete the release:
+
+1. **Verify Preview Deployment:**
+   - Confirm `prevglow.vercel.app` is successfully auto-deployed with the latest memory leak and stability fixes.
+2. **Merge PR #4 on GitHub:**
+   - Merge `preview` → `master` on GitHub.
+   - This automatically triggers the production build and deploys to `glowtris.vercel.app`.
+3. **Checkout and Pull Master Locally:**
+   ```bash
+   git checkout master
+   git pull
+   ```
+4. **Create & Push Dual Release Tags:**
+   ```bash
+   git tag -a v1.0.9.3 -m "T-Spin Mini + leaderboard dedup + OG image"
+   git tag -a v1.0.9.4 -m "Hotfix: PC panel overflow + perf + memory leaks"
+   git push origin v1.0.9.3 v1.0.9.4
+   ```
+5. **Sync Preview Branch Back to Master:**
+   ```bash
+   git checkout preview
+   git merge master
+   git push origin preview
+   ```
+
+### Confirmed mandatory workflow going forward
+```
+feature/xxx → preview (verify) → PR to master (user approves) → merge → (tag if versioned)
+```
+
+---
+
+## ✅ Completed: Pre-v1.1 API Hardening — by Claude (2026-05-29)
+
+- [x] **60s edge cache**: GET `/api/leaderboard` now sets `Cache-Control: s-maxage=60, stale-while-revalidate=30`. Vercel edge network serves cached responses, reducing Redis reads ~50%. Extends Upstash free ceiling from ~416 DAU to ~700 DAU at zero cost — v1.1's 500 DAU target is now safely within the free tier.
+- [x] **Rate limiting**: IP-based limit of 5 POST submissions per 60s window. Uses a Redis `INCR` key with `EXPIRE` TTL (costs 1–2 commands on hot path). Returns HTTP 429 on violation.
+- [x] **Score validation**: Rejects submissions where score is not a positive integer ≤ 10,000,000 (≈ 4+ hours of perfect play). Prevents obvious spoofed entries without server-side game simulation.
+
+---
+
+## 🔮 Planned: Pre-v1.1 — Domain + Donation UI
+> DAU goal: — | Key driver: custom domain before launch + monetization foundation
+
+### Domain Setup (user action)
+- [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
+- [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
+
+### Donation UI
+- [ ] Task 1: **`SUPPORT_URL` constant** — add `const SUPPORT_URL = 'https://ko-fi.com/xxx';` at top of `index.html`. When empty string, all donation UI is hidden with zero layout impact.
+- [ ] Task 2: **Game over donation button** — ☕ gold-toned "BUY ME A COFFEE" button below the leaderboard submission form; only rendered when `SUPPORT_URL` is set.
+- [ ] Task 3: **Stats overlay footer card** — dashed gold box at the bottom of the STATS overlay with "Buy me a coffee to keep Glowtris 100% ad-free!" copy and ☕ link; only rendered when `SUPPORT_URL` is set.
+- [ ] Task 4: Update `README.md` roadmap and `TODO.md` after completion.
+
+---
+
+## 🔮 Planned: v1.1 — Sprint Mode
+> DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
+> ✅ **Infrastructure ready**: 60s edge cache extends Upstash free ceiling to ~700 DAU — v1.1's 500 DAU target is within the free tier. No upgrade required before launch.
 
 - [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
 - [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
-- [ ] Task 3: **Mode Selector** — Marathon vs Sprint toggle on start screen; selection persists to `localStorage`.
+- [ ] Task 3: **Mode Selector** — Marathon / Sprint / Daily Challenge buttons on start screen; selection persists to `localStorage`.
 - [ ] Task 4: **Sprint Leaderboard** — separate Redis leaderboard, ascending sort (fastest wins), TODAY / WEEKLY / ALL TIME tabs, rank shown after submission.
-- [ ] Task 5: **Sprint Stats & Canvas Share** — STATS overlay and share image format sprint results (time, lines/min, rank) correctly.
-- [ ] Task 6: Update `README.md` roadmap and this file after completion.
+- [ ] Task 5: **Sprint Canvas Share card** — large time display + LPM (lines per minute) + rank; "Can you beat XX.XXs?" caption for SNS viral sharing.
+- [ ] Task 6: **Reddit r/webgames launch post** — post to r/webgames on release day: ad-free, PWA, leaderboard, Sprint Mode highlight. Title: "I made a free neon Tetris PWA — no ads, just score attack".
+- [ ] Task 7: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
+
+---
+
+## 🔮 Planned: Pre-v1.2 — Architecture Review
+> DAU goal: — | Key driver: code health before multi-mode complexity
+> ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
+
+`index.html` will be ~4,000+ lines by this point (3,535 now + Ultra + streak code). Decide the code architecture before adding more game modes:
+
+- [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
+- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable).
+- [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
+- [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
+
+---
+
+## 🔮 Planned: v1.2 — Ultra Mode + Streak
+> DAU goal: **700** | Key driver: time-pressure mode + daily return habit
+
+- [ ] Task 1: **Ultra Mode Engine** — 2-minute countdown; score as many points as possible; game ends at 00:00.
+- [ ] Task 2: **Ultra HUD** — countdown timer replaces remaining-lines HUD; score multiplier ramps in final 30 seconds.
+- [ ] Task 3: **Mode Selector expanded** — Marathon / Sprint / Ultra / Daily Challenge on start screen.
+- [ ] Task 4: **Ultra Leaderboard** — separate Redis leaderboard, descending sort (highest score wins), TODAY / WEEKLY / ALL TIME.
+- [ ] Task 5: **Ultra Canvas Share card** — score + time survived + rank.
+- [ ] Task 6: **Basic daily streak counter** — track consecutive days played in `localStorage`; streak badge displayed on start screen and game over screen; streak resets to 0 if a day is missed.
+- [ ] Task 7: Update docs and push version tag `v1.2`.
+
+---
+
+## 🔮 Planned: v1.3 — Training & Finesse
+> DAU goal: **1,200** | Key driver: skill progression loop
+
+- [ ] Task 1: **Practice Mode** — no game over, no timer; press Escape to exit; pieces reset board every 200 lines.
+- [ ] Task 2: **Finesse Counter** — track wasted keypresses vs optimal input per piece; display finesse error count on game over.
+- [ ] Task 3: **Speed Metrics** — PPS (pieces per second) and LPM (lines per minute) displayed on game over and STATS overlay.
+- [ ] Task 4: **Per-piece heatmap** (STATS overlay) — show which pieces caused the most finesse errors.
+- [ ] Task 5: Update docs and push version tag `v1.3`.
+
+---
+
+## 🔮 Planned: v1.4 — Visual Customization
+> DAU goal: **1,800** | Key driver: personal expression & shareability
+
+- [ ] Task 1: **Board skin selector** — 4 themes: Neon (current default) / Midnight / Pastel / Classic. Affects background, grid, and panel colours. Persisted to `localStorage`.
+- [ ] Task 2: **Piece colour palette presets** — 3 palettes: Vivid (current) / Muted / Monochrome. Rebuilds cell sprite cache on change.
+- [ ] Task 3: **BGM track selection** — user can pin a preferred track (Track 1 / Track 2 / Track 3 / Shuffle). Persisted to `localStorage`.
+- [ ] Task 4: Update docs and push version tag `v1.4`.
+
+---
+
+## 🔮 Planned: v1.5 — Weekly Events
+> DAU goal: **2,500** | Key driver: recurring competitive events
+> Note: Basic daily streak counter moved to v1.2.
+
+- [ ] Task 1: **Weekly special challenge** — rotating rule modifier seeded per week (e.g., invisible pieces, narrower board, no hold). Separate Redis leaderboard with 7-day TTL.
+- [ ] Task 2: **Monthly event leaderboard** — all-month leaderboard with Redis TTL; top 3 display gold/silver/bronze badge on profile.
+- [ ] Task 3: Update docs and push version tag `v1.5`.
+
+---
+
+## 🔮 Planned: v1.6 — Ghost & Replay
+> DAU goal: **3,500** | Key driver: self-competition loop
+
+- [ ] Task 1: **Personal best ghost** — serialise input log of personal best run to Redis; render ghost piece trail 1 frame behind real piece during replay.
+- [ ] Task 2: **Ghost race mode** — race against your own ghost in real time; ghost moves at your recorded pace.
+- [ ] Task 3: **Shareable replay link** — encode input log as short-code; recipient can watch the run play out in a read-only spectator view.
+- [ ] Task 4: Update docs and push version tag `v1.6`.
+
+---
+
+## 🔮 Planned: v1.7 — Advanced Stats
+> DAU goal: **4,500** | Key driver: deep engagement for competitive players
+
+- [ ] Task 1: **Expanded STATS overlay** — PPS, finesse rate (%), T-spin %, all-clear %, average combo, max combo, average score per game.
+- [ ] Task 2: **Session history graph** — score sparkline for last 10 games; trend arrow (improving / declining).
+- [ ] Task 3: **Weekly personal report** — auto-generated summary card each Monday: best time (Sprint), best score (Marathon), most achievements unlocked.
+- [ ] Task 4: Update docs and push version tag `v1.7`.
+
+---
+
+## 🔮 Planned: v1.8 — Season & Rank System
+> DAU goal: **6,000** | Key driver: long-term competitive ladder
+
+- [ ] Task 1: **Monthly season** — season leaderboard resets on the 1st of each month; previous season rank archived to player profile.
+- [ ] Task 2: **7-tier rank system** — Bronze / Silver / Gold / Platinum / Diamond / Master / Radiant; rank determined by season score percentile.
+- [ ] Task 3: **Season rewards** — tier-exclusive title badge and board border unlock at end of each season; displayed permanently on profile.
+- [ ] Task 4: **Season banner** on start screen — countdown to season end + current rank.
+- [ ] Task 5: Update docs and push version tag `v1.8`.
+
+---
+
+## 🔮 Planned: v1.9 — Social Layer
+> DAU goal: **8,000** | Key driver: word-of-mouth and friend competition
+
+- [ ] Task 1: **Friend code system** — each user gets a 6-char code (derived from username hash); enter a code to follow; mutual follows create a friend pair stored in Redis.
+- [ ] Task 2: **Friend leaderboard tab** — new tab in leaderboard overlay showing only followed players' scores.
+- [ ] Task 3: **Async challenge** — "Challenge a Friend" button on game over shares a seeded run as a link; recipient plays the exact same sequence; results compared on a shared card.
+- [ ] Task 4: Update docs and push version tag `v1.9`.
+
+---
+
+## 🔮 Planned: v2.0 — Real-time Multiplayer
+> DAU goal: **15,000+** | Key driver: the platform shift
+
+- [ ] Task 1: **WebSocket infrastructure** — integrate Pusher or Ably for real-time bidirectional communication; add API route for session management.
+- [ ] Task 2: **1v1 Battle Mode** — matchmaking queue; garbage line mechanic (cleared lines send junk to opponent); first to top out loses.
+- [ ] Task 3: **Battle HUD** — opponent board preview (mini, right panel); incoming garbage meter; attack/defence counter.
+- [ ] Task 4: **Elo rating system** — per-player Elo stored in Redis; updated after each ranked battle; displayed on profile.
+- [ ] Task 5: **Live spectator mode** — watch any ongoing public match; spectator count shown on match screen.
+- [ ] Task 6: **Battle leaderboard** — ranked by Elo; TODAY (most battles) / ALL TIME (highest Elo) tabs.
+- [ ] Task 7: Update docs, push version tag `v2.0`, upgrade infrastructure (Vercel Pro + Pusher).

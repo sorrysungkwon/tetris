@@ -1,20 +1,13 @@
 # Glowtris
 
-> **DEPLOY & RELEASE RULE:** Always `git commit` first, then deploy with `vercel` (preview — **NOT** `--prod`) and share the preview URL for review before promoting to production. When completing/releasing a new version, always tag it: `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z`.
-
-> **All agents (Claude & Antigravity):** After reading this file, check `TODO.md` for active tasks and guidelines before writing any code.
-
 A neon-styled block stacking game built as a single HTML file.
 
 **Live:** https://glowtris.vercel.app
 
-### Vercel Environments
-| URL | Branch | Purpose |
-|-----|--------|---------|
-| https://glowtris.vercel.app | `master` | 🚀 Production (PR required) |
-| https://prevglow.vercel.app | `preview` | 🔍 Staging — auto-deploys on push |
-| https://prevglow-a.vercel.app | `hotfix/option-a` | 🧪 Testing only |
-| https://prevglow-b.vercel.app | `hotfix/option-b` | 🧪 Testing only |
+| | |
+|---|---|
+| Production | https://glowtris.vercel.app |
+| Staging | https://prevglow.vercel.app |
 
 ## Stack
 
@@ -50,7 +43,37 @@ A neon-styled block stacking game built as a single HTML file.
 - PWA: installable on iOS/Android home screen (manifest + icons)
 - OG image + social meta tags for rich SNS sharing preview
 
+## Growth Milestones
+
+| Milestone | Target DAU | Target Version | Key Driver |
+|---|---:|---|---|
+| 🌱 Launch Stable | 100 | v1.0.9.4 ✅ | Core gameplay complete |
+| 🚀 Sprint Launch | 500 | v1.1 | Sprint Mode viral sharing |
+| 📈 Multi-Mode | 700 | v1.2 | Ultra Mode + basic daily streak |
+| 🎓 Skill Depth | 1,200 | v1.3 | Training mode, finesse tracking |
+| 🎨 Identity | 1,800 | v1.4 | Visual customization |
+| 🔥 Weekly Events | 2,500 | v1.5 | Weekly challenges + monthly leaderboard |
+| 👻 Self-Competition | 3,500 | v1.6 | Ghost race / personal replay |
+| 📊 Meta Game | 4,500 | v1.7 | Advanced stats dashboard |
+| 🏆 Ranked Play | 6,000 | v1.8 | Season & rank tier system |
+| 👥 Social Graph | 8,000 | v1.9 | Friend codes + async challenge |
+| ⚔️ Multiplayer | 15,000+ | v2.0 | Real-time 1v1 battle |
+
+### Infrastructure Upgrade Triggers
+| DAU | Upgrade |
+|---:|---|
+| > 700 | Upstash Free → Pay-as-you-go (~+$1/mo) ¹ |
+| > 600 | Vercel Hobby → Pro (+$20/mo) |
+| > 50,000 | Upstash Pro plan review |
+| v2.0 | WebSocket service — Pusher or Ably (+$49/mo) |
+
+¹ 60s edge cache is live — Upstash free ceiling extended from ~416 to ~700 DAU.
+
+---
+
 ## Roadmap
+
+### ✅ Completed
 
 | Version | Features |
 |---|---|
@@ -66,7 +89,7 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.3~~ ✅ | **Retention & UX Polish**: Username persistence, personal best streak & max combo badges, How To Play collapsible panel. |
 | ~~v1.0.4~~ ✅ | **Profile, UI, & Social Depth**: Full stats screen, personal record badges, UI enhancements (neon grid, floating text, optimized particles), Weekly leaderboard tab, persistent rank display, and canvas share image. |
 | ~~v1.0.5~~ ✅ | **OG Image Redesign**: Logo lockup layout (3×3 block grid mark + GLOW/TRIS neon title), nebula background, neon corner brackets, gradient separator lines. |
-| ~~v1.0.6~~ ✅ | **Settings, Accessibility & Polish**: Ghost piece on/off toggle, lock-delay tuning in pause menu. Privacy Policy + Terms of Service pages (AdSense-ready). Automatic performance mode — monitors FPS and disables glow/particles/nebulae below 30 FPS. |
+| ~~v1.0.6~~ ✅ | **Settings, Accessibility & Polish**: Ghost piece on/off toggle, lock-delay tuning in pause menu. Privacy Policy + Terms of Service pages (Donation-supported & 100% Ad-Free). Automatic performance mode — monitors FPS and disables glow/particles/nebulae below 30 FPS. |
 | ~~v1.0.7~~ ✅ | **Keyboard Parallax & iPad Fit**: Left/right key input nudges the entire UI 2px in the opposite direction with a snappy spring-back (0.18s cubic-bezier). Screen shake locked to X-axis only. `overscroll-behavior:none` prevents page scroll on iPad. Game board shrunk by 8px margin so content never clips on iPad. |
 | ~~v1.0.6 post~~ ✅ | **Code Quality & Mobile Fixes**: Refactor/clean-code pass (CSS consolidation, function extraction, variable shadow fix, removed WHAT comments, −114 lines). Touch control button order swapped: HOLD / DROP / ROTATE. Fixed mobile controls clipping on iOS PWA — `env(safe-area-inset-*)` returns 0 during synchronous script execution; added `requestAnimationFrame` re-layout so safe-area values are read after the first paint. Fixed oversized bottom margin on iPhone WebView — corrected `frameH` formula to `max(0,8−safeTop) + max(0,8−safeBottom) + 16` so safe-area padding is not double-counted (saves up to 24px on iPhone). Removed non-functional "TAP TO RESUME" label from pause overlay (no tap handler existed). Mobile start screen now uses full-screen dark/blur overlay (`position:fixed`) matching desktop/iPad, with panel centred in the full viewport. **Robust touch layout via ResizeObserver** — `#game-row` now uses `flex:1 1 0` to fill remaining space; `ResizeObserver` reads its actual rendered height and sets CELL, replacing all hardcoded `headerH`/`ctrlH`/`frameH` arithmetic so future CSS changes never break the bottom margin. |
 | ~~v1.0.8~~ ✅ | **Accessibility & Visual Polish**: Colorblind mode — 7 unique white symbol overlays per tetromino (I=══ O=○ T=△ S=/ Z=\ J=║ L=✕), rendered on board, active piece, and next/hold previews. Animation intensity cycle (Full / Low / Off) disables particles, screen shake, flash, combo overlay, and rainbow border for motion-sensitive players. Both settings persist to localStorage. |
@@ -74,9 +97,46 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.8.2~~ ✅ | **Perf Mode: Full UI Effect Kill + Bug Fixes**: Low-perf mode now strips every non-gameplay effect — static `#000010` background (no stars/nebulae), all CSS animations off (title, scale-pop, pulse badges), `#screen-flash` hidden, `comboFlash`/`rainbowBorder`/`dangerPulse`/`levelUpScanline` all bypassed, screen shake skipped, `triggerLevelUpVisuals` no-ops. Button effects disabled: `action-btn` hover glow/scale/shimmer-sweep off, `.tbtn` backdrop-filter and press glow off, pause-menu toggle-btn glow off. **Bug fix**: `nc`/`hc` undefined in desktop `initLayout()` — split-canvas refactor left two bare references; renamed to `ncD`/`ncM`/`hcD`/`hcM`. |
 | ~~v1.0.9~~ ✅ | **Daily Challenge + Achievement System**: Date-seeded daily challenge — all players share the same piece sequence; one attempt per day (localStorage gate); dedicated Redis leaderboard (score-based, TODAY only); 🏅 challenge badge + special share card on game over. Achievement system — 20 milestones (first Glowtris, T-spin Triple, All-clear, Combo 10+, reach Level 15, 1000-line lifetime, etc.); unlock toast + particle burst on earn; badge gallery in STATS overlay; persisted to localStorage. |
 | ~~v1.0.9.1~~ ✅ | **iOS PWA Canvas Sizing Fix**: Resolved cold-start canvas oversizing caused by late-resolving CSS `env()` variables on iOS PWA. Option A (pure arithmetic) merged — safe area values are now estimated per-device in JS using `navigator.standalone` + `screen.height`: Dynamic Island (ph≥852→59px), large notch (ph≥844→47px), small notch (ph≥780→44px), no notch (<780→20px), Face ID iPad (ph≥1100→24px). Android PWA / desktop rely on CSS env() which works correctly on those platforms. |
-| v1.1 | **Sprint Mode**: Clear 40 lines as fast as possible. Stopwatch timer + remaining-lines HUD, Marathon vs Sprint mode selector on start screen, dedicated time-based Redis leaderboard (ascending, TODAY / WEEKLY / ALL TIME), Sprint stats & Canvas Share image. |
+| ~~v1.0.9.2~~ ✅ | **BGM Upgrade + Challenge Background + Flash Fix**: Full BGM system with 3 synthwave tracks, dynamic intensity layers, volume fade in/out; Challenge mode gets distinct crimson/dark-red starfield background; hold `<canvas>` flash on game-over fixed. |
+| ~~v1.0.9.3~~ ✅ | **T-Spin Mini + Leaderboard Dedup + OG Image**: T-Spin Mini detection (1 front corner = mini, score 0/200/400×level; 2 front corners = full T-Spin); leaderboard deduplication — same username keeps only personal best across all 5 boards; `/api/og` Edge Function generates 1200×630 PNG for Twitter/KakaoTalk/Discord/Line previews; soft-drop DAS fix (holding ↓ properly accelerates, lock timer not reset while grounded). |
+| ~~v1.0.9.4~~ ✅ | **Hotfix — Hold/Next Panel Overflow + PC Perf**: Fixed hold/next canvas overflowing panel container on desktop (box-sizing:border-box → panel widened 132→150px, canvas dims passed correctly to drawMiniPiece). PC background gradient caching (every 4 frames), auto low-perf mode for Intel iGPU (WEBGL_debug_renderer_info), static gradient background in low-perf mode. |
 
-## Rules
+### 🔮 Planned
 
-- Maintain single `index.html` file structure
-- No external frontend libraries allowed
+| Version | Theme | Features | DAU Goal |
+|---|---|---|---:|
+| Pre-v1.1 | **Foundation** | Custom domain setup. API hardening: 60s edge cache (extends Upstash free tier to ~700 DAU), rate limiting, score validation. ☕ Donation UI (Ko-fi) on game over + stats overlay. | — |
+| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD, remaining-lines counter, mode selector (Marathon / Sprint), time-based leaderboard (ascending), shareable Sprint result card with time + LPM. | **500** |
+| v1.2 | **Ultra Mode + Streak** | 2-minute score attack with a score multiplier that ramps as time runs out. Daily streak badge — tracks consecutive days played, resets on a missed day. | **700** |
+| v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |
+| v1.4 | **Visual Customization** | Board skin selector (Neon / Midnight / Pastel / Classic). Piece colour palette presets. BGM track selection saved to localStorage. | 1,800 |
+| v1.5 | **Weekly Events** | Weekly special challenge (rotating rule modifiers: invisible pieces, 20-line board, etc.) with 7-day Redis TTL leaderboard. Monthly event leaderboard. | 2,500 |
+| v1.6 | **Ghost & Replay** | Best-run ghost stored in Redis (serialised input log). Ghost race mode — race against your own personal best. Shareable replay link via short code. | 3,500 |
+| v1.7 | **Advanced Stats** | Expanded STATS overlay: PPS, finesse rate, T-spin %, all-clear %, average combo. Session graph (score over last 10 games). Weekly personal report card. | 4,500 |
+| v1.8 | **Season & Rank** | Monthly season resets leaderboard. 7-tier rank system (Bronze → Radiant) based on season score. Season-exclusive title badges and board borders unlock at each tier. | 6,000 |
+| v1.9 | **Social Layer** | Friend code system (6-char code → follow mutual). Friend-only leaderboard tab. Async challenge — share a seeded run; recipient plays same sequence, results compared on a shared card. | 8,000 |
+| v2.0 | **Real-time Multiplayer** | 1v1 battle via WebSocket (Pusher/Ably). Garbage line mechanic. Live spectator mode. Elo-based matchmaking queue. Battle-exclusive leaderboard. | **15,000+** |
+
+## Infrastructure
+
+| Item | Value |
+|---|---|
+| Hosting | Vercel (Hobby) |
+| Leaderboard DB | Upstash Redis (REST API) |
+| OG Image | `/api/og` Edge Function (`@vercel/og`) |
+| CI | GitHub Actions |
+
+### Environment Variables
+
+| Variable | Description |
+|---|---|
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST endpoint |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis auth token |
+
+Set in Vercel Dashboard → Settings → Environment Variables.
+
+## Contributing
+
+- Single-file architecture — all game code lives in `index.html`
+- No external frontend libraries
+- API routes in `api/` (Vercel serverless functions)

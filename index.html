@@ -12,17 +12,25 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Glowtris">
-<meta property="og:title" content="GLOWTRIS">
+<!-- Open Graph (Facebook, KakaoTalk, Line, Discord, Slack, etc.) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Glowtris">
+<meta property="og:title" content="GLOWTRIS — Neon Block Stacking">
 <meta property="og:description" content="Neon-styled block stacking game with online leaderboard. Compete for the top rank!">
-<meta property="og:image" content="https://glowtris.vercel.app/og.svg">
+<meta property="og:url" content="https://glowtris.vercel.app">
+<meta property="og:image" content="https://glowtris.vercel.app/api/og">
+<meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:url" content="https://glowtris.vercel.app">
-<meta property="og:type" content="website">
+<meta property="og:image:alt" content="GLOWTRIS — Neon Block Stacking Game">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
+<!-- Twitter / X Card -->
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="GLOWTRIS">
+<meta name="twitter:title" content="GLOWTRIS — Neon Block Stacking">
 <meta name="twitter:description" content="Neon-styled block stacking game with online leaderboard. Compete for the top rank!">
-<meta name="twitter:image" content="https://glowtris.vercel.app/og.svg">
+<meta name="twitter:image" content="https://glowtris.vercel.app/api/og">
+<meta name="twitter:image:alt" content="GLOWTRIS — Neon Block Stacking Game">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
@@ -113,7 +121,7 @@
       0 0 25px rgba(0, 200, 255, 0.08), 
       inset 0 0 15px rgba(0, 0, 40, 0.4),
       0 4px 30px rgba(0, 0, 0, 0.4);
-    width: 132px;
+    width: 150px;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 border-color 0.3s ease, 
                 box-shadow 0.3s ease;
@@ -834,7 +842,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.0.9.1</span>
+    <span class="dh-version">v1.0.9.4</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -955,6 +963,10 @@ document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefa
 const COLS = 10, ROWS = 20;
 let CELL = 30; // recalculated on init & resize
 
+// Donation / creator support URL (Buy Me a Coffee, Ko-fi, etc.)
+// Set to your link to display a beautiful glowing donation button across the game!
+const SUPPORT_URL = 'https://buymeacoffee.com/seonqwer';
+
 const PIECES = {
   I:{shape:[[1,1,1,1]],color:'#00d8ff'},
   O:{shape:[[1,1],[1,1]],color:'#ffe000'},
@@ -966,6 +978,7 @@ const PIECES = {
 };
 const SCORE_TABLE=[0,100,300,500,800];
 const TSPIN_SCORE=[400,800,1200,1600];
+const TSPIN_MINI_SCORE=[0,200,400]; // mini: 0 lines=0pts, 1 line=200, 2 lines=400
 const LEVEL_LINES=10;
 let lockMs=500;
 // Reverse map: color string → piece key (used for colorblind pattern lookup)
@@ -1264,7 +1277,57 @@ window.addEventListener('resize', () => {
 
 // ─── Background starfield ─────────────────────────────────────────────────────
 let stars=[], nebulae=[], bgHue=0, _cBgPulse=0;
+// Background gradient cache: re-render expensive radial/linear gradients every 4 frames (~15fps).
+// Nebulae move so slowly (~0.1px/frame) the 4-frame lag is imperceptible.
+let _bgGradCache=null, _bgGradCtx=null;
+let _chGradCache=null, _chGradCtx=null;
+let _bgFrameCount=0;
+const BG_GRAD_INTERVAL=4; // re-create gradients every N frames
+// Low-perf static background: rendered once, blit every frame (zero per-frame gradient cost)
+let _lpBgCache=null, _lpChBgCache=null;
+
+// Build a static low-perf background into an offscreen canvas (called once per resize)
+function _buildLowPerfBg(W, H, isChallenge) {
+  const oc = document.createElement('canvas');
+  oc.width = W; oc.height = H;
+  const c = oc.getContext('2d');
+  // Deep base fill
+  c.fillStyle = isChallenge ? '#060001' : '#00000e';
+  c.fillRect(0, 0, W, H);
+  // Radial centre glow — stronger, wider
+  const cg = c.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H)*0.85);
+  if(isChallenge){
+    cg.addColorStop(0,   'rgba(90,6,12,0.85)');
+    cg.addColorStop(0.4, 'rgba(50,3,7,0.55)');
+    cg.addColorStop(0.75,'rgba(18,1,3,0.25)');
+    cg.addColorStop(1,   'rgba(0,0,0,0)');
+  } else {
+    cg.addColorStop(0,   'rgba(6,10,60,0.85)');
+    cg.addColorStop(0.4, 'rgba(3,6,35,0.55)');
+    cg.addColorStop(0.75,'rgba(1,2,15,0.25)');
+    cg.addColorStop(1,   'rgba(0,0,0,0)');
+  }
+  c.fillStyle = cg; c.fillRect(0, 0, W, H);
+  // Top colour accent — cyan (normal) / amber-red (challenge)
+  const tg = c.createLinearGradient(0, 0, 0, H*0.45);
+  tg.addColorStop(0,   isChallenge ? 'rgba(160,30,0,0.22)' : 'rgba(0,60,120,0.22)');
+  tg.addColorStop(0.5, isChallenge ? 'rgba(80,10,0,0.08)' : 'rgba(0,30,70,0.08)');
+  tg.addColorStop(1,   'rgba(0,0,0,0)');
+  c.fillStyle = tg; c.fillRect(0, 0, W, H);
+  // Bottom darkening vignette
+  const bg = c.createLinearGradient(0, H*0.6, 0, H);
+  bg.addColorStop(0, 'rgba(0,0,0,0)');
+  bg.addColorStop(1, 'rgba(0,0,0,0.45)');
+  c.fillStyle = bg; c.fillRect(0, 0, W, H);
+  return oc;
+}
+
 function initStars() {
+  // Invalidate gradient caches whenever canvas is resized/reinitialised
+  _bgGradCache=null; _bgGradCtx=null;
+  _chGradCache=null; _chGradCtx=null;
+  _lpBgCache=null; _lpChBgCache=null;
+  _bgFrameCount=0;
   stars=[];
   const numStars = isMobile ? 80 : 150;
   for(let i=0;i<numStars;i++) stars.push({
@@ -1283,30 +1346,61 @@ function initStars() {
 function drawBackground() {
   bgHue=(bgHue+0.05)%360;
   if(lowPerfMode){
-    bgx.fillStyle=isDailyMode?'#0a0002':'#000010';
-    bgx.fillRect(0,0,bgc.width,bgc.height);
+    // Blit pre-rendered static gradient (built once, free every frame after that)
+    if(isDailyMode){
+      if(!_lpChBgCache||_lpChBgCache.width!==bgc.width) _lpChBgCache=_buildLowPerfBg(bgc.width,bgc.height,true);
+      bgx.drawImage(_lpChBgCache,0,0);
+    } else {
+      if(!_lpBgCache||_lpBgCache.width!==bgc.width) _lpBgCache=_buildLowPerfBg(bgc.width,bgc.height,false);
+      bgx.drawImage(_lpBgCache,0,0);
+    }
     return;
   }
+  // Increment frame counter here so both normal and challenge paths share the same throttle
+  _bgFrameCount++;
   if(isDailyMode){ _drawChallengeBg(); return; }
 
   // ── Normal background ────────────────────────────────────────────────────
+  // Trail fade: semi-transparent fill every frame (cheap)
   bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
-  for(const neb of nebulae) {
-    neb.x += neb.vx; neb.y += neb.vy;
-    if(neb.x - neb.r < 0 || neb.x + neb.r > bgc.width) neb.vx *= -1;
-    if(neb.y - neb.r < 0 || neb.y + neb.r > bgc.height) neb.vy *= -1;
-    neb.hue = (neb.hue + 0.02) % 360;
-    const gr = bgx.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
-    gr.addColorStop(0, `hsla(${neb.hue}, 85%, 25%, 0.045)`);
-    gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360}, 80%, 15%, 0.02)`);
-    gr.addColorStop(1, 'transparent');
-    bgx.fillStyle = gr;
-    const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
-    bgx.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
+
+  // Update nebula positions every frame (smooth movement, ~0.1px/frame drift)
+  for(const neb of nebulae){
+    neb.x+=neb.vx; neb.y+=neb.vy;
+    if(neb.x-neb.r<0||neb.x+neb.r>bgc.width) neb.vx*=-1;
+    if(neb.y-neb.r<0||neb.y+neb.r>bgc.height) neb.vy*=-1;
+    neb.hue=(neb.hue+0.02)%360;
   }
-  const gr=bgx.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
-  gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);gr.addColorStop(1,'transparent');
-  bgx.fillStyle=gr; bgx.fillRect(0,0,bgc.width,bgc.height);
+
+  // Re-render gradient layer every BG_GRAD_INTERVAL frames (~15fps).
+  // Nebulae change so slowly the reduced rate is imperceptible.
+  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
+    if(!_bgGradCache||_bgGradCache.width!==bgc.width||_bgGradCache.height!==bgc.height){
+      _bgGradCache=document.createElement('canvas');
+      _bgGradCache.width=bgc.width; _bgGradCache.height=bgc.height;
+      _bgGradCtx=_bgGradCache.getContext('2d');
+    }
+    const gc=_bgGradCtx;
+    gc.clearRect(0,0,bgc.width,bgc.height);
+    for(const neb of nebulae){
+      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+      gr.addColorStop(0,`hsla(${neb.hue},85%,25%,0.045)`);
+      gr.addColorStop(0.5,`hsla(${(neb.hue+40)%360},80%,15%,0.02)`);
+      gr.addColorStop(1,'transparent');
+      gc.fillStyle=gr;
+      const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
+      gc.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
+    }
+    const gr=gc.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
+    gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);
+    gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);
+    gr.addColorStop(1,'transparent');
+    gc.fillStyle=gr; gc.fillRect(0,0,bgc.width,bgc.height);
+  }
+  // Blit cached gradient layer (single GPU drawImage — ~free)
+  if(_bgGradCache) bgx.drawImage(_bgGradCache,0,0);
+
+  // Stars: update & draw every frame (cheap arc paths, no gradients)
   bgx.fillStyle='rgba(180,220,255,0.5)';
   bgx.beginPath();
   for(const s of stars){
@@ -1317,65 +1411,86 @@ function drawBackground() {
 }
 
 // ── Challenge-exclusive background: crimson arena ─────────────────────────
+// Gradient layer cached every BG_GRAD_INTERVAL frames (reduces 65→~16 gradient creates/frame).
 function _drawChallengeBg(){
   _cBgPulse=(_cBgPulse+0.022)%(Math.PI*2);
   const W=bgc.width,H=bgc.height;
 
-  // 1. Dark crimson fade (replaces blue)
+  // 1. Dark crimson fade every frame (cheap solid fill)
   bgx.fillStyle='rgba(10,0,3,0.22)';
   bgx.fillRect(0,0,W,H);
 
-  // 2. Red/amber nebulae — faster drift, clamped to hue 0-55 (red→amber→gold)
+  // Update nebula positions every frame (smooth)
   for(const neb of nebulae){
     neb.x+=neb.vx*1.7; neb.y+=neb.vy*1.7;
     if(neb.x-neb.r<0||neb.x+neb.r>W) neb.vx*=-1;
     if(neb.y-neb.r<0||neb.y+neb.r>H) neb.vy*=-1;
     neb.hue=(neb.hue+0.06)%55;
-    const gr=bgx.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
-    gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
-    gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
-    gr.addColorStop(1,'transparent');
-    bgx.fillStyle=gr;
-    const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
-    bgx.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
   }
-
-  // 3. Diagonal meteor shower with amber glow trails
+  // Update meteor positions every frame (smooth movement)
   for(const s of stars){
     s.y+=s.speed*2.8; s.x+=s.vx*2.8;
     if(s.y>H||s.x>W){s.y=Math.random()*H*0.4; s.x=Math.random()*W*0.6;}
-    const tLen=s.speed*22;
-    const tg=bgx.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
-    tg.addColorStop(0,'transparent');
-    tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
-    bgx.strokeStyle=tg; bgx.lineWidth=s.r*0.9;
-    bgx.beginPath(); bgx.moveTo(s.x-s.vx*22,s.y-tLen); bgx.lineTo(s.x,s.y); bgx.stroke();
   }
 
-  // 4. Slow-pulsing central glow — deep amber core rising from below
-  const coreY=H*0.82;
-  const pulse=0.5+Math.sin(_cBgPulse)*0.5;  // 0→1→0 smooth pulse
-  const cg=bgx.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
-  cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
-  cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
-  cg.addColorStop(1,'transparent');
-  bgx.fillStyle=cg; bgx.fillRect(0,0,W,H);
+  // Re-create gradient layer every BG_GRAD_INTERVAL frames (~15fps)
+  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
+    if(!_chGradCache||_chGradCache.width!==W||_chGradCache.height!==H){
+      _chGradCache=document.createElement('canvas');
+      _chGradCache.width=W; _chGradCache.height=H;
+      _chGradCtx=_chGradCache.getContext('2d');
+    }
+    const gc=_chGradCtx;
+    gc.clearRect(0,0,W,H);
 
-  // 5. Thin dark-red edge vignette — 4 linear gradients, portrait-safe
-  const vA=0.07+Math.sin(_cBgPulse)*0.02;
-  const vc=`rgba(160,0,10,${vA})`;
-  const vTop=bgx.createLinearGradient(0,0,0,H*0.14);
-  vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
-  bgx.fillStyle=vTop; bgx.fillRect(0,0,W,H*0.14);
-  const vBot=bgx.createLinearGradient(0,H,0,H*0.86);
-  vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
-  bgx.fillStyle=vBot; bgx.fillRect(0,H*0.86,W,H*0.14);
-  const vLft=bgx.createLinearGradient(0,0,W*0.10,0);
-  vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
-  bgx.fillStyle=vLft; bgx.fillRect(0,0,W*0.10,H);
-  const vRgt=bgx.createLinearGradient(W,0,W*0.90,0);
-  vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
-  bgx.fillStyle=vRgt; bgx.fillRect(W*0.90,0,W*0.10,H);
+    // 2. Red/amber nebulae
+    for(const neb of nebulae){
+      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
+      gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
+      gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
+      gr.addColorStop(1,'transparent');
+      gc.fillStyle=gr;
+      const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
+      gc.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
+    }
+
+    // 3. Meteor trails (60 linear gradients — only recreated every 4 frames)
+    for(const s of stars){
+      const tLen=s.speed*22;
+      const tg=gc.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
+      tg.addColorStop(0,'transparent');
+      tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
+      gc.strokeStyle=tg; gc.lineWidth=s.r*0.9;
+      gc.beginPath(); gc.moveTo(s.x-s.vx*22,s.y-tLen); gc.lineTo(s.x,s.y); gc.stroke();
+    }
+
+    // 4. Amber core glow
+    const coreY=H*0.82;
+    const pulse=0.5+Math.sin(_cBgPulse)*0.5;
+    const cg=gc.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
+    cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
+    cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
+    cg.addColorStop(1,'transparent');
+    gc.fillStyle=cg; gc.fillRect(0,0,W,H);
+
+    // 5. Edge vignette — 4 linear gradients
+    const vA=0.07+Math.sin(_cBgPulse)*0.02;
+    const vc=`rgba(160,0,10,${vA})`;
+    const vTop=gc.createLinearGradient(0,0,0,H*0.14);
+    vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
+    gc.fillStyle=vTop; gc.fillRect(0,0,W,H*0.14);
+    const vBot=gc.createLinearGradient(0,H,0,H*0.86);
+    vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
+    gc.fillStyle=vBot; gc.fillRect(0,H*0.86,W,H*0.14);
+    const vLft=gc.createLinearGradient(0,0,W*0.10,0);
+    vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
+    gc.fillStyle=vLft; gc.fillRect(0,0,W*0.10,H);
+    const vRgt=gc.createLinearGradient(W,0,W*0.90,0);
+    vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
+    gc.fillStyle=vRgt; gc.fillRect(W*0.90,0,W*0.10,H);
+  }
+  // Blit cached gradient layer
+  if(_chGradCache) bgx.drawImage(_chGradCache,0,0);
 }
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
@@ -1420,8 +1535,10 @@ function lockPiece(){
   if(cleared.length>0){
     flashLines=new Set(cleared);flashTimer=12;combo++;if(combo>maxCombo)maxCombo=combo;
     const mul=combo>1?combo:1;
-    const pts=tspin
+    const pts=tspin==='full'
       ?TSPIN_SCORE[Math.min(cleared.length,3)]*level*mul
+      :tspin==='mini'
+      ?TSPIN_MINI_SCORE[Math.min(cleared.length,2)]*level*mul
       :SCORE_TABLE[Math.min(cleared.length,4)]*level*mul;
     sfxLineClear(cleared.length);
     if(tspin){sfxTSpin();if(animIntensity==='full'){shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}}
@@ -1481,7 +1598,8 @@ function lockPiece(){
       flashLines=new Set();
     },120);
   } else {
-    if(tspin){sfxTSpin();addScore(TSPIN_SCORE[0]*level,0,true);unlockAchievement('tspin_1');}
+    if(tspin==='full'){sfxTSpin();addScore(TSPIN_SCORE[0]*level,0,'full');unlockAchievement('tspin_1');}
+    else if(tspin==='mini'){sfxTSpin();unlockAchievement('tspin_1');} // mini 0 lines = 0pts, no addScore
     else{combo=0;$combo.textContent='';}
   }
   lastWasRotate=false;
@@ -1501,12 +1619,15 @@ function addScore(pts,n,tspin=false){
 function showScorePopup(pts,n,tspin=false){
   const popup=document.getElementById('score-popup');
   const tspinLabels=['T-SPIN!','T-SPIN SINGLE','T-SPIN DOUBLE!!','T-SPIN TRIPLE!!!'];
+  const miniLabels=['T-SPIN MINI','T-SPIN MINI+','T-SPIN MINI DBL'];
   const labels=['','','DOUBLE!','TRIPLE!','GLOWTRIS!!'];
   let txt,color,sz,glow;
   if(n===-1){
     txt=`✦ ALL CLEAR ✦ +${pts}`;color='#ffe600';sz='22px';glow='0 0 32px #ffe600';
-  } else if(tspin){
+  } else if(tspin==='full'){
     txt=`${tspinLabels[Math.min(n,3)]} +${pts}`;color='#a000ff';sz=n>=2?'19px':'14px';glow='0 0 24px #a000ff';
+  } else if(tspin==='mini'){
+    txt=`${miniLabels[Math.min(n,2)]}${pts>0?' +'+pts:''}`;color='#7700cc';sz='13px';glow='0 0 16px #7700cc';
   } else if(n>=4){
     txt=`★ GLOWTRIS ★ +${pts}`;color='#ff0080';sz='24px';glow='0 0 28px #ff0080';
   } else {
@@ -1813,11 +1934,11 @@ function drawMiniPiece(ctx,piece,cw,ch){
 }
 
 function drawNext(){
-  drawMiniPiece(ncDx,next,108,96);
+  drawMiniPiece(ncDx,next,ncD.width,ncD.height);
   drawMiniPiece(ncMx,next,ncM.width,ncM.height);
 }
 function drawHold(){
-  drawMiniPiece(hcDx,held,108,80);
+  drawMiniPiece(hcDx,held,hcD.width,hcD.height);
   drawMiniPiece(hcMx,held,hcM.width,hcM.height);
 }
 
@@ -1892,7 +2013,7 @@ function updateParticles(){
       if(lowPerfMode){p.life-=p.decay;continue;}
       p.life-=p.decay;
       pctx.save();pctx.globalAlpha=Math.max(0,p.life);
-      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;pctx.shadowColor=p.color;pctx.shadowBlur=15;
+      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;if(!lowPerfMode){pctx.shadowColor=p.color;pctx.shadowBlur=15;}
       pctx.beginPath();
       const rx=(1-p.life)*p.maxRadius;
       if(p.type==='ring') pctx.ellipse(p.x,p.y,rx,rx*(p.aspectRatio||0.35),0,0,Math.PI*2);
@@ -2160,6 +2281,19 @@ function _getDrumBuf(){
   _drumBufCtx=audioCtx;
   return _drumBuffer;
 }
+// Register all nodes in a BGM voice: track in bgmNodes[] and disconnect ALL on end.
+// Previously only the source node was tracked; GainNode/BiquadFilterNode companions
+// were never disconnected, leaking the entire AudioContext routing graph over time.
+function _bgmRegister(src, ...rest){
+  const all=[src,...rest];
+  bgmNodes.push(...all);
+  src.onended=()=>{
+    all.forEach(n=>{
+      try{n.disconnect();}catch(e){}
+      const i=bgmNodes.indexOf(n);if(i!==-1)bgmNodes.splice(i,1);
+    });
+  };
+}
 function bgmScheduleKick(t){
   const osc=audioCtx.createOscillator(),g=audioCtx.createGain();
   osc.connect(g);g.connect(masterGain);
@@ -2169,8 +2303,7 @@ function bgmScheduleKick(t){
   g.gain.setValueAtTime(0.35,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.14);
   osc.start(t);osc.stop(t+0.15);
-  bgmNodes.push(osc);
-  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(osc,g);
 }
 function bgmScheduleSnare(t){
   const buf=_getDrumBuf();if(!buf)return;
@@ -2180,8 +2313,7 @@ function bgmScheduleSnare(t){
   g.gain.setValueAtTime(0.18,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.09);
   src.start(t);src.stop(t+0.1);
-  bgmNodes.push(src);
-  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(src,filt,g);
 }
 function bgmScheduleHihat(t){
   const buf=_getDrumBuf();if(!buf)return;
@@ -2191,8 +2323,7 @@ function bgmScheduleHihat(t){
   g.gain.setValueAtTime(0.07,t);
   g.gain.exponentialRampToValueAtTime(0.001,t+0.03);
   src.start(t);src.stop(t+0.04);
-  bgmNodes.push(src);
-  src.onended=()=>{const i=bgmNodes.indexOf(src);if(i!==-1)bgmNodes.splice(i,1);};
+  _bgmRegister(src,filt,g);
 }
 
 function getBGMBeat(){
@@ -2210,12 +2341,14 @@ function bgmScheduleNote(freq,t,dur,vol,type='square'){
   gain.gain.setValueAtTime(vol,t);
   gain.gain.exponentialRampToValueAtTime(0.001,t+dur*0.9);
   osc.start(t);osc.stop(t+dur);
-  osc.onended=()=>{const i=bgmNodes.indexOf(osc);if(i!==-1)bgmNodes.splice(i,1);};
-  bgmNodes.push(osc);
+  _bgmRegister(osc,gain);
 }
 
 function bgmScheduleLoop(){
   if(!bgmPlaying||!audioCtx)return;
+  // Guard: if tab was hidden, audioCtx.currentTime may have jumped far ahead of
+  // bgmNextTime — clamp to avoid scheduling a massive backlog of nodes at once.
+  if(bgmNextTime < audioCtx.currentTime - 0.2) bgmNextTime=audioCtx.currentTime;
   const melody=isDailyMode?CHALLENGE_MELODY:BGM_MELODY;
   const harmony=isDailyMode?CHALLENGE_HARMONY:BGM_HARMONY;
   const bassWalk=isDailyMode?CHALLENGE_BASS_WALK:BGM_BASS_WALK;
@@ -2259,7 +2392,10 @@ function stopBGM(){
   bgmPlaying=false;
   if(bgmScheduler){clearTimeout(bgmScheduler);bgmScheduler=null;}
   const nodes=[...bgmNodes];bgmNodes=[];
-  nodes.forEach(o=>{try{o.stop();}catch(e){}});
+  // stop() only works on scheduled sources; disconnect() works on all AudioNodes.
+  // Both calls are wrapped in try/catch: stop() throws on GainNode/BiquadFilterNode,
+  // disconnect() throws if already disconnected — either way we want to continue.
+  nodes.forEach(n=>{try{n.stop(audioCtx.currentTime+0.01);}catch(e){} try{n.disconnect();}catch(e){}});
 }
 
 function pauseBGM(){if(audioCtx&&audioCtx.state==='running')audioCtx.suspend();}
@@ -2410,11 +2546,35 @@ function unlockAchievement(id) {
 }
 
 // ─── T-spin ───────────────────────────────────────────────────────────────────
+// Returns 'full', 'mini', or false.
+// Uses 3-corner rule + front/back distinction based on T-piece rotation:
+//   Rot 0 (bump up)    : front = top corners    [TL,TR]
+//   Rot 1 (bump right) : front = right corners  [TR,BR]
+//   Rot 2 (bump down)  : front = bottom corners [BL,BR]
+//   Rot 3 (bump left)  : front = left corners   [TL,BL]
+// Full T-Spin = both front corners filled; Mini = only one front corner filled.
 function checkTSpin(){
   if(!current||current.key!=='T'||!lastWasRotate)return false;
-  const corners=[[current.x,current.y],[current.x+2,current.y],[current.x,current.y+2],[current.x+2,current.y+2]];
-  const filled=corners.reduce((n,[cx,cy])=>n+(cx<0||cx>=COLS||cy>=ROWS||(cy>=0&&board[cy][cx])?1:0),0);
-  return filled>=3;
+  const x=current.x,y=current.y;
+  // TL=0, TR=1, BL=2, BR=3
+  const corners=[[x,y],[x+2,y],[x,y+2],[x+2,y+2]];
+  function blocked(cx,cy){return cx<0||cx>=COLS||cy>=ROWS||(cy>=0&&board[cy][cx]);}
+  const f=corners.map(([cx,cy])=>blocked(cx,cy)?1:0);
+  if(f[0]+f[1]+f[2]+f[3]<3)return false;
+  // Infer rotation from shape matrix (no explicit rot field needed)
+  const sh=current.shape;
+  let front; // two indices into f[] that are the "face" of the T
+  if(sh.length===2){
+    // Horizontal T (2 rows × 3 cols): rot0 shape[0][0]===0 → bump up; rot2 → bump down
+    front=sh[0][0]===0?[0,1]:[2,3];
+  }else{
+    // Vertical T (3 rows × 2 cols): rot1 shape[0][1]===0 → bump right; rot3 → bump left
+    front=sh[0][1]===0?[1,3]:[0,2];
+  }
+  const frontFilled=f[front[0]]+f[front[1]];
+  if(frontFilled===2)return'full';
+  if(frontFilled===1)return'mini';
+  return false;
 }
 
 // ─── Keyboard ─────────────────────────────────────────────────────────────────
@@ -2443,7 +2603,7 @@ document.addEventListener('keydown',e=>{
   switch(e.code){
     case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(2,0);break;
     case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-2,0);break;
-    case'ArrowDown': softDrop();break;
+    case'ArrowDown': softDrop();startDASDown();e.preventDefault();break;
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
@@ -2452,13 +2612,18 @@ document.addEventListener('keydown',e=>{
 });
 document.addEventListener('keyup',e=>{
   updateKeyGuideState(e.code, false);
-  KEYS[e.code]=false;if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
+  KEYS[e.code]=false;
+  if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
+  if(e.code==='ArrowDown')clearDASDown();
 });
 function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
+let dasDownTimer=null;
+function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{if(gameRunning&&!gamePaused)softDrop();dasDownTimer=setInterval(()=>{if(gameRunning&&!gamePaused)softDrop();},arr);},das);}
+function clearDASDown(){clearTimeout(dasDownTimer);clearInterval(dasDownTimer);dasDownTimer=null;}
 
 function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
-function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
+function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{if(!lockActive){lockActive=true;lockTimer=lockMs;}}}
 function hardDrop(){
   if(!current)return;
   let d=0;while(validPos(current,0,1)){current.y++;d++;}
@@ -2544,20 +2709,20 @@ function triggerLevelUpVisuals() {
 }
 
 function startGame(){
+  // Hide overlay immediately so browser paints the click response (INP fix)
+  $overlay.style.display='none';
+  $combo.textContent='';
+
   loadSettings();
-  if (!isDailyMode) {
-    _prng = null;
-  }
+  if (!isDailyMode) { _prng = null; }
   // Restore perf mode from localStorage (persists across games + sessions).
-  // If _perfLocked was set mid-game, honour it — don't reset just because a new game started.
-  // A device that couldn't hit 28fps won't suddenly become faster next round.
   const savedPerf = localStorage.getItem(LS.LOW_PERF)==='1';
   if(!_perfLocked && !savedPerf){ setLowPerfMode(false); }
   else { setLowPerfMode(true); }
   _fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
-  _perfHold=_perfLocked||savedPerf?0:3; // Already confirmed slow? Skip hold-off.
-  _lastBorderColor=null; // Force border refresh on first piece
-  // Pre-warm all 7 piece sprites now so first-frame creation doesn't spike FPS
+  _perfHold=_perfLocked||savedPerf?0:3;
+  _lastBorderColor=null;
+  // Sprites are pre-warmed at idle time (page load); this is a fast cache hit
   for(const k of Object.keys(PIECES))getCellSprite(PIECES[k].color);
   board=createBoard();score=0;lines=0;level=1;combo=0;maxCombo=0;dropInterval=800;
   particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
@@ -2566,8 +2731,6 @@ function startGame(){
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
   spawnPiece();drawNext();drawHold();updateUI();
-  $overlay.style.display='none';
-  $combo.textContent='';
   if(animFrame)cancelAnimationFrame(animFrame);
   prevTs=0;lastDropTs=performance.now();
   startBGM();
@@ -2788,6 +2951,7 @@ function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLe
           <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
           <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
+        ${SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : ''}
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
     </div>`;
@@ -2883,7 +3047,7 @@ async function submitScore(){
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + (SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : '');
     }
     else if(data.board){
       _lbCache = {
@@ -2905,7 +3069,7 @@ async function submitScore(){
         <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + (SUPPORT_URL ? `<button class="action-btn sm ghost" style="width:100%;margin-top:6px;color:#ffe600;border-color:rgba(255,230,0,0.22);box-shadow:inset 0 0 8px rgba(255,230,0,0.06)" onclick="window.open('${SUPPORT_URL}','_blank')">☕ BUY ME A COFFEE</button>` : '');
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
@@ -3136,6 +3300,12 @@ function setLbMode(mode) {
 
 function showStartScreen(){
   isDailyMode = false; // reset when returning to start screen
+  // Stop the game loop; switch to lightweight bgOnly loop for the start screen.
+  // gameLoop runs full drawBoard()+particles+shake — unnecessary when no game is active.
+  gameRunning=false;
+  stopBGM();
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
   $overlay.innerHTML=`
     <div class="glass-panel">
       <h1>GLOWTRIS</h1>
@@ -3168,6 +3338,10 @@ function showStartScreen(){
         <a href="/privacy.html" class="footer-link">PRIVACY</a>
         <span style="color:rgba(255,255,255,0.12)">·</span>
         <a href="/terms.html" class="footer-link">TERMS</a>
+        ${SUPPORT_URL ? `
+          <span style="color:rgba(255,255,255,0.12)">·</span>
+          <a href="${SUPPORT_URL}" target="_blank" class="footer-link" style="color:rgba(255,220,0,0.85);text-shadow:0 0 6px rgba(255,220,0,0.3)">☕ SUPPORT ME</a>
+        ` : ''}
       </div>
     </div>`;
   $overlay.style.display='flex';
@@ -3233,7 +3407,13 @@ function openStats(){
       </div>
     `;
     
-    el.innerHTML = mainStatsHTML + achHTML;
+    const supportHTML = SUPPORT_URL ? `
+      <div style="margin-top:15px;text-align:center;padding:10px;background:rgba(255,230,0,0.04);border:1px dashed rgba(255,230,0,0.2);border-radius:10px;cursor:pointer" onclick="window.open('${SUPPORT_URL}','_blank')">
+        <span style="font-size:10px;font-weight:900;color:#ffe600;letter-spacing:1px">☕ SUPPORT THE CREATOR</span>
+        <div style="font-size:7px;color:rgba(255,255,255,0.6);margin-top:2px">Buy me a coffee to keep Glowtris 100% ad-free!</div>
+      </div>
+    ` : '';
+    el.innerHTML = mainStatsHTML + achHTML + supportHTML;
   }
   document.getElementById('stats-overlay').style.display='flex';
   _statsOpenTs=Date.now();
@@ -3277,15 +3457,79 @@ function hideAchTooltip() {
   }, 150);
 }
 
+// ─── Integrated / low-end GPU detection ──────────────────────────────────────
+// Intel HD/UHD iGPU + some AMD APUs cannot handle shadowBlur + canvas gradients
+// at 60fps — Chrome's ANGLE→DirectX path triggers TDR timeout → BSOD.
+// Detect via WebGL renderer string and pre-emptively apply low-perf mode.
+function _detectLowEndGPU(){
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(!gl)return false;
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    const r=ext?(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'').toLowerCase():'';
+    // Explicitly release the WebGL context to free GPU memory immediately.
+    // Without this the throwaway canvas holds a GPU context until GC.
+    try{gl.getExtension('WEBGL_lose_context')?.loseContext();}catch(e){}
+    // Intel integrated — exclude Iris Xe (sufficiently capable)
+    if(r.includes('intel')&&!r.includes(' xe '))return true;
+    // AMD Vega integrated APU (Ryzen iGPU) — exclude discrete RX Vega
+    if(r.includes('vega')&&!r.includes('rx vega'))return true;
+    return false;
+  }catch(e){return false;}
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 initLayout();
 initStars();
 loadSettings();
+
+// Auto low-perf: if integrated GPU detected and user has not manually set preference,
+// immediately apply low-perf mode to prevent GPU driver TDR crash (BSOD).
+// Does NOT persist to localStorage — re-checked each session so driver updates are respected.
+if(!localStorage.getItem(LS.LOW_PERF)&&_detectLowEndGPU()){
+  setLowPerfMode(true);
+  _perfLocked=true; // keep it for the session; FPS-drop won't fight it
+}
+
 hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
 $hiScore.textContent=hiScore.toLocaleString();
 $hiScoreM.textContent=hiScore.toLocaleString();
 animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 showStartScreen();
+// Pre-warm cell sprites during idle so startGame() click doesn't block (INP fix)
+(window.requestIdleCallback||function(cb){setTimeout(cb,200);})(function(){
+  for(var k in PIECES)getCellSprite(PIECES[k].color);
+},{timeout:8000});
+
+// ─── Memory / resource lifecycle ─────────────────────────────────────────────
+// visibilitychange: when the user switches tabs or minimises the window
+//   • RAF is paused automatically by the browser — no action needed there.
+//   • bgmScheduler (setTimeout) keeps firing even when hidden.  If the tab stays
+//     hidden for >0.5 s the bgmScheduleLoop backlog guard (bgmNextTime clamp) will
+//     skip the gap, but the AudioContext continues advancing — we suspend it here
+//     so no time passes and no stale notes play on re-focus.
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){
+    // Suspend audio clock — stops time, avoids scheduling backlog on return.
+    if(audioCtx&&audioCtx.state==='running')audioCtx.suspend();
+    // Also kill the BGM scheduler so it isn't creating nodes while hidden.
+    if(bgmScheduler){clearTimeout(bgmScheduler);bgmScheduler=null;}
+  } else {
+    // Resume audio clock then restart BGM scheduler if game is mid-session.
+    if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();
+    if(bgmPlaying&&gameRunning&&!gamePaused)bgmScheduleLoop();
+  }
+});
+
+// beforeunload: explicitly release AudioContext + cancel RAF before the page
+// unloads.  Without this, Chrome on Windows can hold GPU/audio resources
+// briefly after tab close, causing perceived hangs on low-RAM machines.
+window.addEventListener('beforeunload',()=>{
+  stopBGM();
+  if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+  if(audioCtx&&audioCtx.state!=='closed'){try{audioCtx.close();}catch(e){}}
+});
 </script>
 </body>
 </html>
