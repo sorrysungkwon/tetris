@@ -418,6 +418,21 @@ feature/xxx → preview (verify) → PR to master (user approves) → merge → 
 
 ---
 
+## ✅ Completed: Pre-v1.1 Code Polish & Bug Fixes — by Claude (2026-05-29)
+
+8 issues found and fixed in a full pre-v1.1 code audit:
+
+- [x] **Bug: `lockPiece()` 120ms timeout board corruption** — if a line clear and game over coincide (piece locks on the same frame as top-out), the 120ms board-splice callback fires after `_doStartGame()` has replaced `board`, corrupting the new game's fresh board. Added `if(!gameRunning&&!gameOver)return` guard.
+- [x] **Leak: `unlockSpeaker()` looping audio never stopped** — silent WAV created for iOS speaker routing looped indefinitely. Now stopped after 1s (routing persists after initial unlock).
+- [x] **Bug: `_gateTimer` interval leaked** — daily countdown interval was not cleared when `showStartScreen()` was called; kept firing every second with a stale DOM reference. Added `clearInterval(_gateTimer)` to `showStartScreen()`.
+- [x] **Perf: `unlockAchievement()` localStorage on every call** — called 5–10 times per piece lock (combo_5, combo_10, score_50k, lines_100, etc.), each doing `JSON.parse(localStorage.getItem())`. Now uses `_achievementsCache` (lazy-loaded, write-through).
+- [x] **Perf: `lockPiece()` lifetime stats localStorage** — `JSON.parse(localStorage.getItem(LS.LIFETIME))` on every line clear. Now uses `_lifetimeCache`.
+- [x] **Perf: `updateKeyGuideState()` getElementById on every keydown/keyup** — hot path called on every key event. Pre-cached all 7 key-guide refs in `_keyGuide` map at startup. Simplified `classList.add/remove` → `classList.toggle`.
+- [x] **Perf: `showScorePopup()` getElementById on every score change** — added `$scorePopup` to DOM cache block.
+- [x] **Perf: particle array unbounded growth** — rapid combo + all-clear could push 500+ particles/frame. Added `MAX_PARTICLES=400` cap; `spawnLineClearParticles`, `spawnHardDropParticles`, `triggerAllClearFlash` all bail early when at cap.
+
+---
+
 ## ✅ Completed: Pre-v1.1 INP Fix — by Claude (2026-05-29)
 
 Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms). The existing `// Hide overlay immediately` comment in `startGame()` was a false fix — `display='none'` does not trigger an immediate paint; the browser batches style changes until the JS call stack empties. All synchronous init work (loadSettings, sprite cache warm, canvas draws, BGM init) was blocking the main thread before the browser could paint the click response.
