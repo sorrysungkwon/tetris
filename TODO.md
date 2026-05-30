@@ -503,9 +503,9 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [x] **For v1.2**: Split `src/game.js` into modules — esbuild bundle mode active. Branch: `feature/es-modules`.
   - [x] Session 1: `src/shared.js` — constants, `LS`, `ACHIEVEMENTS`, `mulberry32`, `fmtTime`, `S` state object; `scripts/build.js` esbuild auto-detect
   - [x] Session 2: `src/audio.js` — BGM, SFX, `toggleMute`, lifecycle helpers (`onPageHide/onPageShow/closeAudio`); game.js 3132→2843 lines
-  - [ ] Session 3: `src/ui.js` — layout, drawing, particles, UI update, settings UI (~1100 lines)
-  - [ ] Session 4: `src/leaderboard.js` — leaderboard fetch/render/share (~560 lines)
-  - [ ] Session 5: `src/game.js` finalize — add all imports, expose `window.xxx` for inline onclick handlers, full build test
+  - [x] Session 3: `src/ui.js` — layout, drawing, particles, UI update, settings UI (1165 lines) — by Antigravity (2026-05-30)
+  - [x] Session 4: `src/leaderboard.js` — lbHTML, submitScore, submitSprintScore, shareScore, shareSprintScore, captureGameImage, captureSprintImage, loadStartLeaderboard, renderLbTab, setLbMode (~448 lines) — by Antigravity (2026-05-30)
+  - [ ] Session 5: `src/screens.js` — showStartScreen, showModeSelector, togglePause, startDailyChallenge, showDailyGateOverlay, _renderGameOverScreen, _renderSprintScreen (~400 lines)
   - [ ] Post-split: browser test → clean code/refactor/bug fix → architecture review → deploy to preview
 - [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
 
