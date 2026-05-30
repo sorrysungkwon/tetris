@@ -1323,6 +1323,10 @@ function nudgeUI(dx, dy) {
 // screen restores touch mode.
 function _enableKbMode() {
   if (_kbMode) return;
+  // Phones always keep touch UI — only tablets (min screen dim ≥ 600 CSS px) get kb-mode.
+  // screen.width/height are orientation-independent physical dimensions in CSS pixels,
+  // so Math.min gives the portrait width: iPhone ≤ 430px → blocked, iPad ≥ 744px → allowed.
+  if (Math.min(window.screen.width, window.screen.height) < 600) return;
   _kbMode = true;
   document.documentElement.classList.add('kb-mode');
   // Re-run layout so isMobile is recalculated with kb-mode in mind
