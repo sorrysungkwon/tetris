@@ -28,7 +28,7 @@
 
 ## Branch & Deployment Strategy
 
-- `master` — protected, requires PR. Auto-deploys to **https://glowtris.vercel.app** (production).
+- `master` — protected, requires PR. Auto-deploys to **https://glowtris.com** (production).
 - `preview` — push freely. Auto-deploys to **https://prevglow.vercel.app** (staging/general preview).
 - `hotfix/option-a` — keep, do NOT delete. Testing only → **https://prevglow-a.vercel.app**
 - `hotfix/option-b` — keep, do NOT delete. Testing only → **https://prevglow-b.vercel.app**
@@ -254,7 +254,7 @@ feature/xxx  →  preview (verify)  →  PR to master  →  production
 4. **On "push해"**: `git push origin feature/xxx` then `git checkout preview && git merge feature/xxx && git push origin preview`
 5. Vercel auto-deploys to **https://prevglow.vercel.app** — confirm with user.
 6. **Open PR**: `gh pr create --base master --head preview --title "feat: ..."` — only after user confirms preview is OK.
-7. **User merges PR** → Vercel auto-deploys to **https://glowtris.vercel.app** (production).
+7. **User merges PR** → Vercel auto-deploys to **https://glowtris.com** (production).
 8. **Tag if versioned**: prepare `git tag -a vX.Y.Z -m "Description" && git push origin vX.Y.Z` — present to user, do not run autonomously.
 9. **Sync preview**: `git checkout preview && git merge master && git push origin preview` — run after user confirms PR is merged.
 

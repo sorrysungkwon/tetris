@@ -13,7 +13,7 @@
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | ✅ Done |
-| v1.1 Sprint Mode | 500 | ✅ Done (Reddit post pending) |
+| v1.1 Sprint Mode + Domain | 500 | 🔲 Domain pending (~Jun 10) |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -443,16 +443,21 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: Pre-v1.1 — Domain + Donation URL
+## 🔮 Planned: v1.1 Release — Domain Setup
+> Target: ~June 10, 2026
 
 ### Domain Setup (user action)
-- [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
-- [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
+- [ ] **Purchase domain** (e.g. `glowtris.com`) and connect to Vercel project.
+- [ ] **Set up Cloudflare proxy** — point domain NS to Cloudflare, then proxy to Vercel. DDoS protection + free SSL.
+- [ ] **After domain is live** (agent tasks):
+  - Update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain)
+  - Update `README.md` production URL
+  - Update `ROBOT.md` dashboard/URL references
+  - Redeploy to production
 
-### Donation URL (user action)
-> Donation UI code was removed from codebase (2026-05-29). Will be re-implemented when Ko-fi URL is ready.
-- [ ] Set up Ko-fi account with PayPal payout.
-- [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
+### Donation URL
+- [x] Ko-fi account set up: `https://ko-fi.com/sorrysungkwon`
+- [x] Donation UI implemented — merged to master via PR #9 (2026-05-30)
 
 ### Developer Experience DX (Antigravity Suggestion)
 - [x] **Local Dev Shortcut**: Added `"scripts": { "dev": "npx serve . -p 3000" }` to `package.json`. Run `npm run dev` to serve locally at http://localhost:3000.
