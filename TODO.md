@@ -486,15 +486,21 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: Pre-v1.2 — Architecture Review
-> DAU goal: — | Key driver: code health before multi-mode complexity
+## ✅ Completed: Pre-v1.2 — Architecture Review — by Claude (2026-05-30)
+
 > ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
 
-`index.html` is **4,059 lines** after v1.1. Decide the code architecture before adding more game modes:
-
-- [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
-- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable). *(Antigravity Suggestion: Highly recommended to avoid massive single-file bloat before introducing multi-mode complexity in v1.2)*.
-- [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
+- [x] **Measured**: `index.html` was 4,108 lines (768 CSS + 3,132 JS + 206 HTML) after v1.1.
+- [x] **Decided**: Build step introduced — source files in `src/`, output `index.html` generated at deploy time.
+- [x] **Build step implemented** (`scripts/build.js` — pure Node.js, no extra deps):
+  - `src/template.html` — HTML shell with `<!--BUILD_CSS-->` / `<!--BUILD_JS-->` markers
+  - `src/style.css` — 768 lines of CSS
+  - `src/game.js` — 3,132 lines of JS (edit here, not `index.html`)
+  - `npm run build` → inlines CSS+JS into template → writes `index.html`
+  - `npm run dev` → build + serve at http://localhost:3000
+  - **Vercel**: `"buildCommand": "npm run build"`, `"outputDirectory": "."` added to `vercel.json`
+  - `index.html` added to `.gitignore` (generated artifact; Vercel regenerates on every deploy)
+- [x] **For v1.2**: Split `src/game.js` into modules (e.g. `src/engine.js`, `src/ultra.js`, `src/sprint.js`), then swap `scripts/build.js` to use `esbuild` for bundling. Single-file output rule still applies to the deploy artifact.
 - [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
 
 ---
