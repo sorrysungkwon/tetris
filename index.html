@@ -1251,6 +1251,18 @@ function _applyTouchCELL() {
   pc.style.width  = gameW + 'px';
   pc.style.height = gameH + 'px';
 
+  // Always resize mobile mini canvases — BEFORE the early return so they're
+  // correct even when the main game canvas size hasn't changed (e.g. after
+  // returning from kb-mode where the desktop path set them to 120px).
+  const miniW = Math.max(26, Math.min(30, Math.round(gameW * 0.10)));
+  const miniH = Math.round(miniW * 0.8);
+  if (ncM.width !== miniW || ncM.height !== miniH) {
+    ncM.width = miniW; ncM.height = miniH;
+    ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
+    hcM.width = miniW; hcM.height = miniH;
+    hcM.style.width = miniW + 'px'; hcM.style.height = miniH + 'px';
+  }
+
   // Skip expensive buffer resize + sprite invalidation when nothing changed.
   // Check gc.height too — default canvas height is 150px, not gameH.
   if (newCELL === CELL && gc.width === gameW && gc.height === gameH) return;
@@ -1259,14 +1271,6 @@ function _applyTouchCELL() {
   _cellSprites = {}; // Invalidate sprites — cell size changed
   gc.width  = gameW; gc.height = gameH;
   pc.width  = gameW; pc.height = gameH;
-  if (isMobile) {
-    const miniW = Math.max(26, Math.min(30, Math.round(gameW * 0.10)));
-    const miniH = Math.round(miniW * 0.8);
-    ncM.width = miniW; ncM.height = miniH;
-    ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
-    hcM.width = miniW; hcM.height = miniH;
-    hcM.style.width = miniW + 'px'; hcM.style.height = miniH + 'px';
-  }
   // Redraw all canvases — mini canvases were cleared by buffer resize above
   if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
 }
@@ -1292,12 +1296,10 @@ function initLayout() {
     pc.style.width = (COLS * CELL) + 'px'; pc.style.height = (ROWS * CELL) + 'px';
     ncD.width = 4 * CELL;    ncD.height = 3 * CELL;
     ncD.style.width = (4 * CELL) + 'px'; ncD.style.height = (3 * CELL) + 'px';
-    ncM.width = 4 * CELL;    ncM.height = 3 * CELL;
-    ncM.style.width = (4 * CELL) + 'px'; ncM.style.height = (3 * CELL) + 'px';
+    // ncM / hcM are owned by _applyTouchCELL — don't touch them here or they'll
+    // be left at 120px when returning to touch mode on iPad.
     hcD.width = 4 * CELL;    hcD.height = 3 * CELL;
     hcD.style.width = (4 * CELL) + 'px'; hcD.style.height = (3 * CELL) + 'px';
-    hcM.width = 4 * CELL;    hcM.height = 3 * CELL;
-    hcM.style.width = (4 * CELL) + 'px'; hcM.style.height = (3 * CELL) + 'px';
   }
 }
 
@@ -1330,14 +1332,17 @@ function _enableKbMode() {
   if (Math.min(window.screen.width, window.screen.height) < 600) return;
   _kbMode = true;
   document.documentElement.classList.add('kb-mode');
-  // Re-run layout so isMobile is recalculated with kb-mode in mind
-  initLayout(); initStars(); if (gameRunning) drawBoard();
+  // Re-run layout; drawNext/drawHold needed because desktop path resizes ncD/hcD (clearing them)
+  initLayout(); initStars();
+  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
 }
 function _disableKbMode() {
   if (!_kbMode) return;
   _kbMode = false;
   document.documentElement.classList.remove('kb-mode');
-  initLayout(); initStars(); if (gameRunning) drawBoard();
+  // Re-run layout to restore touch cell sizes; ncM/hcM were resized (clearing them)
+  initLayout(); initStars();
+  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
 }
 // Restore touch mode when the user touches the screen
 document.addEventListener('touchstart', () => {
