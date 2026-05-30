@@ -1260,7 +1260,7 @@ function _applyTouchCELL() {
   gc.width  = gameW; gc.height = gameH;
   pc.width  = gameW; pc.height = gameH;
   if (isMobile) {
-    const miniW = Math.max(36, Math.min(60, Math.round(gameW * 0.18)));
+    const miniW = Math.max(32, Math.min(42, Math.round(gameW * 0.14)));
     const miniH = Math.round(miniW * 0.8);
     ncM.width = miniW; ncM.height = miniH;
     ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
@@ -1310,11 +1310,11 @@ function nudgeUI(dx, dy) {
   $appEl.style.transform  = `translate(${dx}px,${dy}px)`;
   clearTimeout(_nudgeTimer);
   _nudgeTimer = setTimeout(() => {
-    $appEl.style.transition = 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)';
+    $appEl.style.transition = 'transform 0.22s cubic-bezier(0.28,1.8,0.58,1)';
     $appEl.style.transform  = '';
-    // Clear the flag after the spring animation completes (~180ms)
-    setTimeout(() => { _nudgeActive = false; }, 200);
-  }, 15);
+    // Clear the flag after the spring animation completes (~220ms)
+    setTimeout(() => { _nudgeActive = false; }, 250);
+  }, 22);
 }
 
 // ─── iPad keyboard mode ──────────────────────────────────────────────────────
@@ -2809,8 +2809,8 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP'){togglePause();return;}
   if(gamePaused)return;
   switch(e.code){
-    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(2,0);break;
-    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-2,0);break;
+    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(7,-1);break;
+    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-7,-1);break;
     case'ArrowDown': softDrop();startDASDown();e.preventDefault();break;
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
