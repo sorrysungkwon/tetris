@@ -1,613 +1,54 @@
-import { S } from './shared.js';
+import { S, LS, ACHIEVEMENTS, COLS, ROWS, COLOR_TO_KEY, SUPPORT_URL, MAX_PARTICLES, PIECES, SPRINT_LINES, LEVEL_LINES, SCORE_TABLE, TSPIN_SCORE, TSPIN_MINI_SCORE, mulberry32, fmtTime, _getAchievements, _getLifetime } from './shared.js';
 import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio } from './audio.js';
+import {
+  gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
+  measureFPS, setLowPerfMode, resetPerfHold, _detectLowEndGPU,
+  initLayout, initStars, drawBackground,
+  drawBoard, drawNext, drawHold, getCellSprite,
+  spawnLineClearParticles, spawnLockParticles, spawnFloatingText, spawnDropTrail, spawnHardDropParticles, updateParticles,
+  applyShake, nudgeUI, _enableKbMode, _disableKbMode,
+  updateUI, updateSprintTimer, showScorePopup,
+  updateDAS, updateARR, updateLockDelay, updateGhost, updateColorblind, cycleAnimIntensity, _animLabel,
+  triggerScreenFlash, triggerAllClearFlash, triggerLevelUpVisuals, spawnGoldBurst,
+  showAchievementToast, unlockAchievement,
+  openHowToPlay, closeHowToPlay, openStats, closeStats, showAchTooltip, hideAchTooltip,
+} from './ui.js';
 
 document.addEventListener('gesturestart',  e=>e.preventDefault(), {passive:false});
 document.addEventListener('gesturechange', e=>e.preventDefault(), {passive:false});
 document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
 
-// ─── Grid constants ────────────────────────────────────────────────────────────
-const COLS = 10, ROWS = 20;
-let CELL = 30; // recalculated on init & resize
-
-
-const PIECES = {
-  I:{shape:[[1,1,1,1]],color:'#00d8ff'},
-  O:{shape:[[1,1],[1,1]],color:'#ffe000'},
-  T:{shape:[[0,1,0],[1,1,1]],color:'#cc00ff'},
-  S:{shape:[[0,1,1],[1,1,0]],color:'#00ffaa'},
-  Z:{shape:[[1,1,0],[0,1,1]],color:'#ff2040'},
-  J:{shape:[[1,0,0],[1,1,1]],color:'#2979ff'},
-  L:{shape:[[0,0,1],[1,1,1]],color:'#ff8c00'},
-};
-const SCORE_TABLE=[0,100,300,500,800];
-const TSPIN_SCORE=[400,800,1200,1600];
-const TSPIN_MINI_SCORE=[0,200,400]; // mini: 0 lines=0pts, 1 line=200, 2 lines=400
-const LEVEL_LINES=10;
-const SPRINT_LINES=40; // Sprint mode: game ends when 40 lines cleared
-// Donation link — set to '' to hide all donation UI instantly (no layout breakage)
-const SUPPORT_URL='https://ko-fi.com/sorrysungkwon';
-let lockMs=500;
-// Reverse map: color string → piece key (used for colorblind pattern lookup)
-const COLOR_TO_KEY={};
-for(const[k,v]of Object.entries(PIECES))COLOR_TO_KEY[v.color]=k;
-
-// ─── localStorage keys ────────────────────────────────────────────────────────
-// All keys in one place — prevents typos and makes future renaming a one-line change.
-const LS = {
-  HI:           'glowTrisHi',
-  HISTORY:      'glowTrisHistory',
-  STREAK:       'glowTrisStreak',
-  MAX_COMBO:    'glowTrisMaxCombo',
-  TOTAL_GAMES:  'glowTrisTotalGames',
-  TOTAL_SCORE:  'glowTrisTotalScore',
-  BEST_LEVEL:   'glowTrisBestLevel',
-  TOTAL_LINES:  'glowTrisTotalLines',
-  MAX_LINES:    'glowTrisMaxLines',
-  LIFETIME:     'glowTrisLifetime',
-  DAILY_DATE:   'glowTrisDailyDate',
-  NAME:         'glowTrisName',
-  MUTE:         'glowTrisMute',
-  DAS:          'glowTrisDAS',
-  ARR:          'glowTrisARR',
-  LOCK:         'glowTrisLock',
-  GHOST:        'glowTrisGhost',
-  COLORBLIND:   'glowTrisColorblind',
-  ANIM:         'glowTrisAnim',
-  LOW_PERF:     'glowTrisLowPerf',
-  ACHIEVEMENTS: 'glowTrisAchievements',
-  SPRINT_HI:    'glowTrisSprintHi',
-};
-
-// ─── Achievement definitions ───────────────────────────────────────────────────
-const ACHIEVEMENTS = [
-  { id: 'first_game', label: 'First Stack', description: 'Complete your first game', icon: '🧱' },
-  { id: 'glowtris_1', label: 'Glowtris!', description: 'Clear 4 lines at once', icon: '⚡' },
-  { id: 'tspin_1', label: 'T-Spin Initiate', description: 'Perform a T-Spin', icon: '🔄' },
-  { id: 'tspin_triple', label: 'Apex Spin', description: 'Perform a T-Spin Triple', icon: '🌀' },
-  { id: 'all_clear', label: 'Void Clear', description: 'Achieve an All-Clear bonus', icon: '🌟' },
-  { id: 'combo_5', label: 'Combo Cadet', description: 'Reach a 5x combo', icon: '🔥' },
-  { id: 'combo_10', label: 'Combo Master', description: 'Reach a 10x combo', icon: '👑' },
-  { id: 'level_5', label: 'Cruising', description: 'Reach Level 5', icon: '🚀' },
-  { id: 'level_10', label: 'Hyperdrive', description: 'Reach Level 10', icon: '🌠' },
-  { id: 'level_15', label: 'Light Speed', description: 'Reach Level 15', icon: '🌌' },
-  { id: 'score_50k', label: 'High Roller', description: 'Score 50,000 points', icon: '💰' },
-  { id: 'score_100k', label: 'Elite Stacker', description: 'Score 100,000 points', icon: '💎' },
-  { id: 'score_250k', label: 'Neon God', description: 'Score 250,000 points', icon: '👾' },
-  { id: 'games_10', label: 'Hooked', description: 'Play 10 total games', icon: '🎮' },
-  { id: 'games_50', label: 'Obsessed', description: 'Play 50 total games', icon: '❤️' },
-  { id: 'lines_100', label: 'Centurion', description: 'Clear 100 cumulative lines', icon: '💯' },
-  { id: 'lines_1000', label: 'Grandmaster Stacker', description: 'Clear 1,000 cumulative lines', icon: '🏆' },
-  { id: 'daily_challenge_1', label: 'Daily Pioneer', description: 'Complete your first Daily Challenge', icon: '🏅' },
-  { id: 'streak_5', label: 'On Fire', description: 'Reach a 5-game PB streak', icon: '🔥' },
-  { id: 'submit_lb', label: 'Public Record', description: 'Submit a score to online leaderboard', icon: '🌐' },
-  { id: 'sprint_finish', label: 'Sprint Runner', description: 'Complete a 40-line sprint', icon: '⚡' }
-];
-
-// ─── Mulberry32 PRNG ──────────────────────────────────────────────────────────
-function mulberry32(a) {
-  return function() {
-    let t = a += 0x6D2B79F5;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  }
-}
-
 // ─── State ────────────────────────────────────────────────────────────────────
-let board,current,next,held,canHold;
-let score,lines,level,combo,hiScore,maxCombo;
-let gameRunning,gamePaused,gameOver;
+let canHold;
+let maxCombo;
+let gameOver;
 let dropInterval;
-let particles=[];
-let shakeFrames=0,shakeMag=0.4,shakeAllDir=false;
-let flashLines=new Set();
-let flashTimer=0;
 let animFrame;
 let bag=[];
 let lastDropTs=0;
-let lockTimer=0,lockActive=false;
 let prevTs=0;
-let isMobile=false;
-let _kbMode=false; // true after first keydown on a coarse-pointer device (iPad + external keyboard)
-let _nudgeActive=false; // true while nudge spring animation is running (prevents applyShake clearing it)
-let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0,challengeAlltimeBoard:[],challengeAlltimeRank:0,sprintBoard:[],sprintDailyBoard:[],sprintWeeklyBoard:[],sprintRank:0,sprintDailyRank:0,sprintWeeklyRank:0,mySprintTime:0};
-let isDailyMode=false;
-let isSprintMode=false;
-let _sprintStartTime=0;  // performance.now() when sprint begins
-let _sprintEndTime=0;    // performance.now() when 40th line is cleared
-let _sprintHiTime=0;     // personal best sprint time (ms), 0 = no record
-// ─── Countdown ───────────────────────────────────────────────────────────────
-let _countdownVal=0;     // 3→2→1 before game starts, 0 = game running
 let _countdownTimer=null;
-let _countdownGo=0;      // frames of "GO!" flash (~45 frames @ 60fps)
-let _countdownTs=0;      // performance.now() when current number appeared
 let _prng=null;
-let lbMode='marathon'; // 'marathon' | 'sprint' | 'daily'
-// ─── Performance detection ────────────────────────────────────────────────────
-let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0,_perfLocked=false,_fpsLowCount=0;
-// ─── Cell sprite cache (pre-rendered per color, GPU-blit instead of per-frame gradients) ───
-let _cellSprites={};
-// ─── Border/boxShadow cache (avoid CSS recalc 60x/s) ─────────────────────────
-let _lastBorderColor=null;
-// ─── In-memory caches for hot-path localStorage reads ────────────────────────
-// unlockAchievement() and lockPiece() were each doing JSON.parse(localStorage.getItem())
-// on every piece lock / line clear — 5–10 reads per second at high combos.
-// These caches are loaded lazily on first access and kept in sync on write.
-let _achievementsCache=null; // mirrors LS.ACHIEVEMENTS
-let _lifetimeCache=null;     // mirrors LS.LIFETIME
-function _getAchievements(){
-  if(!_achievementsCache)_achievementsCache=JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS)||'[]');
-  return _achievementsCache;
-}
-function _getLifetime(){
-  if(!_lifetimeCache)_lifetimeCache=JSON.parse(localStorage.getItem(LS.LIFETIME)||'{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
-  return _lifetimeCache;
-}
-// ─── Particle cap ─────────────────────────────────────────────────────────────
-// Unbounded particle growth during rapid combos can push the particle canvas to
-// 500+ objects/frame.  Cap at 400 — excess spawns are silently dropped.
-const MAX_PARTICLES=400;
-function measureFPS(ts){
-  _fpsCnt++;
-  if(ts-_fpsLast>=1000){
-    const fps=_fpsCnt;_fpsCnt=0;_fpsLast=ts;
-    if(_perfHold>0){_perfHold--;_fpsLowCount=0;return;}
-    if(!lowPerfMode){
-      // Require 2 consecutive bad seconds — one-off jank doesn't lock perf mode
-      if(fps<28){_fpsLowCount++;if(_fpsLowCount>=2){setLowPerfMode(true);_perfLocked=true;_perfHold=1;}}
-      else{_fpsLowCount=0;}
-    }
-  }
-}
-function setLowPerfMode(on){
-  lowPerfMode=on;
-  document.documentElement.classList.toggle('low-perf',on);
-  const ind=document.getElementById('perf-indicator');
-  if(ind)ind.style.opacity=on?'1':'0';
-  // Persist so the next game (and next session) starts in the right mode immediately.
-  if(on) localStorage.setItem(LS.LOW_PERF,'1');
-  else   localStorage.removeItem(LS.LOW_PERF);
-}
+let _gateTimer=null;
+
+// S.* aliases for frequently-used state (reduce property lookups in hot paths)
+// These are written by this module and read here + by ui.js via S.*
 let lastWasRotate=false;
-let das=150,arr=50,ghostVisible=true;
-let colorblindMode=false;          // draws pattern overlay on each piece cell
-let animIntensity='full';          // 'full' | 'reduced' | 'off'
-let comboFlash=0,comboFlashColor='#00c8ff';
-let rainbowBorder=0;
-let dangerPulse=0;
-let levelUpScanline=0;
 
-// ─── Canvas refs ──────────────────────────────────────────────────────────────
-const gc  = document.getElementById('game-canvas');
-const gctx= gc.getContext('2d');
-const pc  = document.getElementById('particle-canvas');
-const pctx= pc.getContext('2d');
-// Desktop previews
-const ncD = document.getElementById('next-canvas');
-const ncDx= ncD.getContext('2d');
-const hcD = document.getElementById('hold-canvas');
-const hcDx= hcD.getContext('2d');
-// Mobile previews
-const ncM = document.getElementById('next-canvas-m');
-const ncMx= ncM.getContext('2d');
-const hcM = document.getElementById('hold-canvas-m');
-const hcMx= hcM.getContext('2d');
-// Background
-const bgc = document.getElementById('bg-canvas');
-const bgx = bgc.getContext('2d');
+// ─── Keyboard guide DOM refs ───────────────────────────────────────────────────
+const _keyGuide={
+  move:   document.getElementById('key-move'),
+  rotate: document.getElementById('key-rotate'),
+  soft:   document.getElementById('key-soft'),
+  hard:   document.getElementById('key-hard'),
+  hold:   document.getElementById('key-hold'),
+  pause:  document.getElementById('key-pause'),
+  mute:   document.getElementById('key-mute'),
+};
 
-// ─── DOM cache (avoid repeated getElementById in hot paths) ───────────────────
-const $score    = document.getElementById('score-display');
-const $scoreM   = document.getElementById('score-display-m');
-const $lines    = document.getElementById('lines-display');
-const $linesM   = document.getElementById('lines-display-m');
-const $level    = document.getElementById('level-display');
-const $levelM   = document.getElementById('level-display-m');
-const $hiScore  = document.getElementById('hi-score');
-const $hiScoreM = document.getElementById('hi-score-m');
-const $levelBar = document.getElementById('level-bar');
-const $bpmEl    = document.getElementById('bpm-display');
-const $combo    = document.getElementById('combo-display');
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
 const $overlay  = document.getElementById('overlay');
-const $app      = document.getElementById('app');
-const $flash    = document.getElementById('screen-flash');
-const $scorePopup = document.getElementById('score-popup'); // called on every lock
-
-// ─── Color cache (hexToRgb is called every frame per cell) ────────────────────
-const _rgbCache = new Map();
-
-// ─── Layout ───────────────────────────────────────────────────────────────────
-// Option A: hardcoded arithmetic — deterministic, no timing/loop issues.
-// env(safe-area-inset-*) does NOT resolve synchronously in JS on iOS PWA cold start.
-// CSS handles safe areas via #app padding for all platforms; this function replicates
-// those values in JS so the canvas is sized correctly before CSS env() resolves.
-//
-// Safe area reference (portrait, PWA/standalone):
-//   iOS iPhone — navigator.standalone === true, detected by screen portrait height (CSS px):
-//     Dynamic Island  (iPhone 14 Pro / 15 / 16 / 17 series)     ph >= 852 → top 59  bottom 34
-//     Large notch     (iPhone 12 / 13 / 14 standard & Plus)      ph >= 844 → top 47  bottom 34
-//     Small notch     (iPhone X/XS/XR/11/11 Pro / 12-13 mini)    ph >= 780 → top 44  bottom 34
-//     No notch        (iPhone SE 1st/2nd/3rd, iPhone 8 & older)  ph <  780 → top 20  bottom  0
-//   iOS iPad — navigator.standalone === true, detected by screen portrait height:
-//     Face ID  (iPad Pro all / Air 4-5 / mini 6-7 / iPad 10th+)  ph >= 1100 → top 24  bottom 20
-//     Home btn (iPad 9th gen and older)                           ph <  1100 → top 20  bottom  0
-//   Android PWA (Galaxy S/Z Fold / Pixel Fold / etc.) — navigator.standalone is false;
-//     env() resolves correctly in Android Chrome, so JS uses 0 and CSS #app handles it.
-//   Desktop / PC / laptop — no safe areas; CSS #app padding falls back to 8px.
-// headerH: #mobile-header rendered height | ctrlH: #touch-controls rendered height
-function _applyTouchCELL() {
-  const W = window.innerWidth, H = window.innerHeight;
-  isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
-  const availW  = W - (isMobile ? 32 : 56);
-  const headerH = isMobile ? 52 : 30;   // #mobile-header rendered height
-  const ctrlH   = isMobile ? 188 : 218; // #touch-controls rendered height
-
-  // iOS PWA only: env() doesn't resolve at cold start — estimate from screen dimensions.
-  // Android PWA / browser / desktop: env() works correctly; CSS handles padding, JS reads 0.
-  const isIOSPWA = navigator.standalone === true;
-  let safeTop = 0, safeBottom = 0;
-  if (isIOSPWA) {
-    const isIPad = /iPad/.test(navigator.userAgent) ||
-      (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
-    const ph = Math.max(screen.width, screen.height); // portrait height in CSS px
-    if (isIPad) {
-      safeTop    = ph >= 1100 ? 24 : 20; // Face ID iPad : Home button iPad
-      safeBottom = ph >= 1100 ? 20 :  0;
-    } else {
-      // iPhone — keyed on portrait CSS px height
-      if      (ph >= 852) { safeTop = 59; safeBottom = 34; } // Dynamic Island
-      else if (ph >= 844) { safeTop = 47; safeBottom = 34; } // Large notch
-      else if (ph >= 780) { safeTop = 44; safeBottom = 34; } // Small notch / mini
-      else                { safeTop = 20; safeBottom =  0; } // No notch (SE / 8)
-    }
-  }
-
-  // #app vertical padding is max(8px, safe-area-inset)
-  const padTop = Math.max(8, safeTop);
-  const padBottom = Math.max(8, safeBottom);
-  const appPaddingV = padTop + padBottom;
-
-  // Two 8px flex gaps between #app children + 8px of safety breathing room at bottom
-  const gapsAndBreathing = 16 + 8;
-
-  const availH  = H - appPaddingV - headerH - ctrlH - gapsAndBreathing;
-  if (availH <= 0) return;
-
-  const newCELL = Math.max(10, Math.min(30, Math.floor(Math.min(availW / COLS, availH / ROWS))));
-  const gameW = COLS * newCELL;
-  const gameH = ROWS * newCELL;
-
-  document.documentElement.style.setProperty('--game-w', gameW + 'px');
-  gc.style.width  = gameW + 'px';
-  gc.style.height = gameH + 'px';
-  pc.style.width  = gameW + 'px';
-  pc.style.height = gameH + 'px';
-
-  // Always resize mobile mini canvases — BEFORE the early return so they're
-  // correct even when the main game canvas size hasn't changed (e.g. after
-  // returning from kb-mode where the desktop path set them to 120px).
-  const miniW = Math.max(26, Math.min(30, Math.round(gameW * 0.10)));
-  const miniH = Math.round(miniW * 0.8);
-  if (ncM.width !== miniW || ncM.height !== miniH) {
-    ncM.width = miniW; ncM.height = miniH;
-    ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
-    hcM.width = miniW; hcM.height = miniH;
-    hcM.style.width = miniW + 'px'; hcM.style.height = miniH + 'px';
-  }
-
-  // Skip expensive buffer resize + sprite invalidation when nothing changed.
-  // Check gc.height too — default canvas height is 150px, not gameH.
-  if (newCELL === CELL && gc.width === gameW && gc.height === gameH) return;
-
-  CELL = newCELL;
-  _cellSprites = {}; // Invalidate sprites — cell size changed
-  gc.width  = gameW; gc.height = gameH;
-  pc.width  = gameW; pc.height = gameH;
-  // Redraw all canvases — mini canvases were cleared by buffer resize above
-  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
-}
-
-function initLayout() {
-  const W = window.innerWidth, H = window.innerHeight;
-  const isCoarse = window.matchMedia('(pointer:coarse)').matches;
-  // In kb-mode on a tablet, treat the device like a desktop (side panels visible)
-  isMobile = (W < 600) || (isCoarse && !_kbMode);
-  bgc.width = W; bgc.height = H;
-
-  if (isCoarse && !_kbMode) {
-    // Touch-only device path — use proportional cell sizing
-    // Option A: no ResizeObserver, no RAF — just call directly.
-    // Simple arithmetic is timing-independent and never creates feedback loops.
-    _applyTouchCELL();
-  } else {
-    if(CELL!==30){_cellSprites={};} // Invalidate if cell size actually changed
-    CELL = 30;
-    gc.width  = COLS * CELL; gc.height = ROWS * CELL;
-    gc.style.width = (COLS * CELL) + 'px'; gc.style.height = (ROWS * CELL) + 'px';
-    pc.width  = COLS * CELL; pc.height = ROWS * CELL;
-    pc.style.width = (COLS * CELL) + 'px'; pc.style.height = (ROWS * CELL) + 'px';
-    ncD.width = 4 * CELL;    ncD.height = 3 * CELL;
-    ncD.style.width = (4 * CELL) + 'px'; ncD.style.height = (3 * CELL) + 'px';
-    // ncM / hcM are owned by _applyTouchCELL — don't touch them here or they'll
-    // be left at 120px when returning to touch mode on iPad.
-    hcD.width = 4 * CELL;    hcD.height = 3 * CELL;
-    hcD.style.width = (4 * CELL) + 'px'; hcD.style.height = (3 * CELL) + 'px';
-  }
-}
-
-// ─── Keyboard parallax nudge ──────────────────────────────────────────────────
-let _nudgeTimer = null;
-const $appEl = document.getElementById('app');
-function nudgeUI(dx, dy) {
-  _nudgeActive = true;
-  clearTimeout(_nudgeTimer);
-  // Snap to displaced position — no transition
-  $appEl.style.transition = 'none';
-  $appEl.style.transform  = `translate(${dx}px,${dy}px)`;
-  // Force immediate reflow so the snap is committed before spring starts
-  void $appEl.offsetWidth;
-  // Spring back: strong overshoot (y1=2.8) → bouncy, rhythmic snap
-  $appEl.style.transition = 'transform 0.26s cubic-bezier(0.15,2.8,0.5,0.82)';
-  $appEl.style.transform  = '';
-  _nudgeTimer = setTimeout(() => { _nudgeActive = false; }, 300);
-}
-
-// ─── iPad keyboard mode ──────────────────────────────────────────────────────
-// On coarse-pointer devices (iPad), when the user presses a key we switch to
-// the desktop layout (side panels visible, touch controls hidden). Touching the
-// screen restores touch mode.
-function _enableKbMode() {
-  if (_kbMode) return;
-  // Phones always keep touch UI — only tablets (min screen dim ≥ 600 CSS px) get kb-mode.
-  // screen.width/height are orientation-independent physical dimensions in CSS pixels,
-  // so Math.min gives the portrait width: iPhone ≤ 430px → blocked, iPad ≥ 744px → allowed.
-  if (Math.min(window.screen.width, window.screen.height) < 600) return;
-  _kbMode = true;
-  document.documentElement.classList.add('kb-mode');
-  // Re-run layout; drawNext/drawHold needed because desktop path resizes ncD/hcD (clearing them)
-  initLayout(); initStars();
-  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
-}
-function _disableKbMode() {
-  if (!_kbMode) return;
-  _kbMode = false;
-  document.documentElement.classList.remove('kb-mode');
-  // Re-run layout to restore touch cell sizes; ncM/hcM were resized (clearing them)
-  initLayout(); initStars();
-  if (gameRunning) { drawBoard(); drawNext(); drawHold(); }
-}
-// Restore touch mode when the user touches the screen
-document.addEventListener('touchstart', () => {
-  if (_kbMode) _disableKbMode();
-}, { passive: true });
-
-let _resizeTimer;
-window.addEventListener('resize', () => {
-  clearTimeout(_resizeTimer);
-  // Option A: no skip guard — hardcoded arithmetic is idempotent so re-running is safe.
-  // Orientation changes (portrait↔landscape) must always re-run to update CELL.
-  _resizeTimer = setTimeout(() => {
-    initLayout(); initStars(); if(gameRunning) drawBoard();
-  }, 150);
-});
-
-// ─── Background starfield ─────────────────────────────────────────────────────
-let stars=[], nebulae=[], bgHue=0, _cBgPulse=0;
-// Background gradient cache: re-render expensive radial/linear gradients every 4 frames (~15fps).
-// Nebulae move so slowly (~0.1px/frame) the 4-frame lag is imperceptible.
-let _bgGradCache=null, _bgGradCtx=null;
-let _chGradCache=null, _chGradCtx=null;
-let _bgFrameCount=0;
-const BG_GRAD_INTERVAL=4; // re-create gradients every N frames
-// Low-perf static background: rendered once, blit every frame (zero per-frame gradient cost)
-let _lpBgCache=null, _lpChBgCache=null;
-
-// Build a static low-perf background into an offscreen canvas (called once per resize)
-function _buildLowPerfBg(W, H, isChallenge) {
-  const oc = document.createElement('canvas');
-  oc.width = W; oc.height = H;
-  const c = oc.getContext('2d');
-  // Deep base fill
-  c.fillStyle = isChallenge ? '#060001' : '#00000e';
-  c.fillRect(0, 0, W, H);
-  // Radial centre glow — stronger, wider
-  const cg = c.createRadialGradient(W/2, H*0.45, 0, W/2, H*0.45, Math.max(W, H)*0.85);
-  if(isChallenge){
-    cg.addColorStop(0,   'rgba(90,6,12,0.85)');
-    cg.addColorStop(0.4, 'rgba(50,3,7,0.55)');
-    cg.addColorStop(0.75,'rgba(18,1,3,0.25)');
-    cg.addColorStop(1,   'rgba(0,0,0,0)');
-  } else {
-    cg.addColorStop(0,   'rgba(6,10,60,0.85)');
-    cg.addColorStop(0.4, 'rgba(3,6,35,0.55)');
-    cg.addColorStop(0.75,'rgba(1,2,15,0.25)');
-    cg.addColorStop(1,   'rgba(0,0,0,0)');
-  }
-  c.fillStyle = cg; c.fillRect(0, 0, W, H);
-  // Top colour accent — cyan (normal) / amber-red (challenge)
-  const tg = c.createLinearGradient(0, 0, 0, H*0.45);
-  tg.addColorStop(0,   isChallenge ? 'rgba(160,30,0,0.22)' : 'rgba(0,60,120,0.22)');
-  tg.addColorStop(0.5, isChallenge ? 'rgba(80,10,0,0.08)' : 'rgba(0,30,70,0.08)');
-  tg.addColorStop(1,   'rgba(0,0,0,0)');
-  c.fillStyle = tg; c.fillRect(0, 0, W, H);
-  // Bottom darkening vignette
-  const bg = c.createLinearGradient(0, H*0.6, 0, H);
-  bg.addColorStop(0, 'rgba(0,0,0,0)');
-  bg.addColorStop(1, 'rgba(0,0,0,0.45)');
-  c.fillStyle = bg; c.fillRect(0, 0, W, H);
-  return oc;
-}
-
-function initStars() {
-  // Invalidate gradient caches whenever canvas is resized/reinitialised
-  _bgGradCache=null; _bgGradCtx=null;
-  _chGradCache=null; _chGradCtx=null;
-  _lpBgCache=null; _lpChBgCache=null;
-  _bgFrameCount=0;
-  stars=[];
-  const numStars = isMobile ? 80 : 150;
-  for(let i=0;i<numStars;i++) stars.push({
-    x:Math.random()*bgc.width, y:Math.random()*bgc.height,
-    r:Math.random()*1.5+0.2,  speed:Math.random()*0.3+0.05,
-    vx:Math.random()*0.18+0.06  // used for diagonal meteor trail in challenge mode
-  });
-  const w = bgc.width, h = bgc.height;
-  nebulae = [
-    { x: w * 0.25, y: h * 0.3,  r: Math.min(w, h) * 0.45, vx: 0.15,  vy: 0.08,  hue: 190 },
-    { x: w * 0.75, y: h * 0.6,  r: Math.min(w, h) * 0.55, vx: -0.1,  vy: -0.12, hue: 280 },
-    { x: w * 0.5,  y: h * 0.45, r: Math.min(w, h) * 0.35, vx: 0.07,  vy: -0.07, hue: 330 }
-  ];
-}
-
-function drawBackground() {
-  bgHue=(bgHue+0.05)%360;
-  if(lowPerfMode){
-    // Blit pre-rendered static gradient (built once, free every frame after that)
-    if(isDailyMode){
-      if(!_lpChBgCache||_lpChBgCache.width!==bgc.width) _lpChBgCache=_buildLowPerfBg(bgc.width,bgc.height,true);
-      bgx.drawImage(_lpChBgCache,0,0);
-    } else {
-      if(!_lpBgCache||_lpBgCache.width!==bgc.width) _lpBgCache=_buildLowPerfBg(bgc.width,bgc.height,false);
-      bgx.drawImage(_lpBgCache,0,0);
-    }
-    return;
-  }
-  // Increment frame counter here so both normal and challenge paths share the same throttle
-  _bgFrameCount++;
-  if(isDailyMode){ _drawChallengeBg(); return; }
-
-  // ── Normal background ────────────────────────────────────────────────────
-  // Trail fade: semi-transparent fill every frame (cheap)
-  bgx.fillStyle='rgba(0,0,8,0.18)'; bgx.fillRect(0,0,bgc.width,bgc.height);
-
-  // Update nebula positions every frame (smooth movement, ~0.1px/frame drift)
-  for(const neb of nebulae){
-    neb.x+=neb.vx; neb.y+=neb.vy;
-    if(neb.x-neb.r<0||neb.x+neb.r>bgc.width) neb.vx*=-1;
-    if(neb.y-neb.r<0||neb.y+neb.r>bgc.height) neb.vy*=-1;
-    neb.hue=(neb.hue+0.02)%360;
-  }
-
-  // Re-render gradient layer every BG_GRAD_INTERVAL frames (~15fps).
-  // Nebulae change so slowly the reduced rate is imperceptible.
-  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
-    if(!_bgGradCache||_bgGradCache.width!==bgc.width||_bgGradCache.height!==bgc.height){
-      _bgGradCache=document.createElement('canvas');
-      _bgGradCache.width=bgc.width; _bgGradCache.height=bgc.height;
-      _bgGradCtx=_bgGradCache.getContext('2d');
-    }
-    const gc=_bgGradCtx;
-    gc.clearRect(0,0,bgc.width,bgc.height);
-    for(const neb of nebulae){
-      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
-      gr.addColorStop(0,`hsla(${neb.hue},85%,25%,0.045)`);
-      gr.addColorStop(0.5,`hsla(${(neb.hue+40)%360},80%,15%,0.02)`);
-      gr.addColorStop(1,'transparent');
-      gc.fillStyle=gr;
-      const nbx=Math.max(0,neb.x-neb.r),nby=Math.max(0,neb.y-neb.r);
-      gc.fillRect(nbx,nby,Math.min(bgc.width,neb.x+neb.r)-nbx,Math.min(bgc.height,neb.y+neb.r)-nby);
-    }
-    const gr=gc.createRadialGradient(bgc.width/2,bgc.height/2,0,bgc.width/2,bgc.height/2,bgc.width*.7);
-    gr.addColorStop(0,`hsla(${bgHue},80%,10%,0.02)`);
-    gr.addColorStop(.5,`hsla(${(bgHue+60)%360},80%,5%,0.015)`);
-    gr.addColorStop(1,'transparent');
-    gc.fillStyle=gr; gc.fillRect(0,0,bgc.width,bgc.height);
-  }
-  // Blit cached gradient layer (single GPU drawImage — ~free)
-  if(_bgGradCache) bgx.drawImage(_bgGradCache,0,0);
-
-  // Stars: update & draw every frame (cheap arc paths, no gradients)
-  bgx.fillStyle='rgba(180,220,255,0.5)';
-  bgx.beginPath();
-  for(const s of stars){
-    s.y+=s.speed; if(s.y>bgc.height){s.y=0;s.x=Math.random()*bgc.width;}
-    bgx.moveTo(s.x+s.r,s.y); bgx.arc(s.x,s.y,s.r,0,Math.PI*2);
-  }
-  bgx.fill();
-}
-
-// ── Challenge-exclusive background: crimson arena ─────────────────────────
-// Gradient layer cached every BG_GRAD_INTERVAL frames (reduces 65→~16 gradient creates/frame).
-function _drawChallengeBg(){
-  _cBgPulse=(_cBgPulse+0.022)%(Math.PI*2);
-  const W=bgc.width,H=bgc.height;
-
-  // 1. Dark crimson fade every frame (cheap solid fill)
-  bgx.fillStyle='rgba(10,0,3,0.22)';
-  bgx.fillRect(0,0,W,H);
-
-  // Update nebula positions every frame (smooth)
-  for(const neb of nebulae){
-    neb.x+=neb.vx*1.7; neb.y+=neb.vy*1.7;
-    if(neb.x-neb.r<0||neb.x+neb.r>W) neb.vx*=-1;
-    if(neb.y-neb.r<0||neb.y+neb.r>H) neb.vy*=-1;
-    neb.hue=(neb.hue+0.06)%55;
-  }
-  // Update meteor positions every frame (smooth movement)
-  for(const s of stars){
-    s.y+=s.speed*2.8; s.x+=s.vx*2.8;
-    if(s.y>H||s.x>W){s.y=Math.random()*H*0.4; s.x=Math.random()*W*0.6;}
-  }
-
-  // Re-create gradient layer every BG_GRAD_INTERVAL frames (~15fps)
-  if(_bgFrameCount%BG_GRAD_INTERVAL===0){
-    if(!_chGradCache||_chGradCache.width!==W||_chGradCache.height!==H){
-      _chGradCache=document.createElement('canvas');
-      _chGradCache.width=W; _chGradCache.height=H;
-      _chGradCtx=_chGradCache.getContext('2d');
-    }
-    const gc=_chGradCtx;
-    gc.clearRect(0,0,W,H);
-
-    // 2. Red/amber nebulae
-    for(const neb of nebulae){
-      const gr=gc.createRadialGradient(neb.x,neb.y,0,neb.x,neb.y,neb.r);
-      gr.addColorStop(0,`hsla(${neb.hue},100%,28%,0.07)`);
-      gr.addColorStop(0.5,`hsla(${(neb.hue+18)%55},90%,16%,0.03)`);
-      gr.addColorStop(1,'transparent');
-      gc.fillStyle=gr;
-      const nx=Math.max(0,neb.x-neb.r),ny=Math.max(0,neb.y-neb.r);
-      gc.fillRect(nx,ny,Math.min(W,neb.x+neb.r)-nx,Math.min(H,neb.y+neb.r)-ny);
-    }
-
-    // 3. Meteor trails (60 linear gradients — only recreated every 4 frames)
-    for(const s of stars){
-      const tLen=s.speed*22;
-      const tg=gc.createLinearGradient(s.x-s.vx*22,s.y-tLen,s.x,s.y);
-      tg.addColorStop(0,'transparent');
-      tg.addColorStop(1,`rgba(255,${80+s.r*40|0},0,${s.r*0.22})`);
-      gc.strokeStyle=tg; gc.lineWidth=s.r*0.9;
-      gc.beginPath(); gc.moveTo(s.x-s.vx*22,s.y-tLen); gc.lineTo(s.x,s.y); gc.stroke();
-    }
-
-    // 4. Amber core glow
-    const coreY=H*0.82;
-    const pulse=0.5+Math.sin(_cBgPulse)*0.5;
-    const cg=gc.createRadialGradient(W/2,coreY,0,W/2,coreY,W*0.55);
-    cg.addColorStop(0,`rgba(220,80,0,${0.04*pulse})`);
-    cg.addColorStop(0.4,`rgba(160,20,0,${0.025*pulse})`);
-    cg.addColorStop(1,'transparent');
-    gc.fillStyle=cg; gc.fillRect(0,0,W,H);
-
-    // 5. Edge vignette — 4 linear gradients
-    const vA=0.07+Math.sin(_cBgPulse)*0.02;
-    const vc=`rgba(160,0,10,${vA})`;
-    const vTop=gc.createLinearGradient(0,0,0,H*0.14);
-    vTop.addColorStop(0,vc); vTop.addColorStop(1,'transparent');
-    gc.fillStyle=vTop; gc.fillRect(0,0,W,H*0.14);
-    const vBot=gc.createLinearGradient(0,H,0,H*0.86);
-    vBot.addColorStop(0,vc); vBot.addColorStop(1,'transparent');
-    gc.fillStyle=vBot; gc.fillRect(0,H*0.86,W,H*0.14);
-    const vLft=gc.createLinearGradient(0,0,W*0.10,0);
-    vLft.addColorStop(0,vc); vLft.addColorStop(1,'transparent');
-    gc.fillStyle=vLft; gc.fillRect(0,0,W*0.10,H);
-    const vRgt=gc.createLinearGradient(W,0,W*0.90,0);
-    vRgt.addColorStop(0,vc); vRgt.addColorStop(1,'transparent');
-    gc.fillStyle=vRgt; gc.fillRect(W*0.90,0,W*0.10,H);
-  }
-  // Blit cached gradient layer
-  if(_chGradCache) bgx.drawImage(_chGradCache,0,0);
-}
+const $combo    = document.getElementById('combo-display');
 
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
 function refillBag(){bag=[...Object.keys(PIECES)];for(let i=bag.length-1;i>0;i--){const randVal=_prng?_prng():Math.random();const j=Math.floor(randVal*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}}
@@ -623,7 +64,7 @@ function validPos(piece,ox=0,oy=0,shape=null){
     if(!s[r][c])continue;
     const nx=piece.x+c+ox, ny=piece.y+r+oy;
     if(nx<0||nx>=COLS||ny>=ROWS)return false;
-    if(ny>=0&&board[ny][nx])return false;
+    if(ny>=0&&S.board[ny][nx])return false;
   }
   return true;
 }
@@ -631,37 +72,37 @@ function validPos(piece,ox=0,oy=0,shape=null){
 function rotate(shape){const R=shape.length,C=shape[0].length;return Array.from({length:C},(_,c)=>Array.from({length:R},(_,r)=>shape[R-1-r][c]));}
 
 function rotatePiece(){
-  const rot=rotate(current.shape);
-  for(const k of [0,-1,1,-2,2]){if(validPos(current,k,0,rot)){current.shape=rot;current.x+=k;cancelLock();lastWasRotate=true;sfxRotate();return;}}
+  const rot=rotate(S.current.shape);
+  for(const k of [0,-1,1,-2,2]){if(validPos(S.current,k,0,rot)){S.current.shape=rot;S.current.x+=k;cancelLock();lastWasRotate=true;sfxRotate();return;}}
 }
 
-function cancelLock(){lockActive=false;lockTimer=0;}
+function cancelLock(){S.lockActive=false;S.lockTimer=0;}
 
 function lockPiece(){
   const tspin=checkTSpin();
-  lockActive=false;lockTimer=0;
-  for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
-    if(!current.shape[r][c])continue;
-    const y=current.y+r;
+  S.lockActive=false;S.lockTimer=0;
+  for(let r=0;r<S.current.shape.length;r++) for(let c=0;c<S.current.shape[r].length;c++){
+    if(!S.current.shape[r][c])continue;
+    const y=S.current.y+r;
     if(y<0){endGame();return;}
-    board[y][current.x+c]=current.color;
+    S.board[y][S.current.x+c]=S.current.color;
   }
   const cleared=[];
-  for(let r=ROWS-1;r>=0;r--){if(board[r].every(v=>v!==null))cleared.push(r);}
+  for(let r=ROWS-1;r>=0;r--){if(S.board[r].every(v=>v!==null))cleared.push(r);}
   if(cleared.length>0){
-    flashLines=new Set(cleared);flashTimer=12;combo++;if(combo>maxCombo)maxCombo=combo;
-    const mul=combo>1?combo:1;
+    S.flashLines=new Set(cleared);S.flashTimer=12;S.combo++;if(S.combo>maxCombo)maxCombo=S.combo;
+    const mul=S.combo>1?S.combo:1;
     const pts=tspin==='full'
-      ?TSPIN_SCORE[Math.min(cleared.length,3)]*level*mul
+      ?TSPIN_SCORE[Math.min(cleared.length,3)]*S.level*mul
       :tspin==='mini'
-      ?TSPIN_MINI_SCORE[Math.min(cleared.length,2)]*level*mul
-      :SCORE_TABLE[Math.min(cleared.length,4)]*level*mul;
+      ?TSPIN_MINI_SCORE[Math.min(cleared.length,2)]*S.level*mul
+      :SCORE_TABLE[Math.min(cleared.length,4)]*S.level*mul;
     sfxLineClear(cleared.length);
-    if(tspin){sfxTSpin();if(animIntensity==='full'){shakeFrames=Math.max(shakeFrames,12+cleared.length*6);shakeMag=Math.max(shakeMag,0.55);}}
-    if(combo>1&&animIntensity!=='off'){comboFlash=15;comboFlashColor=combo>=5?'#ff0080':combo>=3?'#a000ff':'#00c8ff';}
+    if(tspin){sfxTSpin();if(S.animIntensity==='full'){S.shakeFrames=Math.max(S.shakeFrames,12+cleared.length*6);S.shakeMag=Math.max(S.shakeMag,0.55);}}
+    if(S.combo>1&&S.animIntensity!=='off'){S.comboFlash=15;S.comboFlashColor=S.combo>=5?'#ff0080':S.combo>=3?'#a000ff':'#00c8ff';}
     addScore(pts,cleared.length,tspin);
-    lines+=cleared.length;
-    
+    S.lines+=cleared.length;
+
     // Update lifetime stats and achievements (in-memory cache — no JSON.parse per line clear)
     const lifetime = _getLifetime();
     lifetime.totalLines = (lifetime.totalLines || 0) + cleared.length;
@@ -670,870 +111,107 @@ function lockPiece(){
       unlockAchievement('glowtris_1');
     }
     localStorage.setItem(LS.LIFETIME, JSON.stringify(lifetime));
-    
+
     if (tspin) {
       unlockAchievement('tspin_1');
       if (cleared.length === 3) unlockAchievement('tspin_triple');
     }
-    if (combo >= 5) unlockAchievement('combo_5');
-    if (combo >= 10) unlockAchievement('combo_10');
+    if (S.combo >= 5) unlockAchievement('combo_5');
+    if (S.combo >= 10) unlockAchievement('combo_10');
     if (lifetime.totalLines >= 100) unlockAchievement('lines_100');
     if (lifetime.totalLines >= 1000) unlockAchievement('lines_1000');
-    
-    // Spawn floating score text at center of cleared lines
-    const cy = (cleared[0] + cleared[cleared.length-1]) / 2 * CELL;
-    spawnFloatingText(`+${pts}`, COLS/2*CELL, cy, '#00c8ff', 16);
 
-    const nextLvl=Math.floor(lines/LEVEL_LINES)+1;
-    if(nextLvl > level){
-      level=nextLvl;S.level=level;
-      spawnFloatingText(`LEVEL UP!`, COLS/2*CELL, ROWS/2*CELL, '#ffe600', 24);
+    // Spawn floating score text at center of cleared lines
+    const cy = (cleared[0] + cleared[cleared.length-1]) / 2 * S.CELL;
+    spawnFloatingText(`+${pts}`, COLS/2*S.CELL, cy, '#00c8ff', 16);
+
+    const nextLvl=Math.floor(S.lines/LEVEL_LINES)+1;
+    if(nextLvl > S.level){
+      S.level=nextLvl;
+      spawnFloatingText(`LEVEL UP!`, COLS/2*S.CELL, ROWS/2*S.CELL, '#ffe600', 24);
       triggerLevelUpVisuals();
-      if(level>=5) unlockAchievement('level_5');
-      if(level>=10) unlockAchievement('level_10');
-      if(level>=15) unlockAchievement('level_15');
+      if(S.level>=5) unlockAchievement('level_5');
+      if(S.level>=10) unlockAchievement('level_10');
+      if(S.level>=15) unlockAchievement('level_15');
     } else {
-      level=nextLvl;S.level=level;
+      S.level=nextLvl;
     }
-    dropInterval=Math.max(80,800-(level-1)*70);
+    dropInterval=Math.max(80,800-(S.level-1)*70);
     updateUI();
     const snap=[...cleared];
     setTimeout(()=>{
-      // Guard: if game was reset before this fires (e.g. line clear on the frame
-      // of game over → _doStartGame() replaces `board`), bail out immediately.
-      // Without this, the splice would corrupt the NEW game's fresh board.
-      if(!gameRunning&&!gameOver)return;
-      for(const r of snap.slice().sort((a,b)=>a-b)){board.splice(r,1);board.unshift(Array(COLS).fill(null));}
+      // Guard: if game was reset before this fires bail out immediately.
+      if(!S.gameRunning&&!gameOver)return;
+      for(const r of snap.slice().sort((a,b)=>a-b)){S.board.splice(r,1);S.board.unshift(Array(COLS).fill(null));}
       spawnLineClearParticles(snap);
-      if(snap.length>=4&&!tspin&&animIntensity==='full'){shakeFrames=25;shakeMag=0.7;}
-      if(snap.length>=4){triggerScreenFlash();if(animIntensity!=='off')rainbowBorder=45;}
+      if(snap.length>=4&&!tspin&&S.animIntensity==='full'){S.shakeFrames=25;S.shakeMag=0.7;}
+      if(snap.length>=4){triggerScreenFlash();if(S.animIntensity!=='off')S.rainbowBorder=45;}
       // All-clear bonus: board completely empty
-      if(board.every(row=>row.every(v=>v===null))){
-        const bonus=2000*level;
+      if(S.board.every(row=>row.every(v=>v===null))){
+        const bonus=2000*S.level;
         addScore(bonus,0,false);
         showScorePopup(bonus,-1,false); // -1 signals all-clear
         triggerAllClearFlash();
         unlockAchievement('all_clear');
       }
-      flashLines=new Set();
+      S.flashLines=new Set();
       // Sprint end: check AFTER board splice so the cleared board is visible
-      if(isSprintMode&&lines>=SPRINT_LINES){endSprint();return;}
+      if(S.isSprintMode&&S.lines>=SPRINT_LINES){endSprint();return;}
     },120);
   } else {
-    if(tspin==='full'){sfxTSpin();addScore(TSPIN_SCORE[0]*level,0,'full');unlockAchievement('tspin_1');}
-    else if(tspin==='mini'){sfxTSpin();unlockAchievement('tspin_1');} // mini 0 lines = 0pts, no addScore
-    else{combo=0;$combo.textContent='';}
+    if(tspin==='full'){sfxTSpin();addScore(TSPIN_SCORE[0]*S.level,0,'full');unlockAchievement('tspin_1');}
+    else if(tspin==='mini'){sfxTSpin();unlockAchievement('tspin_1');}
+    else{S.combo=0;$combo.textContent='';}
   }
   lastWasRotate=false;
-  spawnLockParticles();
+  spawnLockParticles(S.current);
   // In sprint mode, capture end time immediately when 40 lines reached.
-  // spawnPiece() is skipped — the 120ms callback calls endSprint() after the flash.
-  if(isSprintMode&&lines>=SPRINT_LINES){_sprintEndTime=performance.now();return;}
+  if(S.isSprintMode&&S.lines>=SPRINT_LINES){S._sprintEndTime=performance.now();return;}
   spawnPiece();
 }
 
 function addScore(pts,n,tspin=false){
-  score+=pts;
+  S.score+=pts;
   // In sprint mode score is cosmetic only — don't update marathon hi-score or achievements
-  if(!isSprintMode){
-    if(score>hiScore){hiScore=score;localStorage.setItem(LS.HI,hiScore);}
-    if(score>=50000)unlockAchievement('score_50k');
-    if(score>=100000)unlockAchievement('score_100k');
-    if(score>=250000)unlockAchievement('score_250k');
+  if(!S.isSprintMode){
+    if(S.score>S.hiScore){S.hiScore=S.score;localStorage.setItem(LS.HI,S.hiScore);}
+    if(S.score>=50000)unlockAchievement('score_50k');
+    if(S.score>=100000)unlockAchievement('score_100k');
+    if(S.score>=250000)unlockAchievement('score_250k');
   }
   updateUI();showScorePopup(pts,n,tspin);
 }
 
-function showScorePopup(pts,n,tspin=false){
-  const popup=$scorePopup;
-  const tspinLabels=['T-SPIN!','T-SPIN SINGLE','T-SPIN DOUBLE!!','T-SPIN TRIPLE!!!'];
-  const miniLabels=['T-SPIN MINI','T-SPIN MINI+','T-SPIN MINI DBL'];
-  const labels=['','','DOUBLE!','TRIPLE!','GLOWTRIS!!'];
-  let txt,color,sz,glow;
-  if(n===-1){
-    txt=`✦ ALL CLEAR ✦ +${pts}`;color='#ffe600';sz='22px';glow='0 0 32px #ffe600';
-  } else if(tspin==='full'){
-    txt=`${tspinLabels[Math.min(n,3)]} +${pts}`;color='#a000ff';sz=n>=2?'19px':'14px';glow='0 0 24px #a000ff';
-  } else if(tspin==='mini'){
-    txt=`${miniLabels[Math.min(n,2)]}${pts>0?' +'+pts:''}`;color='#7700cc';sz='13px';glow='0 0 16px #7700cc';
-  } else if(n>=4){
-    txt=`★ GLOWTRIS ★ +${pts}`;color='#ff0080';sz='24px';glow='0 0 28px #ff0080';
-  } else {
-    txt=n>=2?`${labels[n]} +${pts}`:`+${pts}`;color='#fff';sz='16px';glow='0 0 16px #00c8ff';
-  }
-  popup.textContent=txt;
-  popup.style.cssText=`left:50%;top:50%;transform:translate(-50%,-50%);opacity:1;font-size:${sz};color:${color};text-shadow:${glow};transition:none;position:absolute;pointer-events:none;font-family:Orbitron,monospace;font-weight:900;z-index:20;`;
-  requestAnimationFrame(()=>{popup.style.transition='opacity .9s ease,transform .9s ease';popup.style.opacity='0';popup.style.transform='translate(-50%,-130%)';});
-  if(combo>1){$combo.textContent=`x${combo} COMBO`;$combo.style.opacity='1';setTimeout(()=>$combo.style.opacity='0',1400);}
-}
-
 function spawnPiece(){
   lastWasRotate=false;
-  current=makePiece(next.key);next=makePiece(nextFromBag());canHold=true;
-  drawNext();if(!validPos(current))endGame();
+  S.current=makePiece(S.next.key);S.next=makePiece(nextFromBag());canHold=true;
+  drawNext();if(!validPos(S.current))endGame();
 }
 
 function holdPiece(){
-  if(!canHold||!gameRunning||gamePaused)return;
+  if(!canHold||!S.gameRunning||S.gamePaused)return;
   canHold=false;sfxHold();
-  if(held){const pk=held.key;held=makePiece(current.key);current=makePiece(pk);}
-  else{held=makePiece(current.key);current=makePiece(next.key);next=makePiece(nextFromBag());drawNext();}
+  if(S.held){const pk=S.held.key;S.held=makePiece(S.current.key);S.current=makePiece(pk);}
+  else{S.held=makePiece(S.current.key);S.current=makePiece(S.next.key);S.next=makePiece(nextFromBag());drawNext();}
   cancelLock();drawHold();
 }
 
 // ─── Ghost ────────────────────────────────────────────────────────────────────
-function getGhostY(){let d=0;while(validPos(current,0,d+1))d++;return current.y+d;}
-
-// ─── Drawing ──────────────────────────────────────────────────────────────────
-function hexToRgb(hex){
-  if(_rgbCache.has(hex))return _rgbCache.get(hex);
-  const v={r:parseInt(hex.slice(1,3),16),g:parseInt(hex.slice(3,5),16),b:parseInt(hex.slice(5,7),16)};
-  _rgbCache.set(hex,v);return v;
-}
-
-// Draws a white symbol overlay on a cell for colorblind accessibility.
-// cs = cell pixel size (allows reuse in mini-preview canvases with different sizes).
-// Pre-render each piece color as a padded canvas sprite — glow baked in, blitted at zero cost.
-// PAD gives room for the subtle glow to bleed just past the cell edge.
-function getCellSprite(color){
-  if(_cellSprites[color])return _cellSprites[color];
-  const PAD=14,s=CELL,p=PAD;
-  const sc=document.createElement('canvas');
-  sc.width=sc.height=s+PAD*2;
-  const sx=sc.getContext('2d');
-  const {r,g,b}=hexToRgb(color);
-
-  // PAD must exceed shadowBlur so the glow isn't clipped at sprite canvas edges
-  sx.shadowColor=`rgba(${r},${g},${b},0.8)`;
-  sx.shadowBlur=12;
-
-  // Main fill: diagonal gradient (lit top-left → dark bottom-right) for 3D depth
-  const gr=sx.createLinearGradient(p,p,p+s,p+s);
-  gr.addColorStop(0,  `rgba(${Math.min(255,r+40)},${Math.min(255,g+40)},${Math.min(255,b+40)},0.96)`);
-  gr.addColorStop(0.55,`rgba(${r},${g},${b},0.90)`);
-  gr.addColorStop(1,  `rgba(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)},0.94)`);
-  sx.fillStyle=gr;sx.fillRect(p+1,p+1,s-2,s-2);
-  sx.shadowBlur=0;
-
-  // Diagonal sheen — smooth fade from bright corner, stops at ~60% of cell
-  const sh=sx.createLinearGradient(p,p,p+s*0.62,p+s*0.62);
-  sh.addColorStop(0,  'rgba(255,255,255,0.32)');
-  sh.addColorStop(0.5,'rgba(255,255,255,0.06)');
-  sh.addColorStop(1,  'rgba(255,255,255,0)');
-  sx.fillStyle=sh;sx.fillRect(p+2,p+2,s-4,s-4);
-
-  // Inner rim light — subtle bright top & left bevel (raised tile feel)
-  sx.strokeStyle=`rgba(${Math.min(255,r+90)},${Math.min(255,g+90)},${Math.min(255,b+90)},0.4)`;
-  sx.lineWidth=1;sx.lineCap='round';
-  sx.beginPath();sx.moveTo(p+2,p+s-2);sx.lineTo(p+2,p+2);sx.lineTo(p+s-2,p+2);sx.stroke();
-
-  // Outer border
-  sx.strokeStyle=`rgba(${Math.min(255,r+55)},${Math.min(255,g+55)},${Math.min(255,b+55)},0.5)`;
-  sx.lineWidth=1;sx.strokeRect(p+1.5,p+1.5,s-3,s-3);
-
-  _cellSprites[color]={canvas:sc,pad:PAD};
-  return _cellSprites[color];
-}
-
-function drawCBPattern(ctx,px,py,cs,key){
-  ctx.save();
-  ctx.globalAlpha=0.62;
-  ctx.strokeStyle='rgba(255,255,255,0.85)';
-  ctx.lineWidth=Math.max(1,cs*0.09);
-  ctx.lineCap='round';
-  const m=cs*0.2,x1=px+m,y1=py+m,x2=px+cs-m,y2=py+cs-m;
-  const mx=px+cs*0.5,my=py+cs*0.5;
-  ctx.beginPath();
-  switch(key){
-    case'I': // ═ two horizontal bars
-      ctx.moveTo(x1,my-cs*0.14);ctx.lineTo(x2,my-cs*0.14);
-      ctx.moveTo(x1,my+cs*0.14);ctx.lineTo(x2,my+cs*0.14);break;
-    case'O': // ○ circle
-      ctx.arc(mx,my,cs*0.26,0,Math.PI*2);break;
-    case'T': // △ upward triangle
-      ctx.moveTo(mx,y1);ctx.lineTo(x2,y2);ctx.lineTo(x1,y2);ctx.closePath();break;
-    case'S': // / forward slash
-      ctx.moveTo(x2,y1);ctx.lineTo(x1,y2);break;
-    case'Z': // \ backward slash
-      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);break;
-    case'J': // ║ two vertical bars
-      ctx.moveTo(mx-cs*0.14,y1);ctx.lineTo(mx-cs*0.14,y2);
-      ctx.moveTo(mx+cs*0.14,y1);ctx.lineTo(mx+cs*0.14,y2);break;
-    case'L': // ✕ cross
-      ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
-      ctx.moveTo(x2,y1);ctx.lineTo(x1,y2);break;
-  }
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawCell(ctx,x,y,color,alpha=1,glow=1,key=null){
-  const s=CELL,px=x*s,py=y*s;
-  const sp=getCellSprite(color);
-  ctx.save();ctx.globalAlpha=alpha;
-  // Active piece: extra live glow on top of the baked sprite glow — makes it pop above board
-  if(glow>1.2&&!lowPerfMode){ctx.shadowColor=color;ctx.shadowBlur=9;}
-  ctx.drawImage(sp.canvas,px-sp.pad,py-sp.pad);
-  ctx.shadowBlur=0;
-  ctx.restore();
-  if(colorblindMode&&key)drawCBPattern(ctx,px,py,s,key);
-}
-
-function drawBoard(){
-  const W=COLS*CELL,H=ROWS*CELL;
-  gctx.clearRect(0,0,W,H);
-  gctx.fillStyle='rgba(0,0,15,0.88)';gctx.fillRect(0,0,W,H);
-  const gridGlow = 0.05 + 0.03 * Math.sin(Date.now() / 400);
-  gctx.save();
-  gctx.strokeStyle=`rgba(0,200,255,${gridGlow})`;
-  gctx.lineWidth=1;
-  gctx.beginPath();
-  for(let r=0;r<=ROWS;r++){gctx.moveTo(0,r*CELL);gctx.lineTo(W,r*CELL);}
-  for(let c=0;c<=COLS;c++){gctx.moveTo(c*CELL,0);gctx.lineTo(c*CELL,H);}
-  gctx.stroke();
-  gctx.fillStyle=`rgba(0,255,255,${gridGlow * 3})`;
-  for(let r=1;r<ROWS;r++) for(let c=1;c<COLS;c++) gctx.fillRect(c*CELL-0.5, r*CELL-0.5, 1, 1);
-  gctx.restore();
-  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(!board[r][c])continue;
-    if(flashLines.has(r)){
-      const t=1-flashTimer/12;
-      gctx.save();gctx.globalAlpha=0.5+0.5*Math.sin(t*Math.PI*4);
-      gctx.fillStyle='#fff';if(!lowPerfMode){gctx.shadowColor='#fff';gctx.shadowBlur=28;}
-      gctx.fillRect(c*CELL+1,r*CELL+1,CELL-2,CELL-2);gctx.restore();
-    } else drawCell(gctx,c,r,board[r][c],1,1,colorblindMode?COLOR_TO_KEY[board[r][c]]:null);
-  }
-  if(gameRunning&&!gamePaused&&current){
-    const ghostY=getGhostY();
-    if(ghostVisible&&ghostY!==current.y){
-      const {r,g,b}=hexToRgb(current.color);
-      for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
-        if(!current.shape[row][col])continue;
-        gctx.save();
-        gctx.shadowBlur=0;
-        gctx.strokeStyle=`rgba(${r},${g},${b},0.32)`;gctx.lineWidth=1.5;
-        gctx.strokeRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
-        gctx.fillStyle=`rgba(${r},${g},${b},0.06)`;
-        gctx.fillRect((current.x+col)*CELL+2,(ghostY+row)*CELL+2,CELL-4,CELL-4);
-        gctx.restore();
-      }
-      let minCol = COLS, maxCol = -1;
-      for(let r=0; r<current.shape.length; r++) {
-        for(let c=0; c<current.shape[r].length; c++) {
-          if(current.shape[r][c]) {
-            if(c < minCol) minCol = c;
-            if(c > maxCol) maxCol = c;
-          }
-        }
-      }
-      gctx.save();
-      gctx.strokeStyle = `rgba(${r},${g},${b},0.09)`;
-      gctx.lineWidth = 1;
-      gctx.setLineDash([4, 4]);
-      
-      const lx = (current.x + minCol) * CELL;
-      gctx.beginPath();
-      gctx.moveTo(lx, (current.y + current.shape.length) * CELL);
-      gctx.lineTo(lx, ghostY * CELL);
-      gctx.stroke();
-      
-      const rx = (current.x + maxCol + 1) * CELL;
-      gctx.beginPath();
-      gctx.moveTo(rx, (current.y + current.shape.length) * CELL);
-      gctx.lineTo(rx, ghostY * CELL);
-      gctx.stroke();
-      
-      gctx.restore();
-    }
-    if(lockActive&&lockTimer>0){
-      const pct=lockTimer/lockMs;
-      const {r,g,b}=hexToRgb(current.color);
-      for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
-        if(!current.shape[row][col])continue;
-        gctx.save();gctx.fillStyle=`rgba(${r},${g},${b},${0.18*pct})`;
-        gctx.fillRect((current.x+col)*CELL+1,(current.y+row)*CELL+1,CELL-2,CELL-2);gctx.restore();
-      }
-      const bY=(current.y+current.shape.length)*CELL-3;
-      gctx.save();
-      gctx.fillStyle=`rgba(${r},${g},${b},0.75)`;
-      if(!lowPerfMode){gctx.shadowColor=current.color;gctx.shadowBlur=5;}
-      gctx.fillRect(current.x*CELL, bY, current.shape[0].length*CELL*pct, 3);
-      gctx.restore();
-    }
-    for(let row=0;row<current.shape.length;row++) for(let col=0;col<current.shape[row].length;col++){
-      if(current.shape[row][col]) drawCell(gctx,current.x+col,current.y+row,current.color,1,1.5,colorblindMode?current.key:null);
-    }
-    if(_lastBorderColor!==current.color){
-      _lastBorderColor=current.color;
-      const {r,g,b}=hexToRgb(current.color);
-      gc.style.borderColor=`rgba(${r},${g},${b},0.6)`;
-      gc.style.boxShadow=lowPerfMode?'none':`0 0 25px rgba(${r},${g},${b},0.35), 0 0 60px rgba(${r},${g},${b},0.15)`;
-    }
-  } else {
-    if(_lastBorderColor!==null){
-      _lastBorderColor=null;
-      gc.style.borderColor='rgba(0,200,255,0.35)';
-      gc.style.boxShadow=lowPerfMode?'none':'0 0 36px rgba(0,200,255,0.25), 0 0 70px rgba(0,100,255,0.12)';
-    }
-  }
-  if(flashTimer>0)flashTimer--;
-  if(comboFlash>0&&!lowPerfMode){
-    gctx.save();
-    gctx.globalAlpha=(comboFlash/15)*0.28;
-    gctx.fillStyle=comboFlashColor;
-    gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
-    gctx.restore();
-    comboFlash--;
-  } else if(lowPerfMode){ comboFlash=0; }
-  if(rainbowBorder>0&&!lowPerfMode){
-    const hue=(Date.now()/4)%360;
-    const a=(rainbowBorder/45)*0.9;
-    gctx.save();
-    gctx.globalAlpha=a;
-    gctx.strokeStyle=`hsl(${hue},100%,65%)`;
-    gctx.shadowColor=`hsl(${hue},100%,65%)`;
-    gctx.shadowBlur=24;
-    gctx.lineWidth=5;
-    gctx.strokeRect(3,3,COLS*CELL-6,ROWS*CELL-6);
-    gctx.restore();
-    rainbowBorder--;
-  } else if(lowPerfMode){ rainbowBorder=0; }
-  if(gameRunning&&!gamePaused&&!lowPerfMode){
-    let topRow=ROWS;
-    for(let r=0;r<ROWS;r++){if(board[r].some(v=>v!==null)){topRow=r;break;}}
-    const dangerThreshold=Math.floor(ROWS*0.25); // row 5
-    if(topRow<dangerThreshold){
-      dangerPulse++;
-      const speed=0.06+((dangerThreshold-topRow)/dangerThreshold)*0.1;
-      const intensity=(dangerThreshold-topRow)/dangerThreshold; // 0→1 as stack grows
-      const alpha=(0.12+intensity*0.18)*(0.5+0.5*Math.sin(dangerPulse*speed));
-      gctx.save();
-      gctx.globalAlpha=alpha;
-      gctx.fillStyle='#ff1133';
-      gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
-      // Red border vignette
-      const vg=gctx.createRadialGradient(COLS*CELL/2,ROWS*CELL/2,ROWS*CELL*0.3,COLS*CELL/2,ROWS*CELL/2,ROWS*CELL*0.75);
-      vg.addColorStop(0,'rgba(0,0,0,0)');
-      vg.addColorStop(1,`rgba(255,0,30,${0.3+intensity*0.35})`);
-      gctx.globalAlpha=1;
-      gctx.fillStyle=vg;
-      gctx.fillRect(0,0,COLS*CELL,ROWS*CELL);
-      gctx.restore();
-    } else {
-      dangerPulse=0;
-    }
-  } else if(lowPerfMode){ dangerPulse=0; }
-  if(levelUpScanline>0&&!lowPerfMode){
-    const y = levelUpScanline * gc.height;
-    gctx.save();
-    const gr = gctx.createLinearGradient(0, y - 20, 0, y + 20);
-    gr.addColorStop(0, 'rgba(0, 200, 255, 0)');
-    gr.addColorStop(0.5, 'rgba(0, 200, 255, 0.9)');
-    gr.addColorStop(1, 'rgba(0, 200, 255, 0)');
-    gctx.fillStyle = gr;
-    gctx.shadowColor = '#00c8ff';
-    gctx.shadowBlur = 24;
-    gctx.fillRect(0, y - 10, gc.width, 20);
-    gctx.restore();
-
-    levelUpScanline += 0.022; // speed
-    if(levelUpScanline >= 1.0) levelUpScanline = 0;
-  } else if(lowPerfMode){ levelUpScanline = 0; }
-
-  // ── Countdown overlay ────────────────────────────────────────────────────
-  if(_countdownVal>0||_countdownGo>0){
-    const W=COLS*CELL,H=ROWS*CELL,cx=W/2,cy=H/2;
-    const isGo=_countdownGo>0;
-    // Per-number neon color: 3=red, 2=amber, 1=cyan, GO=green
-    const CDCOLORS={3:'#ff3355',2:'#ffaa00',1:'#00c8ff'};
-    const color=isGo?'#00ff88':(CDCOLORS[_countdownVal]||'#00c8ff');
-
-    // Animation fraction 0→1 within each 1s window
-    const frac=isGo
-      ?1-_countdownGo/55                            // GO: 0→1 as it fades
-      :Math.min(1,(performance.now()-_countdownTs)/1000);
-
-    // Scale: number pops in large then settles
-    const scale=isGo
-      ?(1+0.4*(1-frac))                             // GO starts 1.4× and shrinks to 1×
-      :Math.max(0.9,1.7-frac*0.8);                 // number: 1.7→0.9 over 1s
-
-    // Alpha: countdown stays solid, GO fades out in last 40%
-    const alpha=isGo
-      ?Math.max(0,1-(frac-0.6)/0.4)
-      :(frac<0.75?1:Math.max(0,1-(frac-0.75)/0.25));
-
-    // Dark vignette overlay during countdown numbers only
-    if(_countdownVal>0){
-      const dimA=Math.min(0.6,0.6*(frac<0.8?1:(1-(frac-0.8)/0.2)));
-      gctx.save();gctx.globalAlpha=dimA;
-      gctx.fillStyle='rgba(0,0,8,1)';gctx.fillRect(0,0,W,H);
-      gctx.restore();
-    }
-
-    // Expanding ring (only for numbers, not GO)
-    if(!isGo){
-      const ringR=Math.min(cy*0.8,30+frac*cy*0.9);
-      const ringA=Math.max(0,0.9-frac*0.9);
-      gctx.save();gctx.globalAlpha=ringA;
-      gctx.strokeStyle=color;gctx.shadowColor=color;gctx.shadowBlur=18;
-      gctx.lineWidth=2.5;
-      gctx.beginPath();gctx.arc(cx,cy,ringR,0,Math.PI*2);gctx.stroke();
-      // second ring (delayed)
-      const ringR2=Math.min(cy*0.85,10+frac*cy*1.1);
-      const ringA2=Math.max(0,0.5-frac*0.5);
-      gctx.globalAlpha=ringA2;
-      gctx.lineWidth=1.5;
-      gctx.beginPath();gctx.arc(cx,cy,ringR2,0,Math.PI*2);gctx.stroke();
-      gctx.shadowBlur=0;gctx.restore();
-    }
-
-    // Full-board color flash on each new number (first 6% of window)
-    if(!isGo&&frac<0.06){
-      gctx.save();gctx.globalAlpha=(1-frac/0.06)*0.18;
-      gctx.fillStyle=color;gctx.fillRect(0,0,W,H);
-      gctx.restore();
-    }
-
-    // Main text with zoom transform
-    const text=isGo?'GO!':String(_countdownVal);
-    const fontSize=Math.floor(W*(isGo?0.44:0.54));
-    gctx.save();
-    gctx.globalAlpha=alpha;
-    gctx.translate(cx,cy);gctx.scale(scale,scale);gctx.translate(-cx,-cy);
-    gctx.font=`900 ${fontSize}px Orbitron,monospace`;
-    gctx.textAlign='center';gctx.textBaseline='middle';
-    // Outer glow layer
-    gctx.fillStyle=color;gctx.shadowColor=color;gctx.shadowBlur=80;
-    gctx.fillText(text,cx,cy);
-    // Inner bright core
-    gctx.shadowBlur=30;gctx.fillStyle='#ffffff';gctx.globalAlpha=alpha*0.45;
-    gctx.fillText(text,cx,cy);
-    gctx.shadowBlur=0;gctx.restore();
-
-    if(_countdownGo>0)_countdownGo--;
-  }
-}
-
-function drawMiniPiece(ctx,piece,cw,ch){
-  ctx.clearRect(0,0,cw,ch);
-  ctx.fillStyle='rgba(0,0,15,0.55)';ctx.fillRect(0,0,cw,ch);
-  if(!piece)return;
-  const s=piece.shape,cs=isMobile?Math.max(7,Math.floor(Math.min(cw/4,ch/3))):18;
-  const ox=Math.floor((cw-s[0].length*cs)/2),oy=Math.floor((ch-s.length*cs)/2);
-  const {r,g,b}=hexToRgb(piece.color);
-  for(let row=0;row<s.length;row++) for(let col=0;col<s[row].length;col++){
-    if(!s[row][col])continue;
-    ctx.save();ctx.shadowColor=piece.color;ctx.shadowBlur=8;
-    const gr=ctx.createLinearGradient(ox+col*cs,oy+row*cs,ox+col*cs+cs,oy+row*cs+cs);
-    gr.addColorStop(0,`rgba(${r},${g},${b},0.95)`);gr.addColorStop(1,`rgba(${Math.max(0,r-35)},${Math.max(0,g-35)},${Math.max(0,b-35)},0.95)`);
-    ctx.fillStyle=gr;ctx.fillRect(ox+col*cs+1,oy+row*cs+1,cs-2,cs-2);
-    ctx.strokeStyle=`rgba(${Math.min(255,r+70)},${Math.min(255,g+70)},${Math.min(255,b+70)},0.5)`;
-    ctx.lineWidth=1;ctx.strokeRect(ox+col*cs+1.5,oy+row*cs+1.5,cs-3,cs-3);
-    ctx.restore();
-    if(colorblindMode&&piece.key)drawCBPattern(ctx,ox+col*cs,oy+row*cs,cs,piece.key);
-  }
-}
-
-function drawNext(){
-  drawMiniPiece(ncDx,next,ncD.width,ncD.height);
-  drawMiniPiece(ncMx,next,ncM.width,ncM.height);
-}
-function drawHold(){
-  drawMiniPiece(hcDx,held,hcD.width,hcD.height);
-  drawMiniPiece(hcMx,held,hcM.width,hcM.height);
-}
-
-// ─── Particles ────────────────────────────────────────────────────────────────
-const PAL=['#00c8ff','#a000ff','#ff0080','#ffe600','#00ff88'];
-
-function spawnLineClearParticles(rows){
-  if(animIntensity==='off')return;
-  if(particles.length>=MAX_PARTICLES)return; // drop spawn if already at cap
-  for(const row of rows) {
-    particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*CELL*1.5,type:'radial-ring'});
-    particles.push({x:(COLS/2)*CELL,y:(row+0.5)*CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*CELL*2.3,type:'radial-ring'});
-    
-    const sparkCount = lowPerfMode ? 2 : (isMobile ? 2 : 4);
-    for(let c=0;c<COLS;c++) for(let i=0;i<sparkCount;i++){
-      const a=Math.random()*Math.PI*2,sp=Math.random()*5+2;
-      particles.push({x:(c+.5)*CELL,y:(row+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-3,life:1,decay:Math.random()*.02+.015,color:'#00c8ff',size:Math.random()*4+2,type:'spark'});
-    }
-  }
-  const starCount = lowPerfMode ? 10 : (isMobile ? 12 : 25);
-  for(let i=0;i<starCount;i++){
-    const a=Math.random()*Math.PI*2,sp=Math.random()*8+3;
-    particles.push({x:COLS/2*CELL,y:(rows[0]+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.015+.008,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*6+3,type:'star'});
-  }
-}
-function spawnLockParticles(){
-  if(!current||animIntensity==='off')return;
-  const pCount = lowPerfMode ? 1 : (isMobile ? 1 : 2);
-  if(pCount===0)return;
-  for(let r=0;r<current.shape.length;r++) for(let c=0;c<current.shape[r].length;c++){
-    if(!current.shape[r][c])continue;
-    for(let i=0;i<pCount;i++) particles.push({x:(current.x+c+.5)*CELL,y:(current.y+r+.5)*CELL,vx:(Math.random()-.5)*4,vy:Math.random()*-4-1.5,life:1,decay:.04,color:current.color,size:Math.random()*3+1.5,type:'spark'});
-  }
-}
-function spawnFloatingText(txt, x, y, color, size) {
-  particles.push({
-    text: txt, x, y, vx: 0, vy: -0.6, life: 1, decay: 0.02, color, size, type: 'text'
-  });
-}
-function spawnDropTrail() {
-  if(!current||lowPerfMode||animIntensity!=='full') return;
-  const w = current.shape[0].length;
-  const cx = (current.x + Math.random() * w) * CELL;
-  const cy = current.y * CELL;
-  particles.push({
-    x: cx,
-    y: cy,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: -0.3 - Math.random() * 0.3,
-    life: 1,
-    decay: 0.08, // fades in 12 frames
-    color: current.color,
-    size: Math.random() * 1.5 + 0.6,
-    type: 'spark'
-  });
-}
-function updateParticles(){
-  pctx.clearRect(0,0,pc.width,pc.height);
-  particles=particles.filter(p=>p.life>0);
-  for(const p of particles){
-    if(p.type==='text'){
-      p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;
-      pctx.save();pctx.globalAlpha=Math.max(0,p.life);
-      pctx.font=`900 ${p.size}px Orbitron, monospace`;
-      pctx.textAlign='center';
-      if(!lowPerfMode){pctx.shadowColor=p.color;pctx.shadowBlur=12;}
-      pctx.fillStyle=p.color;
-      pctx.fillText(p.text,p.x,p.y);
-      pctx.restore();
-      continue;
-    }
-    if(p.type==='ring'||p.type==='radial-ring'){
-      if(lowPerfMode){p.life-=p.decay;continue;}
-      p.life-=p.decay;
-      pctx.save();pctx.globalAlpha=Math.max(0,p.life);
-      pctx.strokeStyle=p.color;pctx.lineWidth=p.size*p.life;if(!lowPerfMode){pctx.shadowColor=p.color;pctx.shadowBlur=15;}
-      pctx.beginPath();
-      const rx=(1-p.life)*p.maxRadius;
-      if(p.type==='ring') pctx.ellipse(p.x,p.y,rx,rx*(p.aspectRatio||0.35),0,0,Math.PI*2);
-      else pctx.arc(p.x,p.y,rx,0,Math.PI*2);
-      pctx.stroke();pctx.restore();
-      continue;
-    }
-    // Physics with friction
-    p.vx*=0.94; p.vy+=0.15; // gravity
-    p.x+=p.vx;p.y+=p.vy;p.life-=p.decay;
-    
-    pctx.save();pctx.globalAlpha=Math.max(0,p.life);
-    const {r,g,b}=hexToRgb(p.color);
-    
-    if(p.type==='star'){
-      pctx.fillStyle=p.color;pctx.beginPath();
-      const spikes=4,outer=p.size,inner=p.size*.4;
-      for(let i=0;i<spikes*2;i++){const a=(i*Math.PI/spikes)-Math.PI/2,rad=i%2===0?outer:inner;if(i===0)pctx.moveTo(p.x+Math.cos(a)*rad,p.y+Math.sin(a)*rad);else pctx.lineTo(p.x+Math.cos(a)*rad,p.y+Math.sin(a)*rad);}
-      pctx.closePath();pctx.fill();
-    } else {
-      // Trail effect for spark
-      pctx.beginPath();
-      pctx.moveTo(p.x - p.vx*1.5, p.y - p.vy*1.5);
-      pctx.lineTo(p.x, p.y);
-      pctx.strokeStyle=`rgb(${r},${g},${b})`;
-      pctx.lineWidth=Math.max(.1,p.size*p.life);
-      pctx.lineCap='round';
-      pctx.stroke();
-    }
-    pctx.restore();
-  }
-}
-
-function spawnHardDropParticles(){
-  if(animIntensity==='off')return;
-  if(particles.length>=MAX_PARTICLES)return;
-  const col=current.color;
-  const w=current.shape[0].length;
-  const cx=(current.x+w/2)*CELL;
-  const cy=(current.y+current.shape.length)*CELL;
-  const full=animIntensity==='full';
-
-  // 1. Flat shockwave rings expanding along the floor
-  if(full&&!lowPerfMode){
-    particles.push({x:cx,y:cy,vx:0,vy:0,life:1,decay:0.05,color:'#ffffff',size:5,maxRadius:w*CELL*1.0,aspectRatio:0.16,type:'ring'});
-    particles.push({x:cx,y:cy,vx:0,vy:0,life:1,decay:0.035,color:col,size:3.5,maxRadius:w*CELL*1.8,aspectRatio:0.2,type:'ring'});
-  }
-
-  // 2. Central upward burst — sparks from the full bottom edge of the piece
-  const burstCount=full?(isMobile?16:24):10;
-  for(let i=0;i<burstCount;i++){
-    const sp=Math.random()*13+5;
-    const angle=Math.PI+Math.random()*Math.PI; // upper hemisphere
-    particles.push({
-      x:cx+(Math.random()-.5)*w*CELL*0.9,y:cy,
-      vx:Math.cos(angle)*sp,vy:Math.sin(angle)*sp,
-      life:1,decay:Math.random()*0.022+0.028,
-      color:Math.random()<0.35?'#ffffff':col,
-      size:Math.random()*6+2,type:'spark'
-    });
-  }
-
-  // 3. Floor spray — low-angle debris kicking left & right
-  const sprayCount=full?8:0;
-  for(let i=0;i<sprayCount;i++){
-    const dir=Math.random()<0.5?1:-1;
-    particles.push({
-      x:cx+(Math.random()-.5)*w*CELL*0.7,y:cy,
-      vx:dir*(Math.random()*16+7),vy:-(Math.random()*2.5+0.5),
-      life:1,decay:Math.random()*0.028+0.035,
-      color:Math.random()<0.4?'#ffffff':col,
-      size:Math.random()*3+1,type:'spark'
-    });
-  }
-
-  // 4. Star glints for extra sparkle (full only)
-  if(full&&!lowPerfMode){
-    for(let i=0;i<5;i++){
-      const a=Math.PI+Math.random()*Math.PI;
-      const sp=Math.random()*9+3;
-      particles.push({
-        x:cx+(Math.random()-.5)*w*CELL*0.8,y:cy,
-        vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
-        life:1,decay:0.022,
-        color:Math.random()<0.5?'#ffffff':col,
-        size:Math.random()*5+3,type:'star'
-      });
-    }
-  }
-}
-
-function applyShake(){
-  if(animIntensity!=='full'||lowPerfMode){if(!_nudgeActive)$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
-  if(shakeFrames>0){
-    const m=shakeFrames*shakeMag;
-    const x=(Math.random()-.5)*m;
-    const y=shakeAllDir?(Math.random()-.5)*m:0;
-    $app.style.transform=`translate(${x}px,${y}px)`;
-    shakeFrames--;
-    if(!shakeFrames){shakeMag=0.4;shakeAllDir=false;}
-  } else if(!_nudgeActive) $app.style.transform=''; // don't clear while nudge spring is active
-}
-
-// ─── UI ───────────────────────────────────────────────────────────────────────
-// Format milliseconds as M:SS.cc (centiseconds). No leading minute if < 1 min.
-function fmtTime(ms){
-  const total=Math.floor(ms/10);
-  const cs=total%100;
-  const secs=Math.floor(total/100)%60;
-  const mins=Math.floor(total/6000);
-  return `${mins>0?mins+':':''}${secs.toString().padStart(2,'0')}.${cs.toString().padStart(2,'0')}`;
-}
-
-function updateUI(){
-  if(isSprintMode){
-    // Sprint HUD: time display handled by updateSprintTimer() each frame.
-    // Here we update lines-left, level, hi-time, and progress bar.
-    const remaining=Math.max(0,SPRINT_LINES-lines);
-    $lines.textContent=remaining; if($linesM)$linesM.textContent=remaining;
-    $level.textContent=level; if($levelM)$levelM.textContent=level;
-    const ht=_sprintHiTime>0?fmtTime(_sprintHiTime):'--:--';
-    $hiScore.textContent=ht; if($hiScoreM)$hiScoreM.textContent=ht;
-    // Progress bar = sprint completion (lines cleared / SPRINT_LINES)
-    $levelBar.style.width=(lines/SPRINT_LINES*100)+'%';
-    $levelBar.style.background='linear-gradient(90deg,#00ff88,#00c8ff)';
-    $bpmEl.textContent=Math.min(200,135+level*5)+' BPM';
-    return;
-  }
-  const s=score.toLocaleString();
-  $score.textContent=s; $scoreM.textContent=s;
-  $lines.textContent=lines; $linesM.textContent=lines;
-  $level.textContent=level; $levelM.textContent=level;
-  const hi=hiScore.toLocaleString();
-  $hiScore.textContent=hi; $hiScoreM.textContent=hi;
-  const pct=((lines%LEVEL_LINES)/LEVEL_LINES)*100;
-  const hue=(level-1)*30;
-  $levelBar.style.width=pct+'%';
-  $levelBar.style.background=`linear-gradient(90deg,hsl(${190+hue},100%,50%),hsl(${270+hue},100%,50%))`;
-  $bpmEl.textContent=Math.min(200,135+level*5)+' BPM';
-}
-
-// Sprint stopwatch — called every frame while sprint is running.
-// Updates the score display (repurposed as a timer in sprint mode).
-function updateSprintTimer(){
-  const elapsed=performance.now()-_sprintStartTime;
-  const fmt=fmtTime(elapsed);
-  $score.textContent=fmt; if($scoreM)$scoreM.textContent=fmt;
-}
-
-// ─── Settings ─────────────────────────────────────────────────────────────────
-function updateDAS(v){
-  das=parseInt(v);localStorage.setItem(LS.DAS,v);
-  const el=document.getElementById('ov-das-val');if(el)el.textContent=v+'ms';
-}
-function updateARR(v){
-  arr=parseInt(v);localStorage.setItem(LS.ARR,v);
-  const el=document.getElementById('ov-arr-val');if(el)el.textContent=v+'ms';
-}
-function updateLockDelay(v){
-  lockMs=parseInt(v);localStorage.setItem(LS.LOCK,v);
-  const el=document.getElementById('ov-lock-val');if(el)el.textContent=v+'ms';
-}
-function updateGhost(){
-  ghostVisible=!ghostVisible;
-  localStorage.setItem(LS.GHOST,ghostVisible?'1':'0');
-  const btn=document.getElementById('ov-ghost-btn');
-  if(btn)btn.textContent=ghostVisible?'👻 GHOST ON':'👻 GHOST OFF';
-  btn&&btn.classList.toggle('muted',!ghostVisible);
-}
-function updateColorblind(){
-  colorblindMode=!colorblindMode;
-  localStorage.setItem(LS.COLORBLIND,colorblindMode?'1':'0');
-  const btn=document.getElementById('ov-cb-btn');
-  if(btn)btn.textContent=colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF';
-  btn&&btn.classList.toggle('cb-active',colorblindMode);
-  btn&&btn.classList.toggle('muted',!colorblindMode);
-  if(gameRunning&&!gamePaused)drawBoard();
-}
-function _animLabel(){return animIntensity==='full'?'✨ ANIM: FULL':animIntensity==='reduced'?'💫 ANIM: LOW':'🔲 ANIM: OFF';}
-function cycleAnimIntensity(){
-  animIntensity=animIntensity==='full'?'reduced':animIntensity==='reduced'?'off':'full';
-  localStorage.setItem(LS.ANIM,animIntensity);
-  const btn=document.getElementById('ov-anim-btn');
-  if(btn)btn.textContent=_animLabel();
-  btn&&btn.classList.toggle('muted',animIntensity==='off');
-}
-
-function triggerScreenFlash(){
-  if(animIntensity==='off'||lowPerfMode)return;
-  $flash.style.transition='none';
-  $flash.style.opacity='1';
-  requestAnimationFrame(()=>{
-    $flash.style.transition='opacity 0.7s ease-out';
-    $flash.style.opacity='0';
-  });
-}
-
-function triggerAllClearFlash(){
-  if(!lowPerfMode){
-    $flash.style.background='rgba(255,230,0,0.55)';
-    $flash.style.transition='none';$flash.style.opacity='1';
-    requestAnimationFrame(()=>{
-      $flash.style.transition='opacity 1.2s ease-out';$flash.style.opacity='0';
-      setTimeout(()=>{$flash.style.background='rgba(255,255,255,0.65)';},1300);
-    });
-  }
-  if(animIntensity!=='off'&&!lowPerfMode){rainbowBorder=90;shakeFrames=30;shakeMag=0.9;}
-  [523,659,784,880,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.22,.35,i*.07));
-  if(animIntensity==='full'&&particles.length<MAX_PARTICLES){
-    for(let i=0;i<80;i++){
-      const a=Math.random()*Math.PI*2,sp=Math.random()*12+4;
-      particles.push({x:COLS/2*CELL,y:ROWS/2*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.012+.006,color:['#ffe600','#00c8ff','#ff0080','#00ff88','#a000ff'][Math.floor(Math.random()*5)],size:Math.random()*7+3,type:'star'});
-    }
-  }
-}
-
-function spawnGoldBurst(x, y) {
-  for (let i = 0; i < 30; i++) {
-    const p = document.createElement('div');
-    p.style.position = 'fixed';
-    p.style.left = x + 'px';
-    p.style.top = y + 'px';
-    p.style.width = Math.random() * 6 + 4 + 'px';
-    p.style.height = p.style.width;
-    p.style.backgroundColor = Math.random() < 0.5 ? '#ffe600' : '#ffaa00';
-    p.style.borderRadius = '50%';
-    p.style.pointerEvents = 'none';
-    p.style.zIndex = '9999';
-    p.style.boxShadow = '0 0 8px #ffe600';
-    
-    const angle = Math.random() * Math.PI * 2;
-    const speed = Math.random() * 100 + 50;
-    const tx = Math.cos(angle) * speed;
-    const ty = Math.sin(angle) * speed;
-    
-    document.body.appendChild(p);
-    
-    p.animate([
-      { transform: 'translate(0, 0) scale(1)', opacity: 1 },
-      { transform: `translate(${tx}px, ${ty}px) scale(0)`, opacity: 0 }
-    ], {
-      duration: Math.random() * 800 + 400,
-      easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
-      fill: 'forwards'
-    });
-    
-    setTimeout(() => p.remove(), 1200);
-  }
-}
-
-function showAchievementToast(ach) {
-  sfxAchievementUnlock();
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.innerHTML = `
-    <div style="font-size:24px">${ach.icon}</div>
-    <div style="display:flex;flex-direction:column;text-align:left;">
-      <div style="font-weight:900;color:#ffe600;font-size:8px;letter-spacing:1px;margin-bottom:1px">ACHIEVEMENT UNLOCKED!</div>
-      <div style="font-weight:700;font-size:11px;letter-spacing:0.5px;color:#fff">${ach.label}</div>
-      <div style="font-size:8px;color:rgba(255,255,255,0.6);margin-top:1px">${ach.description}</div>
-    </div>
-  `;
-  document.body.appendChild(toast);
-  
-  toast.offsetHeight; // force reflow
-  toast.classList.add('show');
-  
-  setTimeout(() => {
-    const rect = toast.getBoundingClientRect();
-    spawnGoldBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
-  }, 100);
-  
-  setTimeout(() => {
-    toast.classList.remove('show');
-    setTimeout(() => toast.remove(), 400);
-  }, 2500);
-}
-
-function unlockAchievement(id) {
-  const achieved = _getAchievements(); // in-memory cache — no JSON.parse on every call
-  const isAlreadyUnlocked = achieved.some(a => (typeof a === 'string' ? a === id : a.id === id));
-  if (isAlreadyUnlocked) return;
-
-  const ach = ACHIEVEMENTS.find(a => a.id === id);
-  if (!ach) return;
-
-  achieved.push({ id, date: new Date().toLocaleDateString() });
-  // _achievementsCache is the same array reference — push above already updated it
-  localStorage.setItem(LS.ACHIEVEMENTS, JSON.stringify(achieved));
-
-  showAchievementToast(ach);
-}
+function getGhostY(){let d=0;while(validPos(S.current,0,d+1))d++;return S.current.y+d;}
 
 // ─── T-spin ───────────────────────────────────────────────────────────────────
-// Returns 'full', 'mini', or false.
-// Uses 3-corner rule + front/back distinction based on T-piece rotation:
-//   Rot 0 (bump up)    : front = top corners    [TL,TR]
-//   Rot 1 (bump right) : front = right corners  [TR,BR]
-//   Rot 2 (bump down)  : front = bottom corners [BL,BR]
-//   Rot 3 (bump left)  : front = left corners   [TL,BL]
-// Full T-Spin = both front corners filled; Mini = only one front corner filled.
 function checkTSpin(){
-  if(!current||current.key!=='T'||!lastWasRotate)return false;
-  const x=current.x,y=current.y;
-  // TL=0, TR=1, BL=2, BR=3
+  if(!S.current||S.current.key!=='T'||!lastWasRotate)return false;
+  const x=S.current.x,y=S.current.y;
   const corners=[[x,y],[x+2,y],[x,y+2],[x+2,y+2]];
-  function blocked(cx,cy){return cx<0||cx>=COLS||cy>=ROWS||(cy>=0&&board[cy][cx]);}
+  function blocked(cx,cy){return cx<0||cx>=COLS||cy>=ROWS||(cy>=0&&S.board[cy][cx]);}
   const f=corners.map(([cx,cy])=>blocked(cx,cy)?1:0);
   if(f[0]+f[1]+f[2]+f[3]<3)return false;
-  // Infer rotation from shape matrix (no explicit rot field needed)
-  const sh=current.shape;
-  let front; // two indices into f[] that are the "face" of the T
+  const sh=S.current.shape;
+  let front;
   if(sh.length===2){
-    // Horizontal T (2 rows × 3 cols): rot0 shape[0][0]===0 → bump up; rot2 → bump down
     front=sh[0][0]===0?[0,1]:[2,3];
   }else{
-    // Vertical T (3 rows × 2 cols): rot1 shape[0][1]===0 → bump right; rot3 → bump left
     front=sh[0][1]===0?[1,3]:[0,2];
   }
   const frontFilled=f[front[0]]+f[front[1]];
@@ -1544,17 +222,7 @@ function checkTSpin(){
 
 // ─── Keyboard ─────────────────────────────────────────────────────────────────
 const KEYS={};let dasTimer=null;
-// Key guide DOM refs cached once at startup — getElementById on every keydown was
-// the most frequent DOM query in the hot path (every keydown + keyup event).
-const _keyGuide={
-  move:   document.getElementById('key-move'),
-  rotate: document.getElementById('key-rotate'),
-  soft:   document.getElementById('key-soft'),
-  hard:   document.getElementById('key-hard'),
-  hold:   document.getElementById('key-hold'),
-  pause:  document.getElementById('key-pause'),
-  mute:   document.getElementById('key-mute'),
-};
+
 function updateKeyGuideState(code, isPressed) {
   let el = null;
   if (code === 'ArrowLeft' || code === 'ArrowRight') el = _keyGuide.move;
@@ -1568,12 +236,11 @@ function updateKeyGuideState(code, isPressed) {
 }
 document.addEventListener('keydown',e=>{
   updateKeyGuideState(e.code, true);
-  // Enable desktop-style layout on iPad when a keyboard key is pressed
-  if(!_kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
+  if(!S._kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
   if(KEYS[e.code])return;KEYS[e.code]=true;
-  if(!gameRunning)return;
+  if(!S.gameRunning)return;
   if(e.code==='KeyP'){togglePause();return;}
-  if(gamePaused)return;
+  if(S.gamePaused)return;
   switch(e.code){
     case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
     case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-12,-2);break;
@@ -1590,20 +257,20 @@ document.addEventListener('keyup',e=>{
   if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
   if(e.code==='ArrowDown')clearDASDown();
 });
-function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(gameRunning&&!gamePaused)moveX(d);},arr);},das);}
+function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)moveX(d);},S.arr);},S.das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
 let dasDownTimer=null;
-function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{if(gameRunning&&!gamePaused)softDrop();dasDownTimer=setInterval(()=>{if(gameRunning&&!gamePaused)softDrop();},arr);},das);}
+function startDASDown(){clearDASDown();dasDownTimer=setTimeout(()=>{if(S.gameRunning&&!S.gamePaused)softDrop();dasDownTimer=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)softDrop();},S.arr);},S.das);}
 function clearDASDown(){clearTimeout(dasDownTimer);clearInterval(dasDownTimer);dasDownTimer=null;}
 
-function moveX(d){if(!current)return;if(validPos(current,d)){current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
-function softDrop(){if(!current)return;if(validPos(current,0,1)){current.y++;score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail();}else{if(!lockActive){lockActive=true;lockTimer=lockMs;}}}
+function moveX(d){if(!S.current)return;if(validPos(S.current,d)){S.current.x+=d;cancelLock();lastWasRotate=false;sfxMove();}}
+function softDrop(){if(!S.current)return;if(validPos(S.current,0,1)){S.current.y++;S.score+=1;updateUI();cancelLock();lastWasRotate=false;spawnDropTrail(S.current);}else{if(!S.lockActive){S.lockActive=true;S.lockTimer=S.lockMs;}}}
 function hardDrop(){
-  if(!current)return;
-  let d=0;while(validPos(current,0,1)){current.y++;d++;}
-  score+=d*2;updateUI();
-  if(animIntensity==='full'){shakeFrames=Math.min(12,5+Math.floor(d*0.45));shakeMag=2.8;shakeAllDir=true;}
-  spawnHardDropParticles();
+  if(!S.current)return;
+  let d=0;while(validPos(S.current,0,1)){S.current.y++;d++;}
+  S.score+=d*2;updateUI();
+  if(S.animIntensity==='full'){S.shakeFrames=Math.min(12,5+Math.floor(d*0.45));S.shakeMag=2.8;S.shakeAllDir=true;}
+  spawnHardDropParticles(S.current);
   sfxHardDrop();
   lockPiece();
 }
@@ -1612,7 +279,7 @@ function hardDrop(){
 function makeTouchBtn(id,onPress,mode='repeat'){
   const el=document.getElementById(id);if(!el)return;
   let iv=null,to=null,on=false;
-  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!gameRunning&&mode!=='any')return;if(gamePaused&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(gameRunning&&!gamePaused)onPress();},arr);},das);}}
+  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!S.gameRunning&&mode!=='any')return;if(S.gamePaused&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)onPress();},S.arr);},S.das);}}
   function rel(e){if(e)e.preventDefault();if(!on)return;on=false;el.classList.remove('pressed');clearTimeout(to);clearInterval(iv);to=null;iv=null;}
   el.addEventListener('touchstart',press,{passive:false});
   el.addEventListener('touchend',rel,{passive:false});
@@ -1635,11 +302,11 @@ function gameLoop(ts){
   measureFPS(ts);
   const dt=prevTs?Math.min(ts-prevTs,100):16;prevTs=ts;
   drawBackground();
-  if(!gamePaused&&gameRunning&&current&&!_countdownVal){
-    if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
-    else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1)){current.y++;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
+  if(!S.gamePaused&&S.gameRunning&&S.current&&!S._countdownVal){
+    if(S.lockActive){S.lockTimer-=dt;if(S.lockTimer<=0)lockPiece();}
+    else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(S.current,0,1)){S.current.y++;spawnDropTrail(S.current);}else{S.lockActive=true;S.lockTimer=S.lockMs;}}
   }
-  if(isSprintMode&&gameRunning&&!_countdownVal)updateSprintTimer();
+  if(S.isSprintMode&&S.gameRunning&&!S._countdownVal)updateSprintTimer();
   drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
 }
@@ -1647,12 +314,12 @@ function gameLoop(ts){
 // ─── Game control ─────────────────────────────────────────────────────────────
 function loadSettings(){
   S.muteAudio=localStorage.getItem(LS.MUTE)==='1';
-  das=parseInt(localStorage.getItem(LS.DAS)||'150');
-  arr=parseInt(localStorage.getItem(LS.ARR)||'50');
-  lockMs=parseInt(localStorage.getItem(LS.LOCK)||'500');
-  ghostVisible=localStorage.getItem(LS.GHOST)!=='0';
-  colorblindMode=localStorage.getItem(LS.COLORBLIND)==='1';
-  animIntensity=localStorage.getItem(LS.ANIM)||'full';
+  S.das=parseInt(localStorage.getItem(LS.DAS)||'150');
+  S.arr=parseInt(localStorage.getItem(LS.ARR)||'50');
+  S.lockMs=parseInt(localStorage.getItem(LS.LOCK)||'500');
+  S.ghostVisible=localStorage.getItem(LS.GHOST)!=='0';
+  S.colorblindMode=localStorage.getItem(LS.COLORBLIND)==='1';
+  S.animIntensity=localStorage.getItem(LS.ANIM)||'full';
   const icon=document.getElementById('mute-icon');
   const btn=document.getElementById('btn-mute');
   if(icon)icon.textContent=S.muteAudio?'volume_off':'volume_up';
@@ -1660,65 +327,33 @@ function loadSettings(){
   applyMuteToGain();
 }
 
-function triggerLevelUpVisuals() {
-  if(lowPerfMode) return; // Skip all level-up cosmetics in perf mode
-  const targetIds = ['level-display', 'level-display-m', 'bpm-display'];
-  targetIds.forEach(id => {
-    const el = document.getElementById(id);
-    if(el) {
-      el.classList.remove('scale-pop-active');
-      void el.offsetWidth; // force reflow
-      el.classList.add('scale-pop-active');
-      setTimeout(() => el.classList.remove('scale-pop-active'), 600);
-    }
-  });
-  
-  const lvlPCount=lowPerfMode?25:50;
-  for(let i=0;i<lvlPCount;i++){
-    const a=Math.random()*Math.PI*2,sp=Math.random()*11+3;
-    particles.push({x:(COLS/2)*CELL,y:(ROWS/2)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:0.012,color:PAL[Math.floor(Math.random()*5)],size:Math.random()*8+4,type:'star'});
-  }
-  
-  [261, 329, 392, 523, 659, 784].forEach((f, i) => playBeep(f, 'square', 0.16, 0.22, i * 0.05));
-  levelUpScanline = 0.01;
-}
-
 function startGame(){
-  // Hide overlay and yield to browser so it can PAINT before heavy init runs.
-  // A lone display='none' does NOT trigger an immediate paint — the browser
-  // batches style changes until the JS call stack empties. setTimeout(0)
-  // empties the stack first, so the paint (overlay gone) happens before any
-  // init work. This is the real INP fix; the previous inline comment was wrong.
   $overlay.style.display='none';
   $combo.textContent='';
   setTimeout(_doStartGame, 0);
 }
 function _doStartGame(){
   loadSettings();
-  if (!isDailyMode) { _prng = null; }
-  // Restore perf mode from localStorage (persists across games + sessions).
+  if (!S.isDailyMode) { _prng = null; }
   const savedPerf = localStorage.getItem(LS.LOW_PERF)==='1';
-  if(!_perfLocked && !savedPerf){ setLowPerfMode(false); }
+  if(!S._perfLocked && !savedPerf){ setLowPerfMode(false); }
   else { setLowPerfMode(true); }
-  _fpsCnt=0;_fpsLast=0;_fpsLowCount=0;
-  _perfHold=_perfLocked||savedPerf?0:3;
-  _lastBorderColor=null;
+  resetPerfHold(S._perfLocked, savedPerf);
   // Sprites are pre-warmed at idle time (page load); this is a fast cache hit
   for(const k of Object.keys(PIECES))getCellSprite(PIECES[k].color);
-  board=createBoard();score=0;lines=0;level=1;S.level=1;combo=0;maxCombo=0;dropInterval=800;
-  particles=[];shakeFrames=0;shakeMag=0.4;shakeAllDir=false;flashLines=new Set();flashTimer=0;
-  lockTimer=0;lockActive=false;lastWasRotate=false;rainbowBorder=0;comboFlash=0;comboFlashColor='#00c8ff';dangerPulse=0;levelUpScanline=0;
-  hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
-  bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
-  gameRunning=true;gamePaused=false;gameOver=false;S.gameRunning=true;S.gamePaused=false;
+  S.board=createBoard();S.score=0;S.lines=0;S.level=1;S.combo=0;maxCombo=0;dropInterval=800;
+  S.particles=[];S.shakeFrames=0;S.shakeMag=0.4;S.shakeAllDir=false;S.flashLines=new Set();S.flashTimer=0;
+  S.lockTimer=0;S.lockActive=false;lastWasRotate=false;S.rainbowBorder=0;S.comboFlash=0;S.comboFlashColor='#00c8ff';S.dangerPulse=0;S.levelUpScanline=0;
+  S.hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
+  bag=[];refillBag();S.next=makePiece(nextFromBag());S.held=null;canHold=true;
+  S.gameRunning=true;S.gamePaused=false;gameOver=false;
 
   // ── Sprint mode init ──────────────────────────────────────────────────────
-  // Update panel labels and load personal best sprint time.
   const psl=document.getElementById('panel-score-label');
   const lsl=document.getElementById('lines-sub-label');
-  if(isSprintMode){
-    _sprintHiTime=parseInt(localStorage.getItem(LS.SPRINT_HI)||'0');
-    _sprintEndTime=0;
+  if(S.isSprintMode){
+    S._sprintHiTime=parseInt(localStorage.getItem(LS.SPRINT_HI)||'0');
+    S._sprintEndTime=0;
     if(psl)psl.textContent='TIME';
     if(lsl)lsl.textContent='LEFT';
   }else{
@@ -1731,32 +366,28 @@ function _doStartGame(){
   prevTs=0;lastDropTs=performance.now();
   startBGM();
   // 3-2-1 countdown before pieces start falling
-  _countdownGo=0;
-  _countdownVal=3;
-  _countdownTs=performance.now();
+  S._countdownGo=0;
+  S._countdownVal=3;
+  S._countdownTs=performance.now();
   clearInterval(_countdownTimer);
-  // Tick sound for first number (3)
   if(!S.muteAudio)playBeep(440,'square',.13,.18,0);
   _countdownTimer=setInterval(()=>{
-    _countdownVal--;
-    _countdownTs=performance.now();
-    if(_countdownVal<=0){
-      clearInterval(_countdownTimer);_countdownTimer=null;_countdownVal=0;
-      _countdownGo=55; // ~0.9s "GO!" flash
+    S._countdownVal--;
+    S._countdownTs=performance.now();
+    if(S._countdownVal<=0){
+      clearInterval(_countdownTimer);_countdownTimer=null;S._countdownVal=0;
+      S._countdownGo=55;
       lastDropTs=performance.now();
-      if(isSprintMode)_sprintStartTime=performance.now();
-      // GO! fanfare chord
+      if(S.isSprintMode)S._sprintStartTime=performance.now();
       if(!S.muteAudio){[523,659,784].forEach((f,i)=>playBeep(f,'sawtooth',.16,.3,i*.04));}
     }else{
-      // Ascending pitch per tick: 3=440 2=550 1=660
-      const pitch={2:550,1:660}[_countdownVal]||440;
+      const pitch={2:550,1:660}[S._countdownVal]||440;
       if(!S.muteAudio)playBeep(pitch,'square',.13,.18,0);
     }
   },1000);
   animFrame=requestAnimationFrame(gameLoop);
 }
 
-let _gateTimer = null;
 function showDailyGateOverlay(todayStr){
   clearInterval(_gateTimer);
   const updateCountdown = () => {
@@ -1771,11 +402,10 @@ function showDailyGateOverlay(todayStr){
     const hrs = String(Math.floor(diffMs / 3600000)).padStart(2, '0');
     const mins = String(Math.floor((diffMs % 3600000) / 60000)).padStart(2, '0');
     const secs = String(Math.floor((diffMs % 60000) / 1000)).padStart(2, '0');
-    
     const countEl = document.getElementById('daily-countdown');
     if (countEl) countEl.textContent = `${hrs}:${mins}:${secs}`;
   };
-  
+
   $overlay.innerHTML = `
     <div class="glass-panel">
       <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600">🏆 DAILY CHALLENGE</h1>
@@ -1799,24 +429,24 @@ function startDailyChallenge(){
     showDailyGateOverlay(todayStr);
     return;
   }
-  
+
   $overlay.innerHTML = `
     <div class="glass-panel" style="width: min(300px, 90vw);">
       <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600;letter-spacing:2px">🏆 DAILY CHALLENGE</h1>
       <div style="font-size:36px;margin:10px 0;animation:pulse 1.5s infinite">🛰️</div>
       <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SAME BLOCKS FOR EVERYONE!</div>
-      
+
       <div id="briefing-box" style="font-size:10px;line-height:1.6;color:rgba(255,255,255,0.8);text-align:left;margin-bottom:12px;padding:12px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:100%;box-sizing:border-box">
         <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
         <p style="margin:0 0 8px 0">Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
         <p style="margin:0;color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
       </div>
-      
+
       <div style="font-size:9px;line-height:1.4;color:#ff5b5b;font-weight:700;text-align:center;margin-bottom:12px;padding:8px 10px;background:rgba(255,91,91,0.08);border:1px solid rgba(255,91,91,0.25);border-radius:6px;width:100%;box-sizing:border-box">
         ⚠️ Warning: You can only play ONCE today!<br>
         Once you start, there are no retries!
       </div>
-      
+
       <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
         <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">START CHALLENGE</button>
         <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">GO BACK</button>
@@ -1828,38 +458,38 @@ function startDailyChallenge(){
 
 function launchDailyChallenge() {
   const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  isDailyMode=true;S.isDailyMode=true;
+  S.isDailyMode=true;
   _prng = mulberry32(parseInt(todayStr, 10));
   startGame();
 }
 
 function togglePause(){
-  if(!gameRunning)return;
-  gamePaused=!gamePaused;S.gamePaused=gamePaused;
-  if(gamePaused){
+  if(!S.gameRunning)return;
+  S.gamePaused=!S.gamePaused;
+  if(S.gamePaused){
     pauseBGM();
     $overlay.innerHTML=`
       <div class="glass-panel">
         <h1 style="font-size:22px;margin-bottom:14px">PAUSED</h1>
         <div class="settings-box" style="width:100%">
           <button class="toggle-btn${S.muteAudio?' muted':''}" id="ov-mute-btn" onclick="toggleMute()">${S.muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON'}</button>
-          <button class="toggle-btn${ghostVisible?'':' muted'}" id="ov-ghost-btn" onclick="updateGhost()">${ghostVisible?'👻 GHOST ON':'👻 GHOST OFF'}</button>
-          <button class="toggle-btn${colorblindMode?' cb-active':' muted'}" id="ov-cb-btn" onclick="updateColorblind()">${colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF'}</button>
-          <button class="toggle-btn${animIntensity==='off'?' muted':''}" id="ov-anim-btn" onclick="cycleAnimIntensity()">${_animLabel()}</button>
+          <button class="toggle-btn${S.ghostVisible?'':' muted'}" id="ov-ghost-btn" onclick="updateGhost()">${S.ghostVisible?'👻 GHOST ON':'👻 GHOST OFF'}</button>
+          <button class="toggle-btn${S.colorblindMode?' cb-active':' muted'}" id="ov-cb-btn" onclick="updateColorblind()">${S.colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF'}</button>
+          <button class="toggle-btn${S.animIntensity==='off'?' muted':''}" id="ov-anim-btn" onclick="cycleAnimIntensity()">${_animLabel()}</button>
           <div class="settings-row">
             <span class="settings-lbl">DAS</span>
-            <input type="range" class="neon-range" min="50" max="300" value="${das}" oninput="updateDAS(this.value)">
-            <span class="settings-val" id="ov-das-val">${das}ms</span>
+            <input type="range" class="neon-range" min="50" max="300" value="${S.das}" oninput="updateDAS(this.value)">
+            <span class="settings-val" id="ov-das-val">${S.das}ms</span>
           </div>
           <div class="settings-row">
             <span class="settings-lbl">ARR</span>
-            <input type="range" class="neon-range" min="0" max="100" value="${arr}" oninput="updateARR(this.value)">
-            <span class="settings-val" id="ov-arr-val">${arr}ms</span>
+            <input type="range" class="neon-range" min="0" max="100" value="${S.arr}" oninput="updateARR(this.value)">
+            <span class="settings-val" id="ov-arr-val">${S.arr}ms</span>
           </div>
           <div class="settings-row">
             <span class="settings-lbl">LOCK</span>
-            <input type="range" class="neon-range" min="100" max="1000" step="50" value="${lockMs}" oninput="updateLockDelay(this.value)">
-            <span class="settings-val" id="ov-lock-val">${lockMs}ms</span>
+            <input type="range" class="neon-range" min="100" max="1000" step="50" value="${S.lockMs}" oninput="updateLockDelay(this.value)">
+            <span class="settings-val" id="ov-lock-val">${S.lockMs}ms</span>
           </div>
         </div>
         <button class="action-btn" style="width:100%" onclick="togglePause()">RESUME</button>
@@ -1873,20 +503,19 @@ function togglePause(){
 }
 
 // Saves all end-of-game stats to localStorage and fires achievement checks.
-// Returns a stats object consumed by _renderGameOverScreen.
 function _saveGameStats() {
   const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  if (isDailyMode) localStorage.setItem(LS.DAILY_DATE, todayStr);
+  if (S.isDailyMode) localStorage.setItem(LS.DAILY_DATE, todayStr);
 
-  const isNewBest = score > hiScore;
-  if (isNewBest) { hiScore = score; localStorage.setItem(LS.HI, hiScore); }
+  const isNewBest = S.score > S.hiScore;
+  if (isNewBest) { S.hiScore = S.score; localStorage.setItem(LS.HI, S.hiScore); }
 
   const hist = JSON.parse(localStorage.getItem(LS.HISTORY) || '[]');
-  hist.unshift({ score, lines, level, date: Date.now() });
+  hist.unshift({ score:S.score, lines:S.lines, level:S.level, date: Date.now() });
   localStorage.setItem(LS.HISTORY, JSON.stringify(hist.slice(0, 5)));
 
   const prevStreak = parseInt(localStorage.getItem(LS.STREAK) || '0');
-  const newStreak = score >= 5000 ? prevStreak + 1 : 0;
+  const newStreak = S.score >= 5000 ? prevStreak + 1 : 0;
   localStorage.setItem(LS.STREAK, newStreak);
 
   const storedMaxCombo = parseInt(localStorage.getItem(LS.MAX_COMBO) || '0');
@@ -1899,15 +528,14 @@ function _saveGameStats() {
   let totalLines = parseInt(localStorage.getItem(LS.TOTAL_LINES) || '0');
   let maxLines   = parseInt(localStorage.getItem(LS.MAX_LINES)   || '0');
 
-  // record checks must happen before updating lifetime totals
-  const isBestLevel = level > 0 && level >= bestLevel;
+  const isBestLevel = S.level > 0 && S.level >= bestLevel;
   const isBestCombo = maxCombo > 0 && maxCombo >= storedMaxCombo;
-  const isBestLines = lines > 0 && lines >= maxLines;
+  const isBestLines = S.lines > 0 && S.lines >= maxLines;
 
-  totalGames += 1; totalScore += score;
-  if (level > bestLevel) bestLevel = level;
-  totalLines += lines;
-  if (lines > maxLines) maxLines = lines;
+  totalGames += 1; totalScore += S.score;
+  if (S.level > bestLevel) bestLevel = S.level;
+  totalLines += S.lines;
+  if (S.lines > maxLines) maxLines = S.lines;
 
   localStorage.setItem(LS.TOTAL_GAMES, totalGames);
   localStorage.setItem(LS.TOTAL_SCORE, totalScore);
@@ -1915,7 +543,6 @@ function _saveGameStats() {
   localStorage.setItem(LS.TOTAL_LINES, totalLines);
   localStorage.setItem(LS.MAX_LINES,   maxLines);
 
-  // Track cumulative lifetime game count for achievement thresholds (in-memory cache)
   const lifetime = _getLifetime();
   lifetime.totalGames = (lifetime.totalGames || 0) + 1;
   localStorage.setItem(LS.LIFETIME, JSON.stringify(lifetime));
@@ -1923,7 +550,7 @@ function _saveGameStats() {
   unlockAchievement('first_game');
   if (lifetime.totalGames >= 10) unlockAchievement('games_10');
   if (lifetime.totalGames >= 50) unlockAchievement('games_50');
-  if (isDailyMode) unlockAchievement('daily_challenge_1');
+  if (S.isDailyMode) unlockAchievement('daily_challenge_1');
   if (newStreak >= 5) unlockAchievement('streak_5');
 
   return { isNewBest, newStreak, displayMaxCombo, isBestLevel, isBestCombo, isBestLines };
@@ -1954,7 +581,6 @@ function _openDonation(){
   document.body.appendChild(modal);
 }
 
-// Returns donation button HTML, or '' if SUPPORT_URL is not set.
 function _donationHTML(){
   if(!SUPPORT_URL)return'';
   return`<div style="margin-top:14px;width:100%;text-align:center">
@@ -1966,24 +592,23 @@ function _donationHTML(){
   </div>`;
 }
 
-// Builds and shows the game-over overlay HTML after the explosion animation settles.
 function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLevel, isBestCombo, isBestLines }) {
   const savedName = localStorage.getItem(LS.NAME) || '';
 
   let pbBadges = [];
-  if (isDailyMode) {
+  if (S.isDailyMode) {
     pbBadges.push(`<div class="pb-badge score-pb" style="background:rgba(255,230,0,0.12);border-color:#ffe600;color:#ffe600">🏅 DAILY CHALLENGE</div>`);
   } else {
     if (isNewBest)  pbBadges.push(`<div class="pb-badge score-pb">🏆 RECORD SCORE</div>`);
-    if (isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${level}</div>`);
-    if (isBestLines) pbBadges.push(`<div class="pb-badge lines-pb">🎯 RECORD LINES: ${lines}</div>`);
+    if (isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${S.level}</div>`);
+    if (isBestLines) pbBadges.push(`<div class="pb-badge lines-pb">🎯 RECORD LINES: ${S.lines}</div>`);
     if (isBestCombo) pbBadges.push(`<div class="pb-badge combo-pb">⚡ RECORD COMBO: x${maxCombo}</div>`);
   }
 
   let badgesHTML = '';
   if (pbBadges.length > 0 || newStreak > 0) {
     badgesHTML = `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-      ${!isDailyMode && newStreak > 0 ? `<div class="streak-badge">🔥 ${newStreak} STREAK</div>` : ''}
+      ${!S.isDailyMode && newStreak > 0 ? `<div class="streak-badge">🔥 ${newStreak} STREAK</div>` : ''}
       ${pbBadges.join(' ')}
     </div>`;
   } else if (displayMaxCombo > 1) {
@@ -1994,11 +619,11 @@ function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLe
 
   $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:20px;margin-bottom:18px">${isDailyMode ? 'DAILY CHALLENGE' : 'GAME OVER'}</h1>
-      ${!isDailyMode && isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>' : ''}
+      <h1 style="font-size:20px;margin-bottom:18px">${S.isDailyMode ? 'DAILY CHALLENGE' : 'GAME OVER'}</h1>
+      ${!S.isDailyMode && isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>' : ''}
       <div style="width:100%;text-align:center;margin-bottom:${badgesHTML ? '16px' : '22px'}">
-        <div class="sub" style="margin-bottom:3px">SCORE: ${score.toLocaleString()}</div>
-        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${hiScore.toLocaleString()}</div>
+        <div class="sub" style="margin-bottom:3px">SCORE: ${S.score.toLocaleString()}</div>
+        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${S.hiScore.toLocaleString()}</div>
       </div>
       ${badgesHTML ? `<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>` : ''}
       <div style="width:100%">
@@ -2018,23 +643,23 @@ function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, isBestLe
 }
 
 function endGame(){
-  gameRunning=false;gameOver=true;S.gameRunning=false;
+  S.gameRunning=false;gameOver=true;
   stopBGM();sfxGameOver();
 
   // Sprint top-out: show "SPRINT FAILED" without saving marathon stats
-  if(isSprintMode){
+  if(S.isSprintMode){
     for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
-      if(!board[r][c])continue;
+      if(!S.board[r][c])continue;
       const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
-      particles.push({x:(c+.5)*CELL,y:(r+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:board[r][c],size:Math.random()*5+3,type:'spark'});
+      S.particles.push({x:(c+.5)*S.CELL,y:(r+.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:S.board[r][c],size:Math.random()*5+3,type:'spark'});
     }
-    shakeFrames=40;shakeMag=0.7;
+    S.shakeFrames=40;S.shakeMag=0.7;
     setTimeout(()=>{
       $overlay.innerHTML=`
         <div class="glass-panel">
           <h1 style="font-size:20px;margin-bottom:18px">SPRINT FAILED</h1>
           <div style="width:100%;text-align:center;margin-bottom:22px">
-            <div class="sub" style="margin-bottom:3px">${Math.max(0,SPRINT_LINES-lines)} LINES REMAINING</div>
+            <div class="sub" style="margin-bottom:3px">${Math.max(0,SPRINT_LINES-S.lines)} LINES REMAINING</div>
           </div>
           <div class="btn-row" style="gap:6px;width:100%">
             <button class="action-btn sm" style="flex:1" onclick="startSprintMode()">RETRY</button>
@@ -2050,42 +675,38 @@ function endGame(){
 
   // Explode all board pieces into spark particles
   for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
-    if(!board[r][c])continue;
+    if(!S.board[r][c])continue;
     const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
-    particles.push({x:(c+.5)*CELL,y:(r+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:board[r][c],size:Math.random()*5+3,type:'spark'});
+    S.particles.push({x:(c+.5)*S.CELL,y:(r+.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:S.board[r][c],size:Math.random()*5+3,type:'spark'});
   }
-  shakeFrames=40;shakeMag=0.7;
+  S.shakeFrames=40;S.shakeMag=0.7;
 
   if(stats.isNewBest){
     [523,659,784,1047].forEach((f,i)=>playBeep(f,'sawtooth',.18,.28,i*.06+.3));
     for(let i=0;i<60;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*10+3;
-      particles.push({x:(Math.random()*COLS)*CELL,y:(Math.random()*ROWS*0.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#ffe600','#ffaa00','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+2,type:'star'});
+      S.particles.push({x:(Math.random()*COLS)*S.CELL,y:(Math.random()*ROWS*0.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#ffe600','#ffaa00','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+2,type:'star'});
     }
   }
 
-  // Delay overlay so the explosion animation plays before UI appears
   setTimeout(() => _renderGameOverScreen(stats), 600);
 }
 
 // ─── Sprint ───────────────────────────────────────────────────────────────────
 function endSprint(){
-  // _sprintEndTime was captured in lockPiece() the moment the 40th line cleared.
-  const timeMs=Math.round(_sprintEndTime-_sprintStartTime);
-  gameRunning=false;gameOver=true;S.gameRunning=false;
+  const timeMs=Math.round(S._sprintEndTime-S._sprintStartTime);
+  S.gameRunning=false;gameOver=true;
   stopBGM();
 
-  // Save personal best (lower = better)
-  const prevBest=_sprintHiTime;
+  const prevBest=S._sprintHiTime;
   const isNewBest=prevBest===0||timeMs<prevBest;
-  if(isNewBest){_sprintHiTime=timeMs;localStorage.setItem(LS.SPRINT_HI,timeMs);}
+  if(isNewBest){S._sprintHiTime=timeMs;localStorage.setItem(LS.SPRINT_HI,timeMs);}
   unlockAchievement('sprint_finish');
 
-  // Confetti celebration
-  if(animIntensity!=='off'){
+  if(S.animIntensity!=='off'){
     for(let i=0;i<60;i++){
       const a=Math.random()*Math.PI*2,sp=Math.random()*10+3;
-      particles.push({x:(Math.random()*COLS)*CELL,y:(Math.random()*ROWS*0.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#00ff88','#00c8ff','#ffe600','#ffffff'][Math.floor(Math.random()*4)],size:Math.random()*6+2,type:'star'});
+      S.particles.push({x:(Math.random()*COLS)*S.CELL,y:(Math.random()*ROWS*0.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#00ff88','#00c8ff','#ffe600','#ffffff'][Math.floor(Math.random()*4)],size:Math.random()*6+2,type:'star'});
     }
   }
   [523,659,784,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.18,.28,i*.07+.1));
@@ -2096,7 +717,7 @@ function _renderSprintScreen(timeMs,isNewBest,prevBest){
   const savedName=localStorage.getItem(LS.NAME)||'';
   const lpm=Math.round(SPRINT_LINES/(timeMs/60000));
   const prevBestLine=prevBest>0&&!isNewBest
-    ?`<div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin-bottom:10px">BEST: ${fmtTime(prevBest)}</div>`:'';
+    ?`<div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin-bottom:10px">BEST: ${fmtTime(prevBest)}</div>`:'';;
 
   $overlay.innerHTML=`
     <div class="glass-panel">
@@ -2138,7 +759,7 @@ async function submitSprintScore(timeMs){
     const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score:timeMs,mode:'sprint'})});
     const data=await r.json();
     if(data.sprintBoard){
-      _lbCache={..._lbCache,sprintBoard:data.sprintBoard||[],sprintDailyBoard:data.sprintDailyBoard||[],sprintWeeklyBoard:data.sprintWeeklyBoard||[],sprintRank:data.sprintRank,sprintDailyRank:data.sprintDailyRank,sprintWeeklyRank:data.sprintWeeklyRank,myName:name,mySprintTime:timeMs};
+      S._lbCache={...S._lbCache,sprintBoard:data.sprintBoard||[],sprintDailyBoard:data.sprintDailyBoard||[],sprintWeeklyBoard:data.sprintWeeklyBoard||[],sprintRank:data.sprintRank,sprintDailyRank:data.sprintDailyRank,sprintWeeklyRank:data.sprintWeeklyRank,myName:name,mySprintTime:timeMs};
       const rankMsg=[
         data.sprintDailyRank?`<div class="sub" style="color:#00ff88;margin-bottom:2px">TODAY: #${data.sprintDailyRank}</div>`:'',
         data.sprintWeeklyRank?`<div class="sub" style="color:#00c8ff;margin-bottom:2px">WEEKLY: #${data.sprintWeeklyRank}</div>`:'',
@@ -2203,18 +824,14 @@ async function captureSprintImage(timeMs,rank,lpm){
   ctx.fillRect(px,py,pw,ph);ctx.shadowBlur=0;
   ctx.strokeStyle='rgba(0,255,136,0.35)';ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);
   ctx.textAlign='center';
-  // Title
   ctx.fillStyle='#00ff88';ctx.font='900 52px Orbitron, monospace';
   ctx.shadowColor='rgba(0,255,136,0.6)';ctx.shadowBlur=20;
   ctx.fillText('SPRINT 40L',px+pw/2,py+95);ctx.shadowBlur=0;
-  // Time label
   ctx.font='700 28px Orbitron, monospace';ctx.fillStyle='rgba(255,255,255,0.6)';
   ctx.letterSpacing='6px';ctx.fillText('FINISH TIME',px+pw/2,py+210);
-  // Time value
   ctx.font='900 70px Orbitron, monospace';ctx.fillStyle='#ffe600';
   ctx.shadowColor='#ffe600';ctx.shadowBlur=25;ctx.letterSpacing='2px';
   ctx.fillText(fmtTime(timeMs),px+pw/2,py+290);ctx.shadowBlur=0;
-  // Separator
   ctx.fillStyle='rgba(0,255,136,0.2)';ctx.fillRect(px+80,py+320,pw-160,2);
   ctx.letterSpacing='2px';ctx.font='700 26px Orbitron, monospace';
   let cy=py+395;
@@ -2257,27 +874,26 @@ async function submitScore(){
   if(!name){inp.focus();return;}
   localStorage.setItem(LS.NAME,name);
 
-  // disable form immediately to prevent duplicate submissions
   btn.disabled=true; inp.disabled=true;
   res.innerHTML='<div class="sub">SUBMITTING...</div>';
 
   try{
-    const payload = { name, score };
-    if (isDailyMode) payload.mode = 'daily';
-    
+    const payload = { name, score:S.score };
+    if (S.isDailyMode) payload.mode = 'daily';
+
     const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const data=await r.json();
-    
+
     unlockAchievement('submit_lb');
-    
-    if(isDailyMode && data.challengeBoard){
-      _lbCache = {
-        ..._lbCache,
+
+    if(S.isDailyMode && data.challengeBoard){
+      S._lbCache = {
+        ...S._lbCache,
         challengeBoard: data.challengeBoard || [],
         challengeRank: data.challengeRank || 0,
         challengeAlltimeBoard: data.challengeAlltimeBoard || [],
         challengeAlltimeRank: data.challengeAlltimeRank || 0,
-        myName: name, myScore: score
+        myName: name, myScore: S.score
       };
 
       const rankMsg = `
@@ -2288,17 +904,17 @@ async function submitScore(){
       const tabs=`<div class="lb-tabs">
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
-      </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
+      </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, S.score)}</div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
     }
     else if(data.board){
-      _lbCache = {
-        ..._lbCache,
+      S._lbCache = {
+        ...S._lbCache,
         board: data.board, dailyBoard: data.dailyBoard || [], weeklyBoard: data.weeklyBoard || [],
         rank: data.rank, dailyRank: data.dailyRank, weeklyRank: data.weeklyRank,
-        myName: name, myScore: score
+        myName: name, myScore: S.score
       };
-      
+
       const rankMsg=[
         data.dailyRank?`<div class="sub" style="color:#00ff88;margin-bottom:2px">TODAY: #${data.dailyRank}</div>`:'',
         data.weeklyRank?`<div class="sub" style="color:#00c8ff;margin-bottom:2px">WEEKLY: #${data.weeklyRank}</div>`:'',
@@ -2310,8 +926,8 @@ async function submitScore(){
         <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
         <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
-      </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
+      </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, S.score)}</div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
@@ -2326,55 +942,44 @@ async function captureGameImage(sc, rank, isDaily=false) {
   const c = document.createElement('canvas');
   c.width = 1200; c.height = 630;
   const ctx = c.getContext('2d');
-  
-  // Base background
+
   ctx.fillStyle = '#04041e';
   ctx.fillRect(0, 0, 1200, 630);
-  
-  // Draw animated background if available
+
   const bgi = document.getElementById('bg-canvas');
   if(bgi) ctx.drawImage(bgi, 0, 0, 1200, 630);
-  
-  // Draw game board on the left
+
   const gci = document.getElementById('game-canvas');
   if(gci) {
     const gw = 260, gh = 520;
     const gx = 90, gy = 55;
-    
-    // Outer glow for board
     ctx.shadowColor = '#00c8ff';
     ctx.shadowBlur = 40;
     ctx.fillStyle = 'rgba(0,0,20,0.8)';
     ctx.fillRect(gx, gy, gw, gh);
     ctx.shadowBlur = 0;
-    
     ctx.drawImage(gci, gx, gy, gw, gh);
-    
-    // Neon border
     ctx.strokeStyle = '#00c8ff';
     ctx.lineWidth = 4;
     ctx.strokeRect(gx, gy, gw, gh);
-    
-    // Inner glass highlight
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.strokeRect(gx+2, gy+2, gw-4, gh-4);
   }
-  
-  // Glassmorphism stats panel on the right
+
   const px = 420, py = 55, pw = 700, ph = 520;
   ctx.fillStyle = 'rgba(4,4,30,0.75)';
   ctx.shadowColor = 'rgba(0,0,0,0.6)';
   ctx.shadowBlur = 30;
   ctx.fillRect(px, py, pw, ph);
   ctx.shadowBlur = 0;
-  
+
   ctx.strokeStyle = 'rgba(0,200,255,0.35)';
   ctx.lineWidth = 2;
   ctx.strokeRect(px, py, pw, ph);
-  
+
   ctx.textAlign = 'center';
-  
+
   if (isDaily) {
     ctx.fillStyle = '#ffe600';
     ctx.font = '900 52px Orbitron, monospace';
@@ -2382,7 +987,6 @@ async function captureGameImage(sc, rank, isDaily=false) {
     ctx.shadowBlur = 20;
     ctx.letterSpacing = '2px';
     ctx.fillText('DAILY CHALLENGE', px + pw/2, py + 95);
-    
     const todayLabel = new Date().toISOString().slice(0,10);
     ctx.font = '700 22px Orbitron, monospace';
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
@@ -2390,7 +994,6 @@ async function captureGameImage(sc, rank, isDaily=false) {
     ctx.fillText(todayLabel, px + pw/2, py + 140);
     ctx.shadowBlur = 0;
   } else {
-    // GLOWTRIS Title with Gradient
     const gr = ctx.createLinearGradient(px, py, px+pw, py);
     gr.addColorStop(0, '#00c8ff');
     gr.addColorStop(0.5, '#a000ff');
@@ -2402,14 +1005,12 @@ async function captureGameImage(sc, rank, isDaily=false) {
     ctx.fillText('GLOWTRIS', px + pw/2, py + 110);
     ctx.shadowBlur = 0;
   }
-  
-  // Score Label
+
   ctx.font = '700 28px Orbitron, monospace';
   ctx.fillStyle = 'rgba(255,255,255,0.6)';
   ctx.letterSpacing = '6px';
   ctx.fillText('FINAL SCORE', px + pw/2, py + 210);
-  
-  // Score Value
+
   ctx.font = '900 70px Orbitron, monospace';
   ctx.fillStyle = '#ffe600';
   ctx.shadowColor = '#ffe600';
@@ -2417,15 +1018,13 @@ async function captureGameImage(sc, rank, isDaily=false) {
   ctx.letterSpacing = '2px';
   ctx.fillText(sc.toLocaleString(), px + pw/2, py + 290);
   ctx.shadowBlur = 0;
-  
-  // Separator
+
   ctx.fillStyle = 'rgba(0,200,255,0.2)';
   ctx.fillRect(px + 80, py + 340, pw - 160, 2);
-  
-  // Stats Row
+
   ctx.font = '700 26px Orbitron, monospace';
   ctx.letterSpacing = '2px';
-  
+
   let currentY = py + 400;
   if (isDaily && rank) {
     ctx.fillStyle = '#00ff88';
@@ -2442,16 +1041,16 @@ async function captureGameImage(sc, rank, isDaily=false) {
     ctx.shadowBlur = 0;
     currentY += 50;
   }
-  
+
   ctx.fillStyle = '#00c8ff';
-  ctx.fillText(`LEVEL: ${level}   |   LINES: ${lines}`, px + pw/2, currentY);
+  ctx.fillText(`LEVEL: ${S.level}   |   LINES: ${S.lines}`, px + pw/2, currentY);
   currentY += 50;
-  
+
   if (maxCombo > 1) {
     ctx.fillStyle = '#ff0080';
     ctx.fillText(`⚡ MAX COMBO: x${maxCombo}`, px + pw/2, currentY);
   }
-  
+
   return new Promise(res => c.toBlob(res, 'image/png'));
 }
 
@@ -2459,13 +1058,13 @@ async function shareScore(sc,rank){
   const btn = event && event.target ? event.target : null;
   if(btn){btn.disabled=true; btn.textContent='GENERATING...';}
   try {
-    const isChallenge = isDailyMode;
+    const isChallenge = S.isDailyMode;
     const rankStr=rank?` — Rank #${rank}`:'';
     const challengeHeader = isChallenge ? `🏆 Glowtris Daily Challenge — ` : `🎮 Glowtris — `;
     const text=`${challengeHeader}${sc.toLocaleString()} pts${rankStr}\n${window.location.origin}`;
     const blob = await captureGameImage(sc, rank, isChallenge);
     const file = new File([blob], 'glowtris-score.png', {type: 'image/png'});
-    
+
     if(navigator.canShare && navigator.canShare({files: [file]})) {
       await navigator.share({title:'Glowtris', text, files: [file]});
     } else {
@@ -2492,14 +1091,14 @@ async function loadStartLeaderboard(){
   const el=document.getElementById('start-lb');
   if(!el)return;
   try{
-    const url=lbMode==='daily'?'/api/leaderboard?mode=daily'
-             :lbMode==='sprint'?'/api/leaderboard?mode=sprint'
+    const url=S.lbMode==='daily'?'/api/leaderboard?mode=daily'
+             :S.lbMode==='sprint'?'/api/leaderboard?mode=sprint'
              :'/api/leaderboard';
     const r=await fetch(url);
     const data=await r.json();
-    _lbCache={..._lbCache,...data}; // preserve myRank from previous POST if any
+    S._lbCache={...S._lbCache,...data};
     const activeTab=document.querySelector('.lb-tab[data-tab].active');
-    const defaultTab=lbMode==='daily'?'challenge':lbMode==='sprint'?'sprint-daily':'daily';
+    const defaultTab=S.lbMode==='daily'?'challenge':S.lbMode==='sprint'?'sprint-daily':'daily';
     renderLbTab(activeTab?activeTab.dataset.tab:defaultTab);
   }catch(e){}
 }
@@ -2509,22 +1108,22 @@ function renderLbTab(tab){
   if(!inner)return;
   let entries, myRank;
   const isSprintTab=tab.startsWith('sprint');
-  if(tab==='daily')           { entries=_lbCache.dailyBoard||[];           myRank=_lbCache.dailyRank; }
-  else if(tab==='weekly')     { entries=_lbCache.weeklyBoard||[];          myRank=_lbCache.weeklyRank; }
-  else if(tab==='challenge')  { entries=_lbCache.challengeBoard||[];       myRank=_lbCache.challengeRank; }
-  else if(tab==='challenge-all'){entries=_lbCache.challengeAlltimeBoard||[];myRank=_lbCache.challengeAlltimeRank;}
-  else if(tab==='sprint-daily'){ entries=_lbCache.sprintDailyBoard||[];   myRank=_lbCache.sprintDailyRank; }
-  else if(tab==='sprint-weekly'){entries=_lbCache.sprintWeeklyBoard||[];  myRank=_lbCache.sprintWeeklyRank; }
-  else if(tab==='sprint-all') { entries=_lbCache.sprintBoard||[];         myRank=_lbCache.sprintRank; }
-  else                        { entries=_lbCache.board||[];               myRank=_lbCache.rank; }
+  if(tab==='daily')            { entries=S._lbCache.dailyBoard||[];            myRank=S._lbCache.dailyRank; }
+  else if(tab==='weekly')      { entries=S._lbCache.weeklyBoard||[];           myRank=S._lbCache.weeklyRank; }
+  else if(tab==='challenge')   { entries=S._lbCache.challengeBoard||[];        myRank=S._lbCache.challengeRank; }
+  else if(tab==='challenge-all'){entries=S._lbCache.challengeAlltimeBoard||[];myRank=S._lbCache.challengeAlltimeRank;}
+  else if(tab==='sprint-daily'){ entries=S._lbCache.sprintDailyBoard||[];     myRank=S._lbCache.sprintDailyRank; }
+  else if(tab==='sprint-weekly'){entries=S._lbCache.sprintWeeklyBoard||[];    myRank=S._lbCache.sprintWeeklyRank; }
+  else if(tab==='sprint-all')  { entries=S._lbCache.sprintBoard||[];          myRank=S._lbCache.sprintRank; }
+  else                         { entries=S._lbCache.board||[];                myRank=S._lbCache.rank; }
 
   document.querySelectorAll('.lb-tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  const myVal=isSprintTab?_lbCache.mySprintTime:_lbCache.myScore;
-  inner.innerHTML=lbHTML(entries,_lbCache.myName,myRank,myVal,isSprintTab);
+  const myVal=isSprintTab?S._lbCache.mySprintTime:S._lbCache.myScore;
+  inner.innerHTML=lbHTML(entries,S._lbCache.myName,myRank,myVal,isSprintTab);
 }
 
 function setLbMode(mode) {
-  lbMode=mode;
+  S.lbMode=mode;
   ['marathon','sprint','daily'].forEach(m=>{
     const el=document.getElementById('lb-mode-'+m);
     if(el)el.classList.toggle('active',m===mode);
@@ -2555,41 +1154,38 @@ function setLbMode(mode) {
 }
 
 function startSprintMode(){
-  isSprintMode=true;
-  isDailyMode=false;S.isDailyMode=false;
+  S.isSprintMode=true;
+  S.isDailyMode=false;
   startGame();
 }
 
 function showStartScreen(){
-  isDailyMode=false;S.isDailyMode=false;
-  isSprintMode=false; // reset sprint when returning to start screen
-  clearInterval(_gateTimer);_gateTimer=null; // stop daily countdown if active
-  clearInterval(_countdownTimer);_countdownTimer=null;_countdownVal=0;_countdownGo=0;
-  // Reset panel labels to marathon defaults
+  S.isDailyMode=false;
+  S.isSprintMode=false;
+  clearInterval(_gateTimer);_gateTimer=null;
+  clearInterval(_countdownTimer);_countdownTimer=null;S._countdownVal=0;S._countdownGo=0;
   const psl=document.getElementById('panel-score-label');
   const lsl=document.getElementById('lines-sub-label');
   if(psl)psl.textContent='SCORE';
   if(lsl)lsl.textContent='CLEARED';
-  // Stop the game loop; switch to lightweight bgOnly loop for the start screen.
-  // gameLoop runs full drawBoard()+particles+shake — unnecessary when no game is active.
-  gameRunning=false;S.gameRunning=false;
+  S.gameRunning=false;
   stopBGM();
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
-  animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
+  animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!S.gameRunning)animFrame=requestAnimationFrame(bgOnly);});
   $overlay.innerHTML=`
     <div class="glass-panel">
       <h1>GLOWTRIS</h1>
       <div id="start-lb">
         <div class="lb-mode-toggle" style="display:flex;gap:4px;margin-bottom:6px;width:100%">
-          <button id="lb-mode-marathon" class="lb-tab ${lbMode==='marathon'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('marathon')">MARATHON</button>
-          <button id="lb-mode-sprint" class="lb-tab ${lbMode==='sprint'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('sprint')">⚡ SPRINT</button>
-          <button id="lb-mode-daily" class="lb-tab ${lbMode==='daily'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">🏆 DAILY</button>
+          <button id="lb-mode-marathon" class="lb-tab ${S.lbMode==='marathon'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('marathon')">MARATHON</button>
+          <button id="lb-mode-sprint" class="lb-tab ${S.lbMode==='sprint'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('sprint')">⚡ SPRINT</button>
+          <button id="lb-mode-daily" class="lb-tab ${S.lbMode==='daily'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">🏆 DAILY</button>
         </div>
         <div class="lb-tabs-container lb-tabs">
-          ${lbMode==='daily' ? `
+          ${S.lbMode==='daily' ? `
             <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
             <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
-          ` : lbMode==='sprint' ? `
+          ` : S.lbMode==='sprint' ? `
             <button class="lb-tab active" data-tab="sprint-daily" onclick="renderLbTab('sprint-daily')">TODAY</button>
             <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
             <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
@@ -2620,7 +1216,7 @@ function showStartScreen(){
 }
 
 function showModeSelector(){
-  const sprintBest=_sprintHiTime>0?`<span style="color:rgba(0,255,136,0.7)">Best: ${fmtTime(_sprintHiTime)}</span>`:'<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
+  const sprintBest=S._sprintHiTime>0?`<span style="color:rgba(0,255,136,0.7)">Best: ${fmtTime(S._sprintHiTime)}</span>`:'<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
   const hiS=parseInt(localStorage.getItem(LS.HI)||'0');
   const marathonBest=hiS>0?`<span style="color:rgba(0,200,255,0.7)">Best: ${hiS.toLocaleString()}</span>`:'<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
   const todayStr=new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -2673,160 +1269,26 @@ function showModeSelector(){
   $overlay.style.display='flex';
 }
 
-let _htpOpenTs=0;
-function openHowToPlay(){
-  _htpOpenTs=Date.now();
-  const ov=document.getElementById('htp-overlay');
-  ov.style.display='flex';
-}
-function closeHowToPlay(){
-  if(Date.now()-_htpOpenTs<350)return;
-  document.getElementById('htp-overlay').style.display='none';
-}
-
-let _statsOpenTs=0;
-function openStats(){
-  // Show overlay immediately (INP fix: paint first, then compute HTML in next frame).
-  // Without this split, the ~20-achievement template string generation blocks the
-  // main thread before display='flex' is painted, causing visible INP delay.
-  _statsOpenTs=Date.now();
-  document.getElementById('stats-overlay').style.display='flex';
-  requestAnimationFrame(()=>{
-    const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES)||'0');
-    const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE)||'0');
-    const sLevel  = parseInt(localStorage.getItem(LS.BEST_LEVEL)||'0');
-    const sLines  = parseInt(localStorage.getItem(LS.TOTAL_LINES)||'0');
-    const sCombo  = parseInt(localStorage.getItem(LS.MAX_COMBO)||'0');
-    const sMaxLn  = parseInt(localStorage.getItem(LS.MAX_LINES)||'0');
-    const sHi     = parseInt(localStorage.getItem(LS.HI)||'0');
-    const avgScore = sGames > 0 ? Math.round(sScore / sGames) : 0;
-
-    const achieved = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
-
-    const el = document.getElementById('stats-scroll');
-    if(el) {
-      const mainStatsHTML = `
-        <div class="stats-row"><span class="stats-lbl">GAMES PLAYED</span><span class="stats-val">${sGames.toLocaleString()}</span></div>
-        <div class="stats-row"><span class="stats-lbl">HIGH SCORE</span><span class="stats-val" style="color:#ffe600;text-shadow:0 0 8px #ffe600">${sHi.toLocaleString()}</span></div>
-        <div class="stats-row"><span class="stats-lbl">AVERAGE SCORE</span><span class="stats-val">${avgScore.toLocaleString()}</span></div>
-        <div class="stats-row"><span class="stats-lbl">BEST LEVEL</span><span class="stats-val" style="color:#00ff88;text-shadow:0 0 8px #00ff88">L${sLevel}</span></div>
-        <div class="stats-row"><span class="stats-lbl">TOTAL LINES CLEARED</span><span class="stats-val">${sLines.toLocaleString()}</span></div>
-        <div class="stats-row"><span class="stats-lbl">MAX SINGLE-GAME LINES</span><span class="stats-val" style="color:#c45bfb;text-shadow:0 0 8px #c45bfb">${sMaxLn.toLocaleString()}</span></div>
-        <div class="stats-row"><span class="stats-lbl">MAX COMBO</span><span class="stats-val" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan)">x${sCombo}</span></div>
-      `;
-
-      const achHTML = `
-        <div class="htp-section" style="margin-top:20px;margin-bottom:10px">🏆 ACHIEVEMENTS</div>
-        <div class="ach-gallery" style="display:grid;grid-template-columns:repeat(4, 1fr);gap:10px;justify-items:center;padding:5px 0;">
-          ${ACHIEVEMENTS.map(ach => {
-            const entry = achieved.find(a => (typeof a === 'string' ? a === ach.id : a.id === ach.id));
-            const isUnlocked = !!entry;
-            const dateStr = entry && typeof entry === 'object' && entry.date ? entry.date : '';
-            const cleanLabel = ach.label.replace(/'/g, "\\'");
-            const cleanDesc = ach.description.replace(/'/g, "\\'");
-            return `
-              <div class="ach-badge-wrap" style="position:relative;cursor:pointer"
-                   onmouseenter="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')"
-                   onmouseleave="hideAchTooltip()"
-                   onclick="showAchTooltip(this, '${cleanLabel}', '${cleanDesc}', ${isUnlocked}, '${dateStr}')">
-                <div class="ach-badge ${isUnlocked ? 'unlocked' : 'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked ? 'rgba(0,200,255,0.1)' : 'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked ? 'var(--cyan)' : 'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked ? '0 0 10px rgba(0,200,255,0.3)' : 'none'};opacity:${isUnlocked ? 1 : 0.25}">
-                  ${ach.icon}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      `;
-
-      const donationCardHTML = SUPPORT_URL ? `
-        <div style="margin-top:24px;padding:14px 16px;border:1px dashed rgba(255,215,0,0.22);border-radius:10px;background:rgba(255,215,0,0.04);text-align:center">
-          <div style="font-size:7px;letter-spacing:2px;color:rgba(255,255,255,0.3);margin-bottom:10px">KEEP GLOWTRIS 100% AD-FREE</div>
-          <button onclick="_openDonation()"
-             style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.3);border-radius:9px;color:#ffe600;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:background 0.2s"
-             onmouseover="this.style.background='rgba(255,215,0,0.14)'" onmouseout="this.style.background='rgba(255,215,0,0.07)'">☕ BUY ME A COFFEE</button>
-        </div>` : '';
-      el.innerHTML = mainStatsHTML + achHTML + donationCardHTML;
-    }
-  });
-}
-function closeStats(){
-  if(Date.now()-_statsOpenTs<350)return;
-  document.getElementById('stats-overlay').style.display='none';
-  hideAchTooltip();
-}
-
-function showAchTooltip(elem, label, desc, isUnlocked, dateStr) {
-  const tooltip = document.getElementById('ach-tooltip');
-  if (!tooltip) return;
-  
-  const statusText = isUnlocked ? `<span style="color:#00ff88;font-weight:900">UNLOCKED${dateStr ? ` (${dateStr})` : ''}</span>` : `<span style="color:#ff5b5b;font-weight:900">LOCKED</span>`;
-  tooltip.innerHTML = `
-    <div style="color:#ffe600;font-weight:900;margin-bottom:3px;letter-spacing:1px;font-size:9px">${label}</div>
-    <div style="color:rgba(255,255,255,0.85);margin-bottom:4px;font-size:8px">${desc}</div>
-    <div style="font-size:7px;letter-spacing:0.5px">${statusText}</div>
-  `;
-  
-  const rect = elem.getBoundingClientRect();
-  tooltip.style.left = `${rect.left + rect.width / 2}px`;
-  tooltip.style.top = `${rect.top - 6}px`;
-  tooltip.style.display = 'block';
-  setTimeout(() => {
-    tooltip.style.opacity = '1';
-    tooltip.style.transform = 'translate(-50%, -100%)';
-  }, 10);
-}
-
-function hideAchTooltip() {
-  const tooltip = document.getElementById('ach-tooltip');
-  if (!tooltip) return;
-  tooltip.style.opacity = '0';
-  tooltip.style.transform = 'translate(-50%, -105%)';
-  setTimeout(() => {
-    if (tooltip.style.opacity === '0') {
-      tooltip.style.display = 'none';
-    }
-  }, 150);
-}
-
-// ─── Integrated / low-end GPU detection ──────────────────────────────────────
-// Intel HD/UHD iGPU + some AMD APUs cannot handle shadowBlur + canvas gradients
-// at 60fps — Chrome's ANGLE→DirectX path triggers TDR timeout → BSOD.
-// Detect via WebGL renderer string and pre-emptively apply low-perf mode.
-function _detectLowEndGPU(){
-  try{
-    const c=document.createElement('canvas');
-    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
-    if(!gl)return false;
-    const ext=gl.getExtension('WEBGL_debug_renderer_info');
-    const r=ext?(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||'').toLowerCase():'';
-    // Explicitly release the WebGL context to free GPU memory immediately.
-    // Without this the throwaway canvas holds a GPU context until GC.
-    try{gl.getExtension('WEBGL_lose_context')?.loseContext();}catch(e){}
-    // Intel integrated — exclude Iris Xe (sufficiently capable)
-    if(r.includes('intel')&&!r.includes(' xe '))return true;
-    // AMD Vega integrated APU (Ryzen iGPU) — exclude discrete RX Vega
-    if(r.includes('vega')&&!r.includes('rx vega'))return true;
-    return false;
-  }catch(e){return false;}
-}
-
 // ─── Init ─────────────────────────────────────────────────────────────────────
+// Initialize shared visual state
+S.flashLines = new Set();
+
 initLayout();
 initStars();
 loadSettings();
 
-// Auto low-perf: if integrated GPU detected and user has not manually set preference,
-// immediately apply low-perf mode to prevent GPU driver TDR crash (BSOD).
-// Does NOT persist to localStorage — re-checked each session so driver updates are respected.
+// Auto low-perf: if integrated GPU detected and user has not manually set preference
 if(!localStorage.getItem(LS.LOW_PERF)&&_detectLowEndGPU()){
   setLowPerfMode(true);
-  _perfLocked=true; // keep it for the session; FPS-drop won't fight it
+  S._perfLocked=true;
 }
 
-hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
-$hiScore.textContent=hiScore.toLocaleString();
-$hiScoreM.textContent=hiScore.toLocaleString();
-animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!gameRunning)animFrame=requestAnimationFrame(bgOnly);});
+S.hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
+const $hiScore  = document.getElementById('hi-score');
+const $hiScoreM = document.getElementById('hi-score-m');
+if($hiScore)$hiScore.textContent=S.hiScore.toLocaleString();
+if($hiScoreM)$hiScoreM.textContent=S.hiScore.toLocaleString();
+animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!S.gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 showStartScreen();
 // Pre-warm cell sprites during idle so startGame() click doesn't block (INP fix)
 (window.requestIdleCallback||function(cb){setTimeout(cb,200);})(function(){
@@ -2840,4 +1302,19 @@ document.addEventListener('visibilitychange',()=>{
 window.addEventListener('beforeunload',()=>{
   closeAudio();
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
+});
+
+// ─── Expose functions needed by inline onclick handlers ───────────────────────
+// esbuild bundles to IIFE — functions are not global by default.
+// HTML template uses onclick="fn()" style which requires window.fn.
+Object.assign(window, {
+  startGame, startSprintMode, startDailyChallenge, launchDailyChallenge,
+  togglePause, showStartScreen, showModeSelector,
+  submitScore, submitSprintScore, shareScore, shareSprintScore,
+  renderLbTab, setLbMode, loadStartLeaderboard,
+  toggleMute, updateDAS, updateARR, updateLockDelay,
+  updateGhost, updateColorblind, cycleAnimIntensity,
+  openHowToPlay, closeHowToPlay, openStats, closeStats,
+  showAchTooltip, hideAchTooltip,
+  _openDonation,
 });

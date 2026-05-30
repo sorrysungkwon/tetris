@@ -75,6 +75,20 @@ export const ACHIEVEMENTS = [
   { id: 'sprint_finish',     label: 'Sprint Runner',       description: 'Complete a 40-line sprint',               icon: '⚡' },
 ];
 
+// ─── Achievement / lifetime cache helpers ─────────────────────────────────────
+// Lazy-load + write-through caches so hot-path code avoids JSON.parse on every call.
+// Both game.js (lockPiece, _saveGameStats) and ui.js (unlockAchievement) need these.
+export function _getAchievements() {
+  if (!S._achievementsCache)
+    S._achievementsCache = JSON.parse(localStorage.getItem(LS.ACHIEVEMENTS) || '[]');
+  return S._achievementsCache;
+}
+export function _getLifetime() {
+  if (!S._lifetimeCache)
+    S._lifetimeCache = JSON.parse(localStorage.getItem(LS.LIFETIME) || '{"totalLines":0,"totalGames":0,"totalGlowtris":0}');
+  return S._lifetimeCache;
+}
+
 // ─── Mulberry32 PRNG ─────────────────────────────────────────────────────────
 export function mulberry32(a) {
   return function() {
@@ -152,4 +166,28 @@ export const S = {
   rainbowBorder:   0,
   dangerPulse:     0,
   levelUpScanline: 0,
+
+  // Game mechanics (game.js writes, ui.js drawBoard reads for lock progress bar)
+  lockActive: false,
+  lockTimer:  0,
+  lockMs:     500,
+
+  // Input settings (ui.js settings fns write, game.js DAS timer reads)
+  das: 150,
+  arr: 50,
+
+  // Sprint timing (game.js writes, ui.js updateUI/updateSprintTimer reads)
+  _sprintStartTime: 0,
+  _sprintEndTime:   0,   // only game.js uses, kept here for symmetry
+  _sprintHiTime:    0,
+
+  // Perf lock (ui.js measureFPS writes, game.js _doStartGame reads)
+  _perfLocked: false,
+
+  // Particle array (game.js endGame/endSprint push directly; ui.js renders)
+  particles: [],
+
+  // Achievement & lifetime caches (written lazily, used by both modules)
+  _achievementsCache: null,
+  _lifetimeCache:     null,
 };
