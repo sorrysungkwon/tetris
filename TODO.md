@@ -449,10 +449,9 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [ ] **Purchase domain** (e.g. `glowtris.com`) and add to Vercel project.
 - [ ] **After domain is live**: update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain), update `README.md` production URL, update `ROBOT.md` dashboard/URL references, redeploy.
 
-### Donation URL (user action)
-> Donation UI code was removed from codebase (2026-05-29). Will be re-implemented when Ko-fi URL is ready.
-- [ ] Set up Ko-fi account with PayPal payout.
-- [ ] Confirm Ko-fi URL → implement donation UI in v1.1 release.
+### Donation URL
+- [x] Ko-fi account set up: `https://ko-fi.com/sorrysungkwon`
+- [x] Donation UI implemented — merged to master via PR #9 (2026-05-30)
 
 ### Developer Experience DX (Antigravity Suggestion)
 - [x] **Local Dev Shortcut**: Added `"scripts": { "dev": "npx serve . -p 3000" }` to `package.json`. Run `npm run dev` to serve locally at http://localhost:3000.
