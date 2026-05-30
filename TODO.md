@@ -12,7 +12,7 @@
 | Version | DAU Goal | Status |
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
-| Pre-v1.1 | — | 🔲 (domain + donation pending) |
+| Pre-v1.1 | — | ✅ Done |
 | v1.1 Sprint Mode | 500 | ✅ Done (Reddit post pending) |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
@@ -459,18 +459,26 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## ✅ Completed: v1.1 — Sprint Mode — by Claude (2026-05-30)
+## ✅ Completed: v1.1 — Sprint Mode + iPad Keyboard — by Claude (2026-05-30)
 
 > DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
 > ✅ **Infrastructure ready**: 60s edge cache extends Upstash free ceiling to ~700 DAU — v1.1's 500 DAU target is within the free tier. No upgrade required before launch.
 
 - [x] Task 1: **Sprint Mode Engine** — `SPRINT_LINES=40`; `isSprintMode` flag; timer starts at `_doStartGame()` just before first RAF; `lockPiece()` captures `_sprintEndTime` and calls `endSprint()` via 120ms callback after board flash. Top-out shows "SPRINT FAILED" without polluting marathon stats.
 - [x] Task 2: **Sprint HUD** — `fmtTime(ms)` formats as `SS.cc` / `M:SS.cc`. `updateSprintTimer()` runs every frame (repurposes `score-display` as live stopwatch). Panel title changes: SCORE→TIME, CLEARED→LEFT. Progress bar = lines cleared / 40.
-- [x] Task 3: **Mode Selector** — Start screen: MARATHON / ⚡ SPRINT 40L / 🏆 DAILY CHALLENGE buttons. `startSprintMode()` sets flags and calls `startGame()`.
+- [x] Task 3: **Mode Selector** — PLAY button opens card UI with MARATHON / ⚡ SPRINT 40L / 🏆 DAILY CHALLENGE, each with description and personal record. 3-2-1 animated countdown (per-number colours, scale animation, expanding rings, GO! flash + SFX).
 - [x] Task 4: **Sprint Leaderboard** — `api/leaderboard.js`: `KEY_SPRINT` / `KEY_SPRINT_DAILY` / `KEY_SPRINT_WEEKLY` Redis keys; `getSprintBoard()` ascending; `deduplicateAndAddSprint()` keeps lower time; rank = `zcount(-inf, time-1)+1`. GET `?mode=sprint` and POST `mode:'sprint'` fully wired. Start screen lb toggle: MARATHON | ⚡ SPRINT | 🏆 DAILY.
 - [x] Task 5: **Sprint Canvas Share card** — `captureSprintImage()`: green neon border, SPRINT 40L title, large time, LPM, rank, "Can you beat it?" caption. `shareSprintScore()` uses Web Share API / clipboard fallback.
 - [x] Task 6: **Reddit r/webgames launch post** — pending (user action on release day).
-- [ ] Task 7: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
+- [x] Task 7: **Docs + tag** — `README.md` roadmap updated, `TODO.md` milestone marked ✅, version tag `v1.1` pushed.
+
+### v1.1 Post-fixes (iPad keyboard mode) — by Claude (2026-05-30)
+
+- [x] **iPad kb-mode**: First keydown on coarse-pointer tablet (`Math.min(screen.w,screen.h) ≥ 600px`) adds `html.kb-mode` → shows desktop side panels, hides mobile header + touch controls. Touch anywhere restores touch mode. Phones always keep touch UI.
+- [x] **Keyboard nudge fix**: `_nudgeActive` flag prevents `applyShake()` from clearing transform during spring animation. `void offsetWidth` forced reflow replaces setTimeout approach — snap position guaranteed before spring. Displacement 2→12px, `cubic-bezier(0.15,2.8,0.5,0.82)` strong overshoot bounce.
+- [x] **GNB mini-canvas size**: `Math.max(26, Math.min(30, gameW * 0.10))` — iPad portrait 54→30px.
+- [x] **Canvas blank on mode switch**: `_enableKbMode`/`_disableKbMode` now call `drawNext()+drawHold()` after `initLayout()`.
+- [x] **Canvas size restore bug**: Desktop path no longer writes `ncM`/`hcM`; mini canvas resize moved before early-return in `_applyTouchCELL()` with size-change guard.
 
 ---
 
@@ -478,7 +486,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 > DAU goal: — | Key driver: code health before multi-mode complexity
 > ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
 
-`index.html` will be ~4,000+ lines by this point (3,535 now + Ultra + streak code). Decide the code architecture before adding more game modes:
+`index.html` is **4,059 lines** after v1.1. Decide the code architecture before adding more game modes:
 
 - [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
 - [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable). *(Antigravity Suggestion: Highly recommended to avoid massive single-file bloat before introducing multi-mode complexity in v1.2)*.

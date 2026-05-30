@@ -48,7 +48,7 @@ A neon-styled block stacking game built as a single HTML file.
 | Milestone | Target DAU | Target Version | Key Driver |
 |---|---:|---|---|
 | 🌱 Launch Stable | 100 | v1.0.9.4 ✅ | Core gameplay complete |
-| 🚀 Sprint Launch | 500 | v1.1 | Sprint Mode viral sharing |
+| 🚀 Sprint Launch | 500 | v1.1 ✅ | Sprint Mode viral sharing |
 | 📈 Multi-Mode | 700 | v1.2 | Ultra Mode + basic daily streak |
 | 🎓 Skill Depth | 1,200 | v1.3 | Training mode, finesse tracking |
 | 🎨 Identity | 1,800 | v1.4 | Visual customization |
@@ -100,13 +100,14 @@ A neon-styled block stacking game built as a single HTML file.
 | ~~v1.0.9.2~~ ✅ | **BGM Upgrade + Challenge Background + Flash Fix**: Full BGM system with 3 synthwave tracks, dynamic intensity layers, volume fade in/out; Challenge mode gets distinct crimson/dark-red starfield background; hold `<canvas>` flash on game-over fixed. |
 | ~~v1.0.9.3~~ ✅ | **T-Spin Mini + Leaderboard Dedup + OG Image**: T-Spin Mini detection (1 front corner = mini, score 0/200/400×level; 2 front corners = full T-Spin); leaderboard deduplication — same username keeps only personal best across all 5 boards; `/api/og` Edge Function generates 1200×630 PNG for Twitter/KakaoTalk/Discord/Line previews; soft-drop DAS fix (holding ↓ properly accelerates, lock timer not reset while grounded). |
 | ~~v1.0.9.4~~ ✅ | **Hotfix — Hold/Next Panel Overflow + PC Perf**: Fixed hold/next canvas overflowing panel container on desktop (box-sizing:border-box → panel widened 132→150px, canvas dims passed correctly to drawMiniPiece). PC background gradient caching (every 4 frames), auto low-perf mode for Intel iGPU (WEBGL_debug_renderer_info), static gradient background in low-perf mode. |
+| ~~v1.1~~ ✅ | **Sprint Mode + iPad Keyboard**: Sprint 40L engine — clear 40 lines, stopwatch HUD, remaining-lines counter, mode selector card UI (Marathon / Sprint 40L / Daily Challenge), 3-2-1 animated countdown (per-number colours, scale animation, expanding rings, GO! flash). Sprint leaderboard ascending (lowest time = best), personal best tracking, shareable Sprint result card (time + LPM + rank). iPad external-keyboard mode — first keydown on coarse-pointer tablet shows desktop side panels (SCORE / LINES / LEVEL / NEXT / HOLD / KEYS), touch restores instantly; phones always keep touch UI. Keyboard nudge spring-back redesigned with `void offsetWidth` forced reflow + `cubic-bezier(0.15,2.8,0.5,0.82)` overshoot. API: `KEY_SPRINT` / `KEY_SPRINT_DAILY` / `KEY_SPRINT_WEEKLY` Redis keys, ascending `getSprintBoard()`, `deduplicateAndAddSprint()`. |
 
 ### 🔮 Planned
 
 | Version | Theme | Features | DAU Goal |
 |---|---|---|---:|
-| Pre-v1.1 | **Foundation** | Custom domain setup. API hardening: 60s edge cache (extends Upstash free tier to ~700 DAU), rate limiting, score validation. ☕ Donation UI (Ko-fi) on game over + stats overlay. | — |
-| v1.1 | **Sprint Mode** | Clear 40 lines as fast as possible. Stopwatch HUD, remaining-lines counter, mode selector (Marathon / Sprint), time-based leaderboard (ascending), shareable Sprint result card with time + LPM. | **500** |
+| ~~Pre-v1.1~~ ✅ | **Foundation** | API hardening: 60s edge cache (extends Upstash free tier to ~700 DAU), rate limiting, score validation. INP 568→160ms fix. 8-item code audit (memory leaks, interval leaks, DOM cache). | — |
+| ~~v1.1~~ ✅ | **Sprint Mode + iPad Keyboard** | 40-line race with stopwatch HUD, ascending leaderboard (fastest time wins), shareable Sprint result card. Mode selector card UI (Marathon / Sprint / Daily). 3-2-1 animated countdown. iPad external-keyboard mode (side panels auto-show, spring nudge effect). | **500** |
 | v1.2 | **Ultra Mode + Streak** | 2-minute score attack with a score multiplier that ramps as time runs out. Daily streak badge — tracks consecutive days played, resets on a missed day. | **700** |
 | v1.3 | **Training & Finesse** | Practice mode (no game over, no timer). Finesse counter — tracks wasted keypresses vs optimal. Per-piece heatmap overlay. Speed metrics (PPS, lines/min). | 1,200 |
 | v1.4 | **Visual Customization** | Board skin selector (Neon / Midnight / Pastel / Classic). Piece colour palette presets. BGM track selection saved to localStorage. | 1,800 |
