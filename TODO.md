@@ -13,7 +13,7 @@
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | 🔲 (domain + donation pending) |
-| v1.1 Sprint Mode | 500 | 🔲 |
+| v1.1 Sprint Mode | 500 | ✅ Done (Reddit post pending) |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -459,16 +459,17 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: v1.1 — Sprint Mode
+## ✅ Completed: v1.1 — Sprint Mode — by Claude (2026-05-30)
+
 > DAU goal: **500** | Key driver: sprint time share card virality + Reddit r/webgames launch
 > ✅ **Infrastructure ready**: 60s edge cache extends Upstash free ceiling to ~700 DAU — v1.1's 500 DAU target is within the free tier. No upgrade required before launch.
 
-- [ ] Task 1: **Sprint Mode Engine** — game ends when 40 lines are cleared; record elapsed time in milliseconds.
-- [ ] Task 2: **Sprint HUD** — elapsed stopwatch (`01:23.45`) and remaining-lines counter replace score/level in sprint side panels.
-- [ ] Task 3: **Mode Selector** — Marathon / Sprint / Daily Challenge buttons on start screen; selection persists to `localStorage`.
-- [ ] Task 4: **Sprint Leaderboard** — separate Redis leaderboard, ascending sort (fastest wins), TODAY / WEEKLY / ALL TIME tabs, rank shown after submission.
-- [ ] Task 5: **Sprint Canvas Share card** — large time display + LPM (lines per minute) + rank; "Can you beat XX.XXs?" caption for SNS viral sharing.
-- [ ] Task 6: **Reddit r/webgames launch post** — post to r/webgames on release day: ad-free, PWA, leaderboard, Sprint Mode highlight. Title: "I made a free neon Tetris PWA — no ads, just score attack".
+- [x] Task 1: **Sprint Mode Engine** — `SPRINT_LINES=40`; `isSprintMode` flag; timer starts at `_doStartGame()` just before first RAF; `lockPiece()` captures `_sprintEndTime` and calls `endSprint()` via 120ms callback after board flash. Top-out shows "SPRINT FAILED" without polluting marathon stats.
+- [x] Task 2: **Sprint HUD** — `fmtTime(ms)` formats as `SS.cc` / `M:SS.cc`. `updateSprintTimer()` runs every frame (repurposes `score-display` as live stopwatch). Panel title changes: SCORE→TIME, CLEARED→LEFT. Progress bar = lines cleared / 40.
+- [x] Task 3: **Mode Selector** — Start screen: MARATHON / ⚡ SPRINT 40L / 🏆 DAILY CHALLENGE buttons. `startSprintMode()` sets flags and calls `startGame()`.
+- [x] Task 4: **Sprint Leaderboard** — `api/leaderboard.js`: `KEY_SPRINT` / `KEY_SPRINT_DAILY` / `KEY_SPRINT_WEEKLY` Redis keys; `getSprintBoard()` ascending; `deduplicateAndAddSprint()` keeps lower time; rank = `zcount(-inf, time-1)+1`. GET `?mode=sprint` and POST `mode:'sprint'` fully wired. Start screen lb toggle: MARATHON | ⚡ SPRINT | 🏆 DAILY.
+- [x] Task 5: **Sprint Canvas Share card** — `captureSprintImage()`: green neon border, SPRINT 40L title, large time, LPM, rank, "Can you beat it?" caption. `shareSprintScore()` uses Web Share API / clipboard fallback.
+- [x] Task 6: **Reddit r/webgames launch post** — pending (user action on release day).
 - [ ] Task 7: Update `README.md` roadmap, `TODO.md` milestone status, and push version tag `v1.1`.
 
 ---

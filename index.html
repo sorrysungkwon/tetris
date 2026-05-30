@@ -842,7 +842,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.0.9.4</span>
+    <span class="dh-version">v1.1</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -870,12 +870,12 @@
 
     <!-- Desktop left panel -->
     <div class="panel" id="left-panel" style="margin-top:6px">
-      <div class="panel-title">SCORE</div>
+      <div class="panel-title" id="panel-score-label">SCORE</div>
       <div class="score-val" id="score-display">0</div>
       <div class="divider"></div>
       <div class="panel-title">LINES</div>
       <div class="score-val" id="lines-display">0</div>
-      <div class="score-sub">CLEARED</div>
+      <div class="score-sub" id="lines-sub-label">CLEARED</div>
       <div class="panel-title">LEVEL</div>
       <div class="score-val" id="level-display">1</div>
       <div id="level-bar-wrap"><div id="level-bar" style="width:0%"></div></div>
@@ -977,6 +977,7 @@ const SCORE_TABLE=[0,100,300,500,800];
 const TSPIN_SCORE=[400,800,1200,1600];
 const TSPIN_MINI_SCORE=[0,200,400]; // mini: 0 lines=0pts, 1 line=200, 2 lines=400
 const LEVEL_LINES=10;
+const SPRINT_LINES=40; // Sprint mode: game ends when 40 lines cleared
 let lockMs=500;
 // Reverse map: color string → piece key (used for colorblind pattern lookup)
 const COLOR_TO_KEY={};
@@ -1006,6 +1007,7 @@ const LS = {
   ANIM:         'glowTrisAnim',
   LOW_PERF:     'glowTrisLowPerf',
   ACHIEVEMENTS: 'glowTrisAchievements',
+  SPRINT_HI:    'glowTrisSprintHi',
 };
 
 // ─── Achievement definitions ───────────────────────────────────────────────────
@@ -1029,7 +1031,8 @@ const ACHIEVEMENTS = [
   { id: 'lines_1000', label: 'Grandmaster Stacker', description: 'Clear 1,000 cumulative lines', icon: '🏆' },
   { id: 'daily_challenge_1', label: 'Daily Pioneer', description: 'Complete your first Daily Challenge', icon: '🏅' },
   { id: 'streak_5', label: 'On Fire', description: 'Reach a 5-game PB streak', icon: '🔥' },
-  { id: 'submit_lb', label: 'Public Record', description: 'Submit a score to online leaderboard', icon: '🌐' }
+  { id: 'submit_lb', label: 'Public Record', description: 'Submit a score to online leaderboard', icon: '🌐' },
+  { id: 'sprint_finish', label: 'Sprint Runner', description: 'Complete a 40-line sprint', icon: '⚡' }
 ];
 
 // ─── Mulberry32 PRNG ──────────────────────────────────────────────────────────
@@ -1057,10 +1060,14 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
-let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0,challengeAlltimeBoard:[],challengeAlltimeRank:0};
+let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0,challengeAlltimeBoard:[],challengeAlltimeRank:0,sprintBoard:[],sprintDailyBoard:[],sprintWeeklyBoard:[],sprintRank:0,sprintDailyRank:0,sprintWeeklyRank:0,mySprintTime:0};
 let isDailyMode=false;
+let isSprintMode=false;
+let _sprintStartTime=0;  // performance.now() when sprint begins
+let _sprintEndTime=0;    // performance.now() when 40th line is cleared
+let _sprintHiTime=0;     // personal best sprint time (ms), 0 = no record
 let _prng=null;
-let lbMode='marathon'; // 'marathon' | 'daily'
+let lbMode='marathon'; // 'marathon' | 'sprint' | 'daily'
 // ─── Performance detection ────────────────────────────────────────────────────
 let lowPerfMode=false,_fpsCnt=0,_fpsLast=0,_perfHold=0,_perfLocked=false,_fpsLowCount=0;
 // ─── Cell sprite cache (pre-rendered per color, GPU-blit instead of per-frame gradients) ───
@@ -1616,6 +1623,8 @@ function lockPiece(){
         unlockAchievement('all_clear');
       }
       flashLines=new Set();
+      // Sprint end: check AFTER board splice so the cleared board is visible
+      if(isSprintMode&&lines>=SPRINT_LINES){endSprint();return;}
     },120);
   } else {
     if(tspin==='full'){sfxTSpin();addScore(TSPIN_SCORE[0]*level,0,'full');unlockAchievement('tspin_1');}
@@ -1624,16 +1633,22 @@ function lockPiece(){
   }
   lastWasRotate=false;
   spawnLockParticles();
+  // In sprint mode, capture end time immediately when 40 lines reached.
+  // spawnPiece() is skipped — the 120ms callback calls endSprint() after the flash.
+  if(isSprintMode&&lines>=SPRINT_LINES){_sprintEndTime=performance.now();return;}
   spawnPiece();
 }
 
 function addScore(pts,n,tspin=false){
-  score+=pts;if(score>hiScore){hiScore=score;localStorage.setItem(LS.HI,hiScore);}
+  score+=pts;
+  // In sprint mode score is cosmetic only — don't update marathon hi-score or achievements
+  if(!isSprintMode){
+    if(score>hiScore){hiScore=score;localStorage.setItem(LS.HI,hiScore);}
+    if(score>=50000)unlockAchievement('score_50k');
+    if(score>=100000)unlockAchievement('score_100k');
+    if(score>=250000)unlockAchievement('score_250k');
+  }
   updateUI();showScorePopup(pts,n,tspin);
-  
-  if (score >= 50000) unlockAchievement('score_50k');
-  if (score >= 100000) unlockAchievement('score_100k');
-  if (score >= 250000) unlockAchievement('score_250k');
 }
 
 function showScorePopup(pts,n,tspin=false){
@@ -2139,7 +2154,30 @@ function applyShake(){
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
+// Format milliseconds as M:SS.cc (centiseconds). No leading minute if < 1 min.
+function fmtTime(ms){
+  const total=Math.floor(ms/10);
+  const cs=total%100;
+  const secs=Math.floor(total/100)%60;
+  const mins=Math.floor(total/6000);
+  return `${mins>0?mins+':':''}${secs.toString().padStart(2,'0')}.${cs.toString().padStart(2,'0')}`;
+}
+
 function updateUI(){
+  if(isSprintMode){
+    // Sprint HUD: time display handled by updateSprintTimer() each frame.
+    // Here we update lines-left, level, hi-time, and progress bar.
+    const remaining=Math.max(0,SPRINT_LINES-lines);
+    $lines.textContent=remaining; if($linesM)$linesM.textContent=remaining;
+    $level.textContent=level; if($levelM)$levelM.textContent=level;
+    const ht=_sprintHiTime>0?fmtTime(_sprintHiTime):'--:--';
+    $hiScore.textContent=ht; if($hiScoreM)$hiScoreM.textContent=ht;
+    // Progress bar = sprint completion (lines cleared / SPRINT_LINES)
+    $levelBar.style.width=(lines/SPRINT_LINES*100)+'%';
+    $levelBar.style.background='linear-gradient(90deg,#00ff88,#00c8ff)';
+    $bpmEl.textContent=Math.min(200,135+level*5)+' BPM';
+    return;
+  }
   const s=score.toLocaleString();
   $score.textContent=s; $scoreM.textContent=s;
   $lines.textContent=lines; $linesM.textContent=lines;
@@ -2151,6 +2189,14 @@ function updateUI(){
   $levelBar.style.width=pct+'%';
   $levelBar.style.background=`linear-gradient(90deg,hsl(${190+hue},100%,50%),hsl(${270+hue},100%,50%))`;
   $bpmEl.textContent=Math.min(200,135+level*5)+' BPM';
+}
+
+// Sprint stopwatch — called every frame while sprint is running.
+// Updates the score display (repurposed as a timer in sprint mode).
+function updateSprintTimer(){
+  const elapsed=performance.now()-_sprintStartTime;
+  const fmt=fmtTime(elapsed);
+  $score.textContent=fmt; if($scoreM)$scoreM.textContent=fmt;
 }
 
 // ─── Audio ────────────────────────────────────────────────────────────────────
@@ -2696,6 +2742,7 @@ function gameLoop(ts){
     if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
     else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1)){current.y++;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
   }
+  if(isSprintMode&&gameRunning)updateSprintTimer();
   drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
 }
@@ -2767,9 +2814,26 @@ function _doStartGame(){
   hiScore=parseInt(localStorage.getItem(LS.HI)||'0');
   bag=[];refillBag();next=makePiece(nextFromBag());held=null;canHold=true;
   gameRunning=true;gamePaused=false;gameOver=false;
+
+  // ── Sprint mode init ──────────────────────────────────────────────────────
+  // Update panel labels and load personal best sprint time.
+  const psl=document.getElementById('panel-score-label');
+  const lsl=document.getElementById('lines-sub-label');
+  if(isSprintMode){
+    _sprintHiTime=parseInt(localStorage.getItem(LS.SPRINT_HI)||'0');
+    _sprintEndTime=0;
+    if(psl)psl.textContent='TIME';
+    if(lsl)lsl.textContent='LEFT';
+  }else{
+    if(psl)psl.textContent='SCORE';
+    if(lsl)lsl.textContent='CLEARED';
+  }
+
   spawnPiece();drawNext();drawHold();updateUI();
   if(animFrame)cancelAnimationFrame(animFrame);
   prevTs=0;lastDropTs=performance.now();
+  // Sprint timer starts just before RAF for maximum accuracy
+  if(isSprintMode)_sprintStartTime=performance.now();
   startBGM();
   animFrame=requestAnimationFrame(gameLoop);
 }
@@ -3001,6 +3065,31 @@ function endGame(){
   gameRunning=false;gameOver=true;
   stopBGM();sfxGameOver();
 
+  // Sprint top-out: show "SPRINT FAILED" without saving marathon stats
+  if(isSprintMode){
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      if(!board[r][c])continue;
+      const a=Math.random()*Math.PI*2,sp=Math.random()*6+2;
+      particles.push({x:(c+.5)*CELL,y:(r+.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-2,life:1,decay:Math.random()*.01+.005,color:board[r][c],size:Math.random()*5+3,type:'spark'});
+    }
+    shakeFrames=40;shakeMag=0.7;
+    setTimeout(()=>{
+      $overlay.innerHTML=`
+        <div class="glass-panel">
+          <h1 style="font-size:20px;margin-bottom:18px">SPRINT FAILED</h1>
+          <div style="width:100%;text-align:center;margin-bottom:22px">
+            <div class="sub" style="margin-bottom:3px">${Math.max(0,SPRINT_LINES-lines)} LINES REMAINING</div>
+          </div>
+          <div class="btn-row" style="gap:6px;width:100%">
+            <button class="action-btn sm" style="flex:1" onclick="startSprintMode()">RETRY</button>
+            <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">BACK</button>
+          </div>
+        </div>`;
+      $overlay.style.display='flex';
+    },600);
+    return;
+  }
+
   const stats = _saveGameStats();
 
   // Explode all board pieces into spark particles
@@ -3023,20 +3112,180 @@ function endGame(){
   setTimeout(() => _renderGameOverScreen(stats), 600);
 }
 
+// ─── Sprint ───────────────────────────────────────────────────────────────────
+function endSprint(){
+  // _sprintEndTime was captured in lockPiece() the moment the 40th line cleared.
+  const timeMs=Math.round(_sprintEndTime-_sprintStartTime);
+  gameRunning=false;gameOver=true;
+  stopBGM();
+
+  // Save personal best (lower = better)
+  const prevBest=_sprintHiTime;
+  const isNewBest=prevBest===0||timeMs<prevBest;
+  if(isNewBest){_sprintHiTime=timeMs;localStorage.setItem(LS.SPRINT_HI,timeMs);}
+  unlockAchievement('sprint_finish');
+
+  // Confetti celebration
+  if(animIntensity!=='off'){
+    for(let i=0;i<60;i++){
+      const a=Math.random()*Math.PI*2,sp=Math.random()*10+3;
+      particles.push({x:(Math.random()*COLS)*CELL,y:(Math.random()*ROWS*0.5)*CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.01+.005,color:['#00ff88','#00c8ff','#ffe600','#ffffff'][Math.floor(Math.random()*4)],size:Math.random()*6+2,type:'star'});
+    }
+  }
+  [523,659,784,1047,1319].forEach((f,i)=>playBeep(f,'sawtooth',.18,.28,i*.07+.1));
+  setTimeout(()=>_renderSprintScreen(timeMs,isNewBest,prevBest),600);
+}
+
+function _renderSprintScreen(timeMs,isNewBest,prevBest){
+  const savedName=localStorage.getItem(LS.NAME)||'';
+  const lpm=Math.round(SPRINT_LINES/(timeMs/60000));
+  const prevBestLine=prevBest>0&&!isNewBest
+    ?`<div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin-bottom:10px">BEST: ${fmtTime(prevBest)}</div>`:'';
+
+  $overlay.innerHTML=`
+    <div class="glass-panel">
+      <h1 style="font-size:20px;margin-bottom:6px">🏁 SPRINT COMPLETE!</h1>
+      ${isNewBest?'<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>':prevBestLine}
+      <div style="width:100%;text-align:center;margin-bottom:16px">
+        <div style="font-size:9px;letter-spacing:3px;color:rgba(0,200,255,0.6);margin-bottom:4px">FINISH TIME</div>
+        <div style="font-size:46px;font-weight:900;color:#ffe600;text-shadow:0 0 20px rgba(255,230,0,0.7);letter-spacing:2px;font-family:monospace">${fmtTime(timeMs)}</div>
+        <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-top:6px">${lpm} LPM</div>
+      </div>
+      <div style="width:100%">
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
+        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
+          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitSprintScore(${timeMs})">SUBMIT</button>
+          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        </div>
+      </div>
+      <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
+    </div>`;
+  $overlay.style.display='flex';
+  const inp=document.getElementById('lb-name');
+  inp.focus();inp.select();
+  inp.addEventListener('keydown',e=>{if(e.key==='Enter')submitSprintScore(timeMs);});
+}
+
+async function submitSprintScore(timeMs){
+  const inp=document.getElementById('lb-name');
+  const res=document.getElementById('lb-result');
+  const btn=document.getElementById('lb-submit-btn');
+  if(!inp||!res||!btn)return;
+  if(btn.disabled)return;
+  const name=inp.value.trim();
+  if(!name){inp.focus();return;}
+  localStorage.setItem(LS.NAME,name);
+  btn.disabled=true;inp.disabled=true;
+  res.innerHTML='<div class="sub">SUBMITTING...</div>';
+  try{
+    const r=await fetch('/api/leaderboard',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,score:timeMs,mode:'sprint'})});
+    const data=await r.json();
+    if(data.sprintBoard){
+      _lbCache={..._lbCache,sprintBoard:data.sprintBoard||[],sprintDailyBoard:data.sprintDailyBoard||[],sprintWeeklyBoard:data.sprintWeeklyBoard||[],sprintRank:data.sprintRank,sprintDailyRank:data.sprintDailyRank,sprintWeeklyRank:data.sprintWeeklyRank,myName:name,mySprintTime:timeMs};
+      const rankMsg=[
+        data.sprintDailyRank?`<div class="sub" style="color:#00ff88;margin-bottom:2px">TODAY: #${data.sprintDailyRank}</div>`:'',
+        data.sprintWeeklyRank?`<div class="sub" style="color:#00c8ff;margin-bottom:2px">WEEKLY: #${data.sprintWeeklyRank}</div>`:'',
+        data.sprintRank?`<div class="sub" style="color:#ffe600;margin-bottom:6px">ALL TIME: #${data.sprintRank}</div>`:'',
+      ].join('');
+      inp.style.display='none';btn.closest('.btn-row').style.display='none';
+      const tabs=`<div class="lb-tabs">
+        <button class="lb-tab active" data-tab="sprint-daily" onclick="renderLbTab('sprint-daily')">TODAY</button>
+        <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
+        <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
+      </div><div class="lb-inner">${lbHTML(data.sprintDailyBoard||[],name,data.sprintDailyRank,timeMs,true)}</div>`;
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareSprintScore(${timeMs},${data.sprintRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
+    }else{
+      btn.disabled=false;inp.disabled=false;
+      res.innerHTML='<div class="sub">Save failed — please try again</div>';
+    }
+  }catch(e){
+    btn.disabled=false;inp.disabled=false;
+    res.innerHTML='<div class="sub">Network error — please try again</div>';
+  }
+}
+
+async function shareSprintScore(timeMs,rank){
+  const btn=event&&event.target?event.target:null;
+  if(btn){btn.disabled=true;btn.textContent='GENERATING...';}
+  try{
+    const lpm=Math.round(SPRINT_LINES/(timeMs/60000));
+    const rankStr=rank?` — Rank #${rank}`:'';
+    const text=`⚡ Glowtris Sprint — ${fmtTime(timeMs)} (${lpm} LPM)${rankStr}\nCan you beat it? ${window.location.origin}`;
+    const blob=await captureSprintImage(timeMs,rank,lpm);
+    const file=new File([blob],'glowtris-sprint.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({title:'Glowtris Sprint',text,files:[file]});
+    }else{
+      try{
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob,'text/plain':new Blob([text],{type:'text/plain'})})]);
+        alert('Image & Time copied to clipboard!');
+      }catch(e){await navigator.clipboard.writeText(text);alert('Sprint time copied to clipboard!');}
+    }
+  }catch(e){console.error(e);}
+  if(btn){btn.disabled=false;btn.textContent='SHARE';}
+}
+
+async function captureSprintImage(timeMs,rank,lpm){
+  const c=document.createElement('canvas');
+  c.width=1200;c.height=630;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#04041e';ctx.fillRect(0,0,1200,630);
+  const bgi=document.getElementById('bg-canvas');
+  if(bgi)ctx.drawImage(bgi,0,0,1200,630);
+  const gci=document.getElementById('game-canvas');
+  if(gci){
+    const gw=260,gh=520,gx=90,gy=55;
+    ctx.shadowColor='#00ff88';ctx.shadowBlur=40;
+    ctx.fillStyle='rgba(0,0,20,0.8)';ctx.fillRect(gx,gy,gw,gh);
+    ctx.shadowBlur=0;ctx.drawImage(gci,gx,gy,gw,gh);
+    ctx.strokeStyle='#00ff88';ctx.lineWidth=4;ctx.strokeRect(gx,gy,gw,gh);
+    ctx.strokeStyle='rgba(255,255,255,0.15)';ctx.lineWidth=1;ctx.strokeRect(gx+2,gy+2,gw-4,gh-4);
+  }
+  const px=420,py=55,pw=700,ph=520;
+  ctx.fillStyle='rgba(4,4,30,0.75)';ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=30;
+  ctx.fillRect(px,py,pw,ph);ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(0,255,136,0.35)';ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);
+  ctx.textAlign='center';
+  // Title
+  ctx.fillStyle='#00ff88';ctx.font='900 52px Orbitron, monospace';
+  ctx.shadowColor='rgba(0,255,136,0.6)';ctx.shadowBlur=20;
+  ctx.fillText('SPRINT 40L',px+pw/2,py+95);ctx.shadowBlur=0;
+  // Time label
+  ctx.font='700 28px Orbitron, monospace';ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.letterSpacing='6px';ctx.fillText('FINISH TIME',px+pw/2,py+210);
+  // Time value
+  ctx.font='900 70px Orbitron, monospace';ctx.fillStyle='#ffe600';
+  ctx.shadowColor='#ffe600';ctx.shadowBlur=25;ctx.letterSpacing='2px';
+  ctx.fillText(fmtTime(timeMs),px+pw/2,py+290);ctx.shadowBlur=0;
+  // Separator
+  ctx.fillStyle='rgba(0,255,136,0.2)';ctx.fillRect(px+80,py+320,pw-160,2);
+  ctx.letterSpacing='2px';ctx.font='700 26px Orbitron, monospace';
+  let cy=py+395;
+  if(rank){
+    ctx.fillStyle='#00ff88';ctx.shadowColor='rgba(0,255,136,0.5)';ctx.shadowBlur=10;
+    ctx.fillText('🏆 ALL TIME RANK: #'+rank,px+pw/2,cy);ctx.shadowBlur=0;cy+=50;
+  }
+  ctx.fillStyle='#00c8ff';ctx.fillText(`${lpm} LPM   |   40 LINES`,px+pw/2,cy);cy+=50;
+  ctx.fillStyle='rgba(255,255,255,0.35)';ctx.font='700 20px Orbitron, monospace';
+  ctx.fillText('Can you beat it? glowtris.vercel.app',px+pw/2,cy+10);
+  return new Promise(res=>c.toBlob(res,'image/png'));
+}
+
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
-function lbHTML(entries, myName, myRank, myScore) {
+function lbHTML(entries, myName, myRank, myScore, timeMode=false) {
   if(!entries.length) return '<div class="sub" style="margin-top:4px">No records yet</div>';
   const medals=['🥇','🥈','🥉'];
+  const fmt=timeMode?(v=>fmtTime(v)):(v=>v.toLocaleString());
   let html = `<table class="lb-table">${entries.map((e,i)=>{
     const isMe=myName&&e.name===myName;
-    return `<tr class="${isMe?'lb-me':''}"><td>${medals[i]||i+1}</td><td>${e.name}</td><td>${e.score.toLocaleString()}</td></tr>`;
+    return `<tr class="${isMe?'lb-me':''}"><td>${medals[i]||i+1}</td><td>${e.name}</td><td>${fmt(e.score)}</td></tr>`;
   }).join('')}`;
-  
+
   if (myRank && myRank > entries.length && myName && myScore !== undefined) {
     html += `<tr><td colspan="3" style="text-align:center;opacity:0.4;padding:2px 0">...</td></tr>`;
-    html += `<tr class="lb-me"><td>${myRank}</td><td>${myName}</td><td>${myScore.toLocaleString()}</td></tr>`;
+    html += `<tr class="lb-me"><td>${myRank}</td><td>${myName}</td><td>${fmt(myScore)}</td></tr>`;
   }
-  
+
   html += `</table>`;
   return html;
 }
@@ -3286,12 +3535,15 @@ async function loadStartLeaderboard(){
   const el=document.getElementById('start-lb');
   if(!el)return;
   try{
-    const url = lbMode === 'daily' ? '/api/leaderboard?mode=daily' : '/api/leaderboard';
+    const url=lbMode==='daily'?'/api/leaderboard?mode=daily'
+             :lbMode==='sprint'?'/api/leaderboard?mode=sprint'
+             :'/api/leaderboard';
     const r=await fetch(url);
     const data=await r.json();
-    _lbCache={..._lbCache, ...data}; // preserve myRank from previous POST if any
+    _lbCache={..._lbCache,...data}; // preserve myRank from previous POST if any
     const activeTab=document.querySelector('.lb-tab[data-tab].active');
-    renderLbTab(activeTab?activeTab.dataset.tab:(lbMode === 'daily' ? 'challenge' : 'daily'));
+    const defaultTab=lbMode==='daily'?'challenge':lbMode==='sprint'?'sprint-daily':'daily';
+    renderLbTab(activeTab?activeTab.dataset.tab:defaultTab);
   }catch(e){}
 }
 
@@ -3299,29 +3551,40 @@ function renderLbTab(tab){
   const inner=document.querySelector('.lb-inner');
   if(!inner)return;
   let entries, myRank;
-  if(tab==='daily') { entries=_lbCache.dailyBoard||[]; myRank=_lbCache.dailyRank; }
-  else if(tab==='weekly') { entries=_lbCache.weeklyBoard||[]; myRank=_lbCache.weeklyRank; }
-  else if(tab==='challenge') { entries=_lbCache.challengeBoard||[]; myRank=_lbCache.challengeRank; }
-  else if(tab==='challenge-all') { entries=_lbCache.challengeAlltimeBoard||[]; myRank=_lbCache.challengeAlltimeRank; }
-  else { entries=_lbCache.board||[]; myRank=_lbCache.rank; }
-  
+  const isSprintTab=tab.startsWith('sprint');
+  if(tab==='daily')           { entries=_lbCache.dailyBoard||[];           myRank=_lbCache.dailyRank; }
+  else if(tab==='weekly')     { entries=_lbCache.weeklyBoard||[];          myRank=_lbCache.weeklyRank; }
+  else if(tab==='challenge')  { entries=_lbCache.challengeBoard||[];       myRank=_lbCache.challengeRank; }
+  else if(tab==='challenge-all'){entries=_lbCache.challengeAlltimeBoard||[];myRank=_lbCache.challengeAlltimeRank;}
+  else if(tab==='sprint-daily'){ entries=_lbCache.sprintDailyBoard||[];   myRank=_lbCache.sprintDailyRank; }
+  else if(tab==='sprint-weekly'){entries=_lbCache.sprintWeeklyBoard||[];  myRank=_lbCache.sprintWeeklyRank; }
+  else if(tab==='sprint-all') { entries=_lbCache.sprintBoard||[];         myRank=_lbCache.sprintRank; }
+  else                        { entries=_lbCache.board||[];               myRank=_lbCache.rank; }
+
   document.querySelectorAll('.lb-tab[data-tab]').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
-  inner.innerHTML=lbHTML(entries, _lbCache.myName, myRank, _lbCache.myScore);
+  const myVal=isSprintTab?_lbCache.mySprintTime:_lbCache.myScore;
+  inner.innerHTML=lbHTML(entries,_lbCache.myName,myRank,myVal,isSprintTab);
 }
 
 function setLbMode(mode) {
   lbMode=mode;
-  const mb=document.getElementById('lb-mode-marathon');
-  const db=document.getElementById('lb-mode-daily');
-  if(mb)mb.classList.toggle('active',mode==='marathon');
-  if(db)db.classList.toggle('active',mode==='daily');
-  
+  ['marathon','sprint','daily'].forEach(m=>{
+    const el=document.getElementById('lb-mode-'+m);
+    if(el)el.classList.toggle('active',m===mode);
+  });
+
   const tc=document.querySelector('.lb-tabs-container');
   if(tc){
     if(mode==='daily'){
       tc.innerHTML=`
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
+      `;
+    }else if(mode==='sprint'){
+      tc.innerHTML=`
+        <button class="lb-tab active" data-tab="sprint-daily" onclick="renderLbTab('sprint-daily')">TODAY</button>
+        <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
+        <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
       `;
     }else{
       tc.innerHTML=`
@@ -3334,9 +3597,21 @@ function setLbMode(mode) {
   loadStartLeaderboard();
 }
 
+function startSprintMode(){
+  isSprintMode=true;
+  isDailyMode=false;
+  startGame();
+}
+
 function showStartScreen(){
-  isDailyMode = false; // reset when returning to start screen
+  isDailyMode=false;
+  isSprintMode=false; // reset sprint when returning to start screen
   clearInterval(_gateTimer); _gateTimer = null; // stop daily countdown if active
+  // Reset panel labels to marathon defaults
+  const psl=document.getElementById('panel-score-label');
+  const lsl=document.getElementById('lines-sub-label');
+  if(psl)psl.textContent='SCORE';
+  if(lsl)lsl.textContent='CLEARED';
   // Stop the game loop; switch to lightweight bgOnly loop for the start screen.
   // gameLoop runs full drawBoard()+particles+shake — unnecessary when no game is active.
   gameRunning=false;
@@ -3349,12 +3624,17 @@ function showStartScreen(){
       <div id="start-lb">
         <div class="lb-mode-toggle" style="display:flex;gap:4px;margin-bottom:6px;width:100%">
           <button id="lb-mode-marathon" class="lb-tab ${lbMode==='marathon'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('marathon')">MARATHON</button>
-          <button id="lb-mode-daily" class="lb-tab ${lbMode==='daily'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">🏆 CHALLENGE</button>
+          <button id="lb-mode-sprint" class="lb-tab ${lbMode==='sprint'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('sprint')">⚡ SPRINT</button>
+          <button id="lb-mode-daily" class="lb-tab ${lbMode==='daily'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">🏆 DAILY</button>
         </div>
         <div class="lb-tabs-container lb-tabs">
-          ${lbMode === 'daily' ? `
+          ${lbMode==='daily' ? `
             <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
             <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
+          ` : lbMode==='sprint' ? `
+            <button class="lb-tab active" data-tab="sprint-daily" onclick="renderLbTab('sprint-daily')">TODAY</button>
+            <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
+            <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
           ` : `
             <button class="lb-tab active" data-tab="daily" onclick="renderLbTab('daily')">TODAY</button>
             <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
@@ -3364,7 +3644,8 @@ function showStartScreen(){
         <div class="lb-inner"></div>
       </div>
       <div class="btn-row" style="margin-bottom:6px;width:100%;flex-direction:column;gap:6px;flex-wrap:nowrap">
-        <button class="action-btn" style="width:100%" onclick="startGame()">START GAME</button>
+        <button class="action-btn" style="width:100%" onclick="startGame()">MARATHON</button>
+        <button class="action-btn" style="width:100%;border-color:rgba(0,255,136,0.5);color:#00ff88" onclick="startSprintMode()">⚡ SPRINT 40L</button>
         <button class="action-btn" id="daily-challenge-btn" style="width:100%" onclick="startDailyChallenge()">🏆 DAILY CHALLENGE</button>
       </div>
       <div class="btn-row" style="gap:6px;width:100%">

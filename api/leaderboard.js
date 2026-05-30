@@ -13,6 +13,17 @@ const KEY_CHALLENGE = () => {
   return `daily:${today}`;
 };
 const KEY_CHALLENGE_ALLTIME = 'challenge:alltime';
+
+// Sprint keys — ascending leaderboard (lowest time = best)
+const KEY_SPRINT     = 'glowtris-sprint';
+const KEY_SPRINT_DAILY  = () => `glowtris-sprint-daily-${new Date().toISOString().slice(0,10)}`;
+const KEY_SPRINT_WEEKLY = () => {
+  const d = new Date();
+  const day = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() - day + 1);
+  return `glowtris-sprint-weekly-${d.toISOString().slice(0,10)}`;
+};
+
 const TOP = 10;
 const TOP_ALLTIME = 20;
 const DAILY_TTL  = 60 * 60 * 26;
@@ -21,6 +32,12 @@ const WEEKLY_TTL = 60 * 60 * 24 * 8;
 // Score bounds: 0 < score ≤ 10M (roughly 4+ hours of perfect play).
 // Rejects obvious spoofed submissions without needing server-side game simulation.
 const MAX_SCORE = 10_000_000;
+
+// Sprint time bounds (milliseconds).
+// 15s lower bound = physically impossible 40-line clear time.
+// 1h upper bound = generous timeout.
+const SPRINT_MIN_MS = 15_000;
+const SPRINT_MAX_MS = 3_600_000;
 
 // Rate limit: max 5 POST submissions per IP per 60s window.
 const RATE_LIMIT  = 5;
@@ -39,8 +56,20 @@ function parseMember(member) {
   return idx === -1 ? decoded : decoded.slice(0, idx);
 }
 
+// Marathon board: descending (highest score first)
 async function getBoard(key, limit = TOP) {
   const data = await redis(`zrange/${key}/0/${limit - 1}/rev/withscores`);
+  const raw = data.result || [];
+  const board = [];
+  for (let i = 0; i < raw.length; i += 2) {
+    board.push({ name: parseMember(raw[i]), score: parseInt(raw[i + 1], 10) });
+  }
+  return board;
+}
+
+// Sprint board: ascending (lowest time first = fastest wins)
+async function getSprintBoard(key, limit = TOP) {
+  const data = await redis(`zrange/${key}/0/${limit - 1}/withscores`);
   const raw = data.result || [];
   const board = [];
   for (let i = 0; i < raw.length; i += 2) {
@@ -62,8 +91,8 @@ async function checkRateLimit(ip) {
   return count > RATE_LIMIT;
 }
 
-// Deduplication: keep only personal best for each clean name.
-// Returns true if the new score was written, false if an equal/higher score already exists.
+// Marathon dedup: keep personal best (highest score).
+// Returns true if the new score was written, false if equal/higher already exists.
 async function deduplicateAndAdd(key, cleanName, newScore, newMember) {
   const data = await redis(`zrange/${key}/0/-1/withscores`);
   const raw = data.result || [];
@@ -84,6 +113,28 @@ async function deduplicateAndAdd(key, cleanName, newScore, newMember) {
   return true;
 }
 
+// Sprint dedup: keep personal best (lowest time).
+// Returns true if the new time was written, false if equal/lower already exists.
+async function deduplicateAndAddSprint(key, cleanName, newTime, newMember) {
+  const data = await redis(`zrange/${key}/0/-1/withscores`);
+  const raw = data.result || [];
+  const oldMembers = [];
+  let personalBest = Infinity;
+  for (let i = 0; i < raw.length; i += 2) {
+    if (parseMember(raw[i]) === cleanName) {
+      oldMembers.push(raw[i]);
+      personalBest = Math.min(personalBest, parseInt(raw[i + 1], 10));
+    }
+  }
+  if (personalBest <= newTime) return false;
+  if (oldMembers.length > 0) {
+    const encoded = oldMembers.map(m => encodeURIComponent(m)).join('/');
+    await redis(`zrem/${key}/${encoded}`);
+  }
+  await redis(`zadd/${key}/${newTime}/${newMember}`);
+  return true;
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -100,15 +151,25 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
 
     const url = req.url ? new URL(req.url, 'http://localhost') : null;
-    const isChallenge = (req.query && (req.query.mode === 'daily' || req.query.challenge === '1')) ||
-                        (url && (url.searchParams.get('mode') === 'daily' || url.searchParams.get('challenge') === '1'));
+    const mode = (req.query && req.query.mode) || (url && url.searchParams.get('mode')) || '';
 
-    if (isChallenge) {
+    if (mode === 'daily') {
       const [challengeBoard, challengeAlltimeBoard] = await Promise.all([
         getBoard(KEY_CHALLENGE()),
         getBoard(KEY_CHALLENGE_ALLTIME, TOP_ALLTIME),
       ]);
       return res.status(200).json({ challengeBoard, challengeAlltimeBoard });
+    }
+
+    if (mode === 'sprint') {
+      const sprintDaily = KEY_SPRINT_DAILY();
+      const sprintWeekly = KEY_SPRINT_WEEKLY();
+      const [sprintBoard, sprintDailyBoard, sprintWeeklyBoard] = await Promise.all([
+        getSprintBoard(KEY_SPRINT, TOP_ALLTIME),
+        getSprintBoard(sprintDaily),
+        getSprintBoard(sprintWeekly),
+      ]);
+      return res.status(200).json({ sprintBoard, sprintDailyBoard, sprintWeeklyBoard });
     }
 
     const [board, dailyBoard, weeklyBoard] = await Promise.all([
@@ -132,16 +193,57 @@ export default async function handler(req, res) {
     if (!name || typeof score !== 'number') {
       return res.status(400).json({ error: 'name and score required' });
     }
-    if (!Number.isInteger(score) || score <= 0 || score > MAX_SCORE) {
-      return res.status(400).json({ error: 'score out of range' });
-    }
     const clean = String(name).slice(0, 12).replace(/[^\w가-힣ㄱ-ㅎㅏ-ㅣ\s\-_.]/g, '');
     if (!clean) return res.status(400).json({ error: 'invalid name' });
 
     const member = encodeURIComponent(`${clean}#${Date.now()}`);
     const isChallenge = mode === 'daily' || req.body.challenge === 1;
+    const isSprint = mode === 'sprint';
 
+    // ── Sprint mode ────────────────────────────────────────────────────────────
+    if (isSprint) {
+      if (!Number.isInteger(score) || score < SPRINT_MIN_MS || score > SPRINT_MAX_MS) {
+        return res.status(400).json({ error: 'sprint time out of range' });
+      }
+      const sprintTime = score; // score field reused for time (ms)
+      const sprintDaily = KEY_SPRINT_DAILY();
+      const sprintWeekly = KEY_SPRINT_WEEKLY();
+
+      await Promise.all([
+        deduplicateAndAddSprint(KEY_SPRINT, clean, sprintTime, member),
+        deduplicateAndAddSprint(sprintDaily, clean, sprintTime, member),
+        deduplicateAndAddSprint(sprintWeekly, clean, sprintTime, member),
+      ]);
+
+      await Promise.all([
+        redis(`zremrangebyrank/${KEY_SPRINT}/${TOP_ALLTIME}/-1`), // keep top 20 fastest
+        redis(`expire/${sprintDaily}/${DAILY_TTL}`),
+        redis(`expire/${sprintWeekly}/${WEEKLY_TTL}`),
+      ]);
+
+      const [sprintBoard, sprintDailyBoard, sprintWeeklyBoard] = await Promise.all([
+        getSprintBoard(KEY_SPRINT, TOP_ALLTIME),
+        getSprintBoard(sprintDaily),
+        getSprintBoard(sprintWeekly),
+      ]);
+
+      const [allRankData, dailyRankData, weeklyRankData] = await Promise.all([
+        redis(`zcount/${KEY_SPRINT}/-inf/${sprintTime - 1}`),
+        redis(`zcount/${sprintDaily}/-inf/${sprintTime - 1}`),
+        redis(`zcount/${sprintWeekly}/-inf/${sprintTime - 1}`),
+      ]);
+      const sprintRank       = (allRankData.result    || 0) + 1;
+      const sprintDailyRank  = (dailyRankData.result  || 0) + 1;
+      const sprintWeeklyRank = (weeklyRankData.result || 0) + 1;
+
+      return res.status(200).json({ sprintBoard, sprintDailyBoard, sprintWeeklyBoard, sprintRank, sprintDailyRank, sprintWeeklyRank });
+    }
+
+    // ── Daily Challenge mode ───────────────────────────────────────────────────
     if (isChallenge) {
+      if (!Number.isInteger(score) || score <= 0 || score > MAX_SCORE) {
+        return res.status(400).json({ error: 'score out of range' });
+      }
       const key = KEY_CHALLENGE();
       await Promise.all([
         deduplicateAndAdd(key, clean, score, member),
@@ -162,6 +264,11 @@ export default async function handler(req, res) {
       const challengeAlltimeRank = (alltimeRankData.result || 0) + 1;
 
       return res.status(200).json({ challengeBoard, challengeRank, challengeAlltimeBoard, challengeAlltimeRank });
+    }
+
+    // ── Marathon mode ──────────────────────────────────────────────────────────
+    if (!Number.isInteger(score) || score <= 0 || score > MAX_SCORE) {
+      return res.status(400).json({ error: 'score out of range' });
     }
 
     await Promise.all([
