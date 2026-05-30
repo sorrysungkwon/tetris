@@ -1,6 +1,6 @@
 import { S, LS, SUPPORT_URL, SPRINT_LINES, fmtTime } from './shared.js';
 import { unlockAchievement } from './ui.js';
-import { showStartScreen } from './game.js'; // Will be moved to screens.js in Session 5
+import { showStartScreen } from './screens.js';
 
 // Shows a confirmation modal before opening the Ko-fi donation page in a new tab.
 export function _openDonation(){
