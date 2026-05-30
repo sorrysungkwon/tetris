@@ -1260,7 +1260,7 @@ function _applyTouchCELL() {
   gc.width  = gameW; gc.height = gameH;
   pc.width  = gameW; pc.height = gameH;
   if (isMobile) {
-    const miniW = Math.max(32, Math.min(42, Math.round(gameW * 0.14)));
+    const miniW = Math.max(26, Math.min(30, Math.round(gameW * 0.10)));
     const miniH = Math.round(miniW * 0.8);
     ncM.width = miniW; ncM.height = miniH;
     ncM.style.width = miniW + 'px'; ncM.style.height = miniH + 'px';
@@ -1306,15 +1306,16 @@ let _nudgeTimer = null;
 const $appEl = document.getElementById('app');
 function nudgeUI(dx, dy) {
   _nudgeActive = true;
+  clearTimeout(_nudgeTimer);
+  // Snap to displaced position — no transition
   $appEl.style.transition = 'none';
   $appEl.style.transform  = `translate(${dx}px,${dy}px)`;
-  clearTimeout(_nudgeTimer);
-  _nudgeTimer = setTimeout(() => {
-    $appEl.style.transition = 'transform 0.22s cubic-bezier(0.28,1.8,0.58,1)';
-    $appEl.style.transform  = '';
-    // Clear the flag after the spring animation completes (~220ms)
-    setTimeout(() => { _nudgeActive = false; }, 250);
-  }, 22);
+  // Force immediate reflow so the snap is committed before spring starts
+  void $appEl.offsetWidth;
+  // Spring back: strong overshoot (y1=2.8) → bouncy, rhythmic snap
+  $appEl.style.transition = 'transform 0.26s cubic-bezier(0.15,2.8,0.5,0.82)';
+  $appEl.style.transform  = '';
+  _nudgeTimer = setTimeout(() => { _nudgeActive = false; }, 300);
 }
 
 // ─── iPad keyboard mode ──────────────────────────────────────────────────────
@@ -2809,8 +2810,8 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP'){togglePause();return;}
   if(gamePaused)return;
   switch(e.code){
-    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(7,-1);break;
-    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-7,-1);break;
+    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
+    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-12,-2);break;
     case'ArrowDown': softDrop();startDASDown();e.preventDefault();break;
     case'ArrowUp':   rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
