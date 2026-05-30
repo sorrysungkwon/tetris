@@ -1070,6 +1070,7 @@ let _sprintHiTime=0;     // personal best sprint time (ms), 0 = no record
 let _countdownVal=0;     // 3→2→1 before game starts, 0 = game running
 let _countdownTimer=null;
 let _countdownGo=0;      // frames of "GO!" flash (~45 frames @ 60fps)
+let _countdownTs=0;      // performance.now() when current number appeared
 let _prng=null;
 let lbMode='marathon'; // 'marathon' | 'sprint' | 'daily'
 // ─── Performance detection ────────────────────────────────────────────────────
@@ -1954,23 +1955,74 @@ function drawBoard(){
   // ── Countdown overlay ────────────────────────────────────────────────────
   if(_countdownVal>0||_countdownGo>0){
     const W=COLS*CELL,H=ROWS*CELL,cx=W/2,cy=H/2;
-    // Dim board during countdown (not during GO!)
+    const isGo=_countdownGo>0;
+    // Per-number neon color: 3=red, 2=amber, 1=cyan, GO=green
+    const CDCOLORS={3:'#ff3355',2:'#ffaa00',1:'#00c8ff'};
+    const color=isGo?'#00ff88':(CDCOLORS[_countdownVal]||'#00c8ff');
+
+    // Animation fraction 0→1 within each 1s window
+    const frac=isGo
+      ?1-_countdownGo/55                            // GO: 0→1 as it fades
+      :Math.min(1,(performance.now()-_countdownTs)/1000);
+
+    // Scale: number pops in large then settles
+    const scale=isGo
+      ?(1+0.4*(1-frac))                             // GO starts 1.4× and shrinks to 1×
+      :Math.max(0.9,1.7-frac*0.8);                 // number: 1.7→0.9 over 1s
+
+    // Alpha: countdown stays solid, GO fades out in last 40%
+    const alpha=isGo
+      ?Math.max(0,1-(frac-0.6)/0.4)
+      :(frac<0.75?1:Math.max(0,1-(frac-0.75)/0.25));
+
+    // Dark vignette overlay during countdown numbers only
     if(_countdownVal>0){
-      gctx.save();gctx.globalAlpha=0.5;
-      gctx.fillStyle='rgba(0,0,10,1)';gctx.fillRect(0,0,W,H);
+      const dimA=Math.min(0.6,0.6*(frac<0.8?1:(1-(frac-0.8)/0.2)));
+      gctx.save();gctx.globalAlpha=dimA;
+      gctx.fillStyle='rgba(0,0,8,1)';gctx.fillRect(0,0,W,H);
       gctx.restore();
     }
-    const isGo=_countdownGo>0;
+
+    // Expanding ring (only for numbers, not GO)
+    if(!isGo){
+      const ringR=Math.min(cy*0.8,30+frac*cy*0.9);
+      const ringA=Math.max(0,0.9-frac*0.9);
+      gctx.save();gctx.globalAlpha=ringA;
+      gctx.strokeStyle=color;gctx.shadowColor=color;gctx.shadowBlur=18;
+      gctx.lineWidth=2.5;
+      gctx.beginPath();gctx.arc(cx,cy,ringR,0,Math.PI*2);gctx.stroke();
+      // second ring (delayed)
+      const ringR2=Math.min(cy*0.85,10+frac*cy*1.1);
+      const ringA2=Math.max(0,0.5-frac*0.5);
+      gctx.globalAlpha=ringA2;
+      gctx.lineWidth=1.5;
+      gctx.beginPath();gctx.arc(cx,cy,ringR2,0,Math.PI*2);gctx.stroke();
+      gctx.shadowBlur=0;gctx.restore();
+    }
+
+    // Full-board color flash on each new number (first 6% of window)
+    if(!isGo&&frac<0.06){
+      gctx.save();gctx.globalAlpha=(1-frac/0.06)*0.18;
+      gctx.fillStyle=color;gctx.fillRect(0,0,W,H);
+      gctx.restore();
+    }
+
+    // Main text with zoom transform
     const text=isGo?'GO!':String(_countdownVal);
-    const color=isGo?'#00ff88':'#00c8ff';
-    const alpha=isGo?Math.min(1,_countdownGo/20):1;
+    const fontSize=Math.floor(W*(isGo?0.44:0.54));
     gctx.save();
     gctx.globalAlpha=alpha;
-    gctx.font=`900 ${Math.floor(W*0.52)}px Orbitron,monospace`;
-    gctx.fillStyle=color;gctx.shadowColor=color;gctx.shadowBlur=60;
+    gctx.translate(cx,cy);gctx.scale(scale,scale);gctx.translate(-cx,-cy);
+    gctx.font=`900 ${fontSize}px Orbitron,monospace`;
     gctx.textAlign='center';gctx.textBaseline='middle';
+    // Outer glow layer
+    gctx.fillStyle=color;gctx.shadowColor=color;gctx.shadowBlur=80;
+    gctx.fillText(text,cx,cy);
+    // Inner bright core
+    gctx.shadowBlur=30;gctx.fillStyle='#ffffff';gctx.globalAlpha=alpha*0.45;
     gctx.fillText(text,cx,cy);
     gctx.shadowBlur=0;gctx.restore();
+
     if(_countdownGo>0)_countdownGo--;
   }
 }
@@ -2863,14 +2915,24 @@ function _doStartGame(){
   // 3-2-1 countdown before pieces start falling
   _countdownGo=0;
   _countdownVal=3;
+  _countdownTs=performance.now();
   clearInterval(_countdownTimer);
+  // Tick sound for first number (3)
+  if(!muteAudio)playBeep(440,'square',.13,.18,0);
   _countdownTimer=setInterval(()=>{
     _countdownVal--;
+    _countdownTs=performance.now();
     if(_countdownVal<=0){
       clearInterval(_countdownTimer);_countdownTimer=null;_countdownVal=0;
-      _countdownGo=45; // ~0.75s "GO!" flash
-      lastDropTs=performance.now(); // reset drop timer so first drop is full interval
-      if(isSprintMode)_sprintStartTime=performance.now(); // timer starts NOW, not before
+      _countdownGo=55; // ~0.9s "GO!" flash
+      lastDropTs=performance.now();
+      if(isSprintMode)_sprintStartTime=performance.now();
+      // GO! fanfare chord
+      if(!muteAudio){[523,659,784].forEach((f,i)=>playBeep(f,'sawtooth',.16,.3,i*.04));}
+    }else{
+      // Ascending pitch per tick: 3=440 2=550 1=660
+      const pitch={2:550,1:660}[_countdownVal]||440;
+      if(!muteAudio)playBeep(pitch,'square',.13,.18,0);
     }
   },1000);
   animFrame=requestAnimationFrame(gameLoop);
