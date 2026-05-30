@@ -303,6 +303,10 @@
     #desktop-header { display:none; }
     #left-panel, #right-panel { display:none; }
 
+    /* ── Keyboard mode on tablet: restore desktop side panels ── */
+    /* When an external keyboard is detected on a coarse-pointer device,
+       we add html.kb-mode and switch to the desktop layout. */
+
     #mobile-header {
       display:flex;
       align-items:center;
@@ -327,6 +331,18 @@
     #game-row { gap:0; }
     #game-canvas { border-radius:3px; }
   }
+
+  /* ── Keyboard mode override (iPad + external keyboard) ────────────────────
+     When html.kb-mode is set, treat this device like a desktop:
+     show side panels, hide mobile header & touch controls.
+  ───────────────────────────────────────────────────────────────────────── */
+  html.kb-mode #desktop-header  { display:flex !important; }
+  html.kb-mode #left-panel,
+  html.kb-mode #right-panel     { display:flex !important; }
+  html.kb-mode #mobile-header   { display:none !important; }
+  html.kb-mode #touch-controls  { display:none !important; }
+  html.kb-mode #game-row        { gap:12px !important; }
+  html.kb-mode #game-canvas     { border-radius:6px !important; }
 
   /* ════════════════════════════════
      TOUCH CONTROLS  (all screens)
@@ -1060,6 +1076,8 @@ let lastDropTs=0;
 let lockTimer=0,lockActive=false;
 let prevTs=0;
 let isMobile=false;
+let _kbMode=false; // true after first keydown on a coarse-pointer device (iPad + external keyboard)
+let _nudgeActive=false; // true while nudge spring animation is running (prevents applyShake clearing it)
 let _lbCache={board:[],dailyBoard:[],weeklyBoard:[],challengeBoard:[],challengeRank:0,challengeAlltimeBoard:[],challengeAlltimeRank:0,sprintBoard:[],sprintDailyBoard:[],sprintWeeklyBoard:[],sprintRank:0,sprintDailyRank:0,sprintWeeklyRank:0,mySprintTime:0};
 let isDailyMode=false;
 let isSprintMode=false;
@@ -1255,10 +1273,13 @@ function _applyTouchCELL() {
 
 function initLayout() {
   const W = window.innerWidth, H = window.innerHeight;
-  isMobile = W < 600 || window.matchMedia('(pointer:coarse)').matches;
+  const isCoarse = window.matchMedia('(pointer:coarse)').matches;
+  // In kb-mode on a tablet, treat the device like a desktop (side panels visible)
+  isMobile = (W < 600) || (isCoarse && !_kbMode);
   bgc.width = W; bgc.height = H;
 
-  if (window.matchMedia('(pointer:coarse)').matches) {
+  if (isCoarse && !_kbMode) {
+    // Touch-only device path — use proportional cell sizing
     // Option A: no ResizeObserver, no RAF — just call directly.
     // Simple arithmetic is timing-independent and never creates feedback loops.
     _applyTouchCELL();
@@ -1284,14 +1305,39 @@ function initLayout() {
 let _nudgeTimer = null;
 const $appEl = document.getElementById('app');
 function nudgeUI(dx, dy) {
+  _nudgeActive = true;
   $appEl.style.transition = 'none';
   $appEl.style.transform  = `translate(${dx}px,${dy}px)`;
   clearTimeout(_nudgeTimer);
   _nudgeTimer = setTimeout(() => {
     $appEl.style.transition = 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)';
     $appEl.style.transform  = '';
+    // Clear the flag after the spring animation completes (~180ms)
+    setTimeout(() => { _nudgeActive = false; }, 200);
   }, 15);
 }
+
+// ─── iPad keyboard mode ──────────────────────────────────────────────────────
+// On coarse-pointer devices (iPad), when the user presses a key we switch to
+// the desktop layout (side panels visible, touch controls hidden). Touching the
+// screen restores touch mode.
+function _enableKbMode() {
+  if (_kbMode) return;
+  _kbMode = true;
+  document.documentElement.classList.add('kb-mode');
+  // Re-run layout so isMobile is recalculated with kb-mode in mind
+  initLayout(); initStars(); if (gameRunning) drawBoard();
+}
+function _disableKbMode() {
+  if (!_kbMode) return;
+  _kbMode = false;
+  document.documentElement.classList.remove('kb-mode');
+  initLayout(); initStars(); if (gameRunning) drawBoard();
+}
+// Restore touch mode when the user touches the screen
+document.addEventListener('touchstart', () => {
+  if (_kbMode) _disableKbMode();
+}, { passive: true });
 
 let _resizeTimer;
 window.addEventListener('resize', () => {
@@ -2221,7 +2267,7 @@ function spawnHardDropParticles(){
 }
 
 function applyShake(){
-  if(animIntensity!=='full'||lowPerfMode){$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
+  if(animIntensity!=='full'||lowPerfMode){if(!_nudgeActive)$app.style.transform='';shakeFrames=0;shakeAllDir=false;return;}
   if(shakeFrames>0){
     const m=shakeFrames*shakeMag;
     const x=(Math.random()-.5)*m;
@@ -2229,7 +2275,7 @@ function applyShake(){
     $app.style.transform=`translate(${x}px,${y}px)`;
     shakeFrames--;
     if(!shakeFrames){shakeMag=0.4;shakeAllDir=false;}
-  } else $app.style.transform='';
+  } else if(!_nudgeActive) $app.style.transform=''; // don't clear while nudge spring is active
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
@@ -2752,6 +2798,8 @@ function updateKeyGuideState(code, isPressed) {
 }
 document.addEventListener('keydown',e=>{
   updateKeyGuideState(e.code, true);
+  // Enable desktop-style layout on iPad when a keyboard key is pressed
+  if(!_kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
   if(KEYS[e.code])return;KEYS[e.code]=true;
   if(!gameRunning)return;
   if(e.code==='KeyP'){togglePause();return;}
