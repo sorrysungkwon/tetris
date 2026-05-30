@@ -39,7 +39,6 @@ let lastDropTs=0;
 let prevTs=0;
 let _countdownTimer=null;
 let _prng=null;
-let _gateTimer=null;
 
 // S.* aliases for frequently-used state (reduce property lookups in hot paths)
 // These are written by this module and read here + by ui.js via S.*

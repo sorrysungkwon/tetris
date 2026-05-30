@@ -44,7 +44,7 @@ export function showDailyGateOverlay(todayStr) {
       </div>
       <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,0.6);text-transform:uppercase;margin-bottom:2px">NEXT CHALLENGE IN</div>
       <div id="daily-countdown" style="font-size:24px;font-weight:900;color:var(--cyan);text-shadow:0 0 10px var(--cyan);margin-bottom:20px;letter-spacing:1.5px">--:--:--</div>
-      <button class="action-btn" style="width:100%" onclick="clearInterval(_gateTimer);showStartScreen()">BACK</button>
+      <button class="action-btn" style="width:100%" onclick="showStartScreen()">BACK</button>
     </div>
   `;
   $overlay.style.display = 'flex';
