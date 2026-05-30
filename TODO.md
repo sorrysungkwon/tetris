@@ -13,7 +13,7 @@
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | ✅ Done |
-| v1.1 Sprint Mode + Domain | 500 | 🔲 Domain pending (~Jun 10) |
+| v1.1 Sprint Mode + Domain | 500 | ✅ Done |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -443,17 +443,16 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: v1.1 Release — Domain Setup
-> Target: ~June 10, 2026
+## ✅ Completed: v1.1 Release — Domain Setup (2026-05-30)
 
-### Domain Setup (user action)
-- [ ] **Purchase domain** (e.g. `glowtris.com`) and connect to Vercel project.
-- [ ] **Set up Cloudflare proxy** — point domain NS to Cloudflare, then proxy to Vercel. DDoS protection + free SSL.
-- [ ] **After domain is live** (agent tasks):
-  - Update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain)
-  - Update `README.md` production URL
-  - Update `ROBOT.md` dashboard/URL references
-  - Redeploy to production
+### Domain Setup
+- [x] **Purchase domain** `glowtris.com` and connect to Vercel project.
+- [x] **Set up Cloudflare proxy** — domain NS pointed to Cloudflare, proxied to Vercel.
+- [x] **URLs updated** (merged to master via PR #10 on 2026-05-30):
+  - `og:url` → `https://glowtris.com`
+  - `og:image` / `twitter:image` → `https://glowtris.com/api/og`
+  - Sprint share card caption → `glowtris.com`
+  - `README.md` + `ROBOT.md` production URL updated
 
 ### Donation URL
 - [x] Ko-fi account set up: `https://ko-fi.com/sorrysungkwon`
