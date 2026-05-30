@@ -2,11 +2,11 @@
 
 A neon-styled block stacking game built as a single HTML file.
 
-**Live:** https://glowtris.vercel.app
+**Live:** https://glowtris.com
 
 | | |
 |---|---|
-| Production | https://glowtris.vercel.app |
+| Production | https://glowtris.com |
 | Staging | https://prevglow.vercel.app |
 
 ## Stack
