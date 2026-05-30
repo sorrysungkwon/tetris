@@ -1066,6 +1066,10 @@ let isSprintMode=false;
 let _sprintStartTime=0;  // performance.now() when sprint begins
 let _sprintEndTime=0;    // performance.now() when 40th line is cleared
 let _sprintHiTime=0;     // personal best sprint time (ms), 0 = no record
+// ─── Countdown ───────────────────────────────────────────────────────────────
+let _countdownVal=0;     // 3→2→1 before game starts, 0 = game running
+let _countdownTimer=null;
+let _countdownGo=0;      // frames of "GO!" flash (~45 frames @ 60fps)
 let _prng=null;
 let lbMode='marathon'; // 'marathon' | 'sprint' | 'daily'
 // ─── Performance detection ────────────────────────────────────────────────────
@@ -1946,6 +1950,29 @@ function drawBoard(){
     levelUpScanline += 0.022; // speed
     if(levelUpScanline >= 1.0) levelUpScanline = 0;
   } else if(lowPerfMode){ levelUpScanline = 0; }
+
+  // ── Countdown overlay ────────────────────────────────────────────────────
+  if(_countdownVal>0||_countdownGo>0){
+    const W=COLS*CELL,H=ROWS*CELL,cx=W/2,cy=H/2;
+    // Dim board during countdown (not during GO!)
+    if(_countdownVal>0){
+      gctx.save();gctx.globalAlpha=0.5;
+      gctx.fillStyle='rgba(0,0,10,1)';gctx.fillRect(0,0,W,H);
+      gctx.restore();
+    }
+    const isGo=_countdownGo>0;
+    const text=isGo?'GO!':String(_countdownVal);
+    const color=isGo?'#00ff88':'#00c8ff';
+    const alpha=isGo?Math.min(1,_countdownGo/20):1;
+    gctx.save();
+    gctx.globalAlpha=alpha;
+    gctx.font=`900 ${Math.floor(W*0.52)}px Orbitron,monospace`;
+    gctx.fillStyle=color;gctx.shadowColor=color;gctx.shadowBlur=60;
+    gctx.textAlign='center';gctx.textBaseline='middle';
+    gctx.fillText(text,cx,cy);
+    gctx.shadowBlur=0;gctx.restore();
+    if(_countdownGo>0)_countdownGo--;
+  }
 }
 
 function drawMiniPiece(ctx,piece,cw,ch){
@@ -2738,11 +2765,11 @@ function gameLoop(ts){
   measureFPS(ts);
   const dt=prevTs?Math.min(ts-prevTs,100):16;prevTs=ts;
   drawBackground();
-  if(!gamePaused&&gameRunning&&current){
+  if(!gamePaused&&gameRunning&&current&&!_countdownVal){
     if(lockActive){lockTimer-=dt;if(lockTimer<=0)lockPiece();}
     else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(current,0,1)){current.y++;spawnDropTrail();}else{lockActive=true;lockTimer=lockMs;}}
   }
-  if(isSprintMode&&gameRunning)updateSprintTimer();
+  if(isSprintMode&&gameRunning&&!_countdownVal)updateSprintTimer();
   drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
 }
@@ -2832,9 +2859,20 @@ function _doStartGame(){
   spawnPiece();drawNext();drawHold();updateUI();
   if(animFrame)cancelAnimationFrame(animFrame);
   prevTs=0;lastDropTs=performance.now();
-  // Sprint timer starts just before RAF for maximum accuracy
-  if(isSprintMode)_sprintStartTime=performance.now();
   startBGM();
+  // 3-2-1 countdown before pieces start falling
+  _countdownGo=0;
+  _countdownVal=3;
+  clearInterval(_countdownTimer);
+  _countdownTimer=setInterval(()=>{
+    _countdownVal--;
+    if(_countdownVal<=0){
+      clearInterval(_countdownTimer);_countdownTimer=null;_countdownVal=0;
+      _countdownGo=45; // ~0.75s "GO!" flash
+      lastDropTs=performance.now(); // reset drop timer so first drop is full interval
+      if(isSprintMode)_sprintStartTime=performance.now(); // timer starts NOW, not before
+    }
+  },1000);
   animFrame=requestAnimationFrame(gameLoop);
 }
 
@@ -3606,7 +3644,8 @@ function startSprintMode(){
 function showStartScreen(){
   isDailyMode=false;
   isSprintMode=false; // reset sprint when returning to start screen
-  clearInterval(_gateTimer); _gateTimer = null; // stop daily countdown if active
+  clearInterval(_gateTimer);_gateTimer=null; // stop daily countdown if active
+  clearInterval(_countdownTimer);_countdownTimer=null;_countdownVal=0;_countdownGo=0;
   // Reset panel labels to marathon defaults
   const psl=document.getElementById('panel-score-label');
   const lsl=document.getElementById('lines-sub-label');
