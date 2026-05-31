@@ -311,7 +311,7 @@ function gameLoop(ts){
     if(S.lockActive){S.lockTimer-=dt;if(S.lockTimer<=0)lockPiece();}
     else if(ts-lastDropTs>dropInterval){lastDropTs=ts;if(validPos(S.current,0,1)){S.current.y++;spawnDropTrail(S.current);}else{S.lockActive=true;S.lockTimer=S.lockMs;}}
   }
-  if(S.isSprintMode&&S.gameRunning&&!S._countdownVal)updateSprintTimer();
+  if(S.isSprintMode&&S.gameRunning&&!S.gamePaused&&!S._countdownVal)updateSprintTimer();
   drawBoard();updateParticles();applyShake();
   animFrame=requestAnimationFrame(gameLoop);
 }
@@ -406,7 +406,17 @@ export function launchDailyChallenge() {
   startGame();
 }
 
+let _sprintPauseTs = 0;
+
+export function pauseGameTiming() {
+  if (S.isSprintMode && S._sprintStartTime > 0) _sprintPauseTs = performance.now();
+}
+
 export function resumeGameTiming() {
+  if (S.isSprintMode && _sprintPauseTs > 0) {
+    S._sprintStartTime += performance.now() - _sprintPauseTs;
+    _sprintPauseTs = 0;
+  }
   lastDropTs = performance.now();
   prevTs = 0;
 }
