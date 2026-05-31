@@ -200,7 +200,7 @@ export function _disableKbMode() {
   initLayout(); initStars();
   if (S.gameRunning) { drawBoard(); drawNext(); drawHold(); }
 }
-document.addEventListener('touchstart', () => { if (S._kbMode) _disableKbMode(); }, { passive: true });
+document.addEventListener('touchstart', () => { if (S._kbMode && !S.gamePaused) _disableKbMode(); }, { passive: true });
 
 let _resizeTimer;
 window.addEventListener('resize', () => {
