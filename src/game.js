@@ -1,5 +1,16 @@
 import { S, LS, ACHIEVEMENTS, COLS, ROWS, COLOR_TO_KEY, SUPPORT_URL, MAX_PARTICLES, PIECES, SPRINT_LINES, LEVEL_LINES, SCORE_TABLE, TSPIN_SCORE, TSPIN_MINI_SCORE, mulberry32, fmtTime, _getAchievements, _getLifetime } from './shared.js';
-import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio } from './audio.js';
+import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio, sfxUIHover, sfxUIClick } from './audio.js';
+
+document.addEventListener('mouseover', (e) => {
+  const btn = e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap');
+  if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
+});
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+});
+document.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+}, {passive: true});
 import {
   gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
   measureFPS, setLowPerfMode, resetPerfHold, _detectLowEndGPU,
@@ -105,7 +116,15 @@ function lockPiece(){
       :SCORE_TABLE[Math.min(cleared.length,4)]*S.level*mul;
     sfxLineClear(cleared.length);
     if(tspin){sfxTSpin();if(S.animIntensity==='full'){S.shakeFrames=Math.max(S.shakeFrames,12+cleared.length*6);S.shakeMag=Math.max(S.shakeMag,0.55);}}
-    if(S.combo>1&&S.animIntensity!=='off'){S.comboFlash=15;S.comboFlashColor=S.combo>=5?'#ff0080':S.combo>=3?'#a000ff':'#00c8ff';}
+    if(S.combo>1&&S.animIntensity!=='off'){
+      S.comboFlash=15 + (S.combo>=4 ? 15 : 0);
+      S.comboFlashColor=S.combo>=5?'#ff0080':S.combo>=3?'#a000ff':'#00c8ff';
+      if(S.combo>=4 && S.animIntensity==='full') {
+        S.shakeFrames=Math.max(S.shakeFrames, 10 + S.combo*3);
+        S.shakeMag=Math.max(S.shakeMag, Math.min(2.5, S.combo*0.35));
+        S.shakeAllDir=true;
+      }
+    }
     addScore(pts,cleared.length,tspin);
     S.lines+=cleared.length;
 
@@ -148,7 +167,7 @@ function lockPiece(){
       // Guard: if game was reset before this fires bail out immediately.
       if(!S.gameRunning&&!gameOver)return;
       for(const r of snap.slice().sort((a,b)=>a-b)){S.board.splice(r,1);S.board.unshift(Array(COLS).fill(null));}
-      spawnLineClearParticles(snap);
+      spawnLineClearParticles(snap, tspin, false);
       if(snap.length>=4&&!tspin&&S.animIntensity==='full'){S.shakeFrames=25;S.shakeMag=0.7;}
       if(snap.length>=4){triggerScreenFlash();if(S.animIntensity!=='off')S.rainbowBorder=45;}
       // All-clear bonus: board completely empty
@@ -157,6 +176,7 @@ function lockPiece(){
         addScore(bonus,0,false);
         showScorePopup(bonus,-1,false); // -1 signals all-clear
         triggerAllClearFlash();
+        spawnLineClearParticles(snap, false, true);
         unlockAchievement('all_clear');
       }
       S.flashLines=new Set();
@@ -239,12 +259,96 @@ function updateKeyGuideState(code, isPressed) {
   else if (code === 'KeyM')                           el = _keyGuide.mute;
   if (el) el.classList.toggle('key-pressed', isPressed);
 }
+function handleUINavigation(e) {
+  const overlay = document.getElementById('overlay');
+  const help = document.getElementById('htp-overlay');
+  const stats = document.getElementById('stats-overlay');
+  const donation = document.getElementById('donation-modal');
+
+  let activeOverlay = null;
+  if (donation) activeOverlay = donation;
+  else if (help && help.style.display === 'flex') activeOverlay = help;
+  else if (stats && stats.style.display === 'flex') activeOverlay = stats;
+  else if (overlay && overlay.style.display === 'flex') activeOverlay = overlay;
+
+  if (!activeOverlay) return false;
+  
+  const active = document.activeElement;
+
+  if (e.code === 'Escape' || e.code === 'Backspace') {
+    if (e.code === 'Backspace' && active && active.tagName === 'INPUT' && active.type === 'text') return false;
+    
+    const btn = Array.from(activeOverlay.querySelectorAll('button')).find(b => {
+      const t = b.textContent.toUpperCase();
+      return b.classList.contains('close-btn') || b.classList.contains('cancel') || t.includes('BACK') || t === 'RESUME' || t === 'CANCEL';
+    });
+    if (btn) {
+      e.preventDefault();
+      sfxUIClick();
+      btn.click();
+      return true;
+    }
+  }
+
+  if (active && active.tagName === 'INPUT' && active.type === 'text') {
+    if (e.code === 'Enter') return false;
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
+  }
+
+  const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
+  const isUp   = e.code === 'ArrowUp'   || e.code === 'KeyW';
+  const isRight= e.code === 'ArrowRight'|| e.code === 'KeyD';
+  const isLeft = e.code === 'ArrowLeft' || e.code === 'KeyA';
+
+  const scrollable = activeOverlay.querySelector('#htp-scroll, #stats-scroll');
+  if (scrollable && (isDown || isUp)) {
+    scrollable.scrollTop += isDown ? 60 : -60;
+    e.preventDefault();
+    return true;
+  }
+
+  const focusables = Array.from(activeOverlay.querySelectorAll('button, input, a[href], [tabindex="0"]'))
+    .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
+  
+  if (focusables.length === 0) return false;
+  let idx = focusables.indexOf(active);
+  const oldIdx = idx;
+
+  if (isDown || isRight || (e.code === 'Tab' && !e.shiftKey)) {
+    if (active && active.type === 'range' && (isLeft || isRight)) return false;
+    e.preventDefault();
+    idx = (idx + 1) % focusables.length;
+    focusables[idx].focus();
+    if (idx !== oldIdx) sfxUIHover();
+    return true;
+  }
+  if (isUp || isLeft || (e.code === 'Tab' && e.shiftKey)) {
+    if (active && active.type === 'range' && (isLeft || isRight)) return false;
+    e.preventDefault();
+    idx = idx <= 0 ? focusables.length - 1 : idx - 1;
+    focusables[idx].focus();
+    if (idx !== oldIdx) sfxUIHover();
+    return true;
+  }
+  if (e.code === 'Enter' || e.code === 'Space') {
+    if (active && focusables.includes(active) && active.tagName !== 'INPUT') {
+      e.preventDefault();
+      sfxUIClick();
+      active.click();
+      return true;
+    }
+  }
+  return false;
+}
+
 document.addEventListener('keydown',e=>{
+  if(e.code==='KeyM') toggleMute();
+  if (handleUINavigation(e)) return;
   updateKeyGuideState(e.code, true);
   if(!S._kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
   if(KEYS[e.code])return;KEYS[e.code]=true;
   if(!S.gameRunning)return;
-  if(e.code==='KeyP'){togglePause();return;}
+  if(e.code==='KeyP' || e.code==='Escape'){togglePause();return;}
   if(S.gamePaused||S._countdownVal)return;
   switch(e.code){
     case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
@@ -253,7 +357,6 @@ document.addEventListener('keydown',e=>{
     case'ArrowUp':case'KeyW':    rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
-    case'KeyM':toggleMute();break;
   }
 });
 document.addEventListener('keyup',e=>{
@@ -284,7 +387,7 @@ function hardDrop(){
 function makeTouchBtn(id,onPress,mode='repeat'){
   const el=document.getElementById(id);if(!el)return;
   let iv=null,to=null,on=false;
-  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!S.gameRunning&&mode!=='any')return;if((S.gamePaused||S._countdownVal)&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)onPress();},S.arr);},S.das);}}
+  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!S.gameRunning&&mode!=='any')return;if((S.gamePaused||S._countdownVal)&&mode!=='any')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(S.gameRunning&&!S.gamePaused&&!S._countdownVal)onPress();},S.arr);},S.das);}}
   function rel(e){if(e)e.preventDefault();if(!on)return;on=false;el.classList.remove('pressed');clearTimeout(to);clearInterval(iv);to=null;iv=null;}
   el.addEventListener('touchstart',press,{passive:false});
   el.addEventListener('touchend',rel,{passive:false});

@@ -294,8 +294,8 @@ export function drawBackground() {
     gc2.clearRect(0, 0, bgc.width, bgc.height);
     for (const neb of nebulae) {
       const gr = gc2.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
-      gr.addColorStop(0,   `hsla(${neb.hue},85%,25%,0.045)`);
-      gr.addColorStop(0.5, `hsla(${(neb.hue+40)%360},80%,15%,0.02)`);
+      gr.addColorStop(0,   `hsla(${neb.hue},95%,35%,0.12)`);
+      gr.addColorStop(0.5, `hsla(${(neb.hue+40)%360},90%,20%,0.06)`);
       gr.addColorStop(1,   'transparent');
       gc2.fillStyle = gr;
       const nbx = Math.max(0, neb.x - neb.r), nby = Math.max(0, neb.y - neb.r);
@@ -712,9 +712,28 @@ export function drawHold() {
 }
 
 // ─── Particles ────────────────────────────────────────────────────────────────
-export function spawnLineClearParticles(rows) {
+export function spawnLineClearParticles(rows, tspin=false, isAllClear=false) {
   if (S.animIntensity === 'off') return;
   if (S.particles.length >= MAX_PARTICLES) return;
+  if (isAllClear) {
+    const starCount = S.lowPerfMode ? 30 : 60;
+    for (let i = 0; i < starCount; i++) {
+      const a = Math.random()*Math.PI*2, sp = Math.random()*15+5;
+      S.particles.push({x:COLS/2*S.CELL,y:ROWS/2*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.015+.008,color:['#ffe600','#ffffff','#ffaa00'][Math.floor(Math.random()*3)],size:Math.random()*8+4,type:'star'});
+    }
+    return;
+  }
+  if (tspin) {
+    const pCount = S.lowPerfMode ? 10 : 20;
+    for (const row of rows) {
+      for (let i = 0; i < pCount; i++) {
+        const a = Math.random()*Math.PI*2, sp = Math.random()*8+3;
+        S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,decay:Math.random()*.02+.01,color:['#a000ff','#ff0080','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+3,type:'star'});
+      }
+      S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.03,color:'#a000ff',size:6,maxRadius:(COLS/2)*S.CELL*2.5,type:'radial-ring'});
+    }
+    return;
+  }
   for (const row of rows) {
     S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*S.CELL*1.5,type:'radial-ring'});
     S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*S.CELL*2.3,type:'radial-ring'});
@@ -867,9 +886,15 @@ export function updateUI() {
     return;
   }
   const s = S.score.toLocaleString();
-  $score.textContent = s; $scoreM.textContent = s;
-  $lines.textContent = S.lines; $linesM.textContent = S.lines;
-  $level.textContent = S.level; $levelM.textContent = S.level;
+  if ($score.textContent !== s && $score.textContent !== '') {
+    if (!S.lowPerfMode) {
+      $score.classList.remove('score-bounce-active'); void $score.offsetWidth; $score.classList.add('score-bounce-active');
+      if ($scoreM) { $scoreM.classList.remove('score-bounce-active'); void $scoreM.offsetWidth; $scoreM.classList.add('score-bounce-active'); }
+    }
+  }
+  $score.textContent = s; if ($scoreM) $scoreM.textContent = s;
+  $lines.textContent = S.lines; if ($linesM) $linesM.textContent = S.lines;
+  $level.textContent = S.level; if ($levelM) $levelM.textContent = S.level;
   const hi = S.hiScore.toLocaleString();
   $hiScore.textContent = hi; $hiScoreM.textContent = hi;
   const pct = ((S.lines % LEVEL_LINES) / LEVEL_LINES) * 100;
@@ -1068,6 +1093,7 @@ export function _detectLowEndGPU() {
 export function openHowToPlay() {
   _htpOpenTs = Date.now();
   document.getElementById('htp-overlay').style.display = 'flex';
+  setTimeout(() => { document.getElementById('htp-close')?.focus(); }, 10);
 }
 export function closeHowToPlay() {
   if (Date.now() - _htpOpenTs < 350) return;
@@ -1077,6 +1103,7 @@ export function closeHowToPlay() {
 export function openStats() {
   _statsOpenTs = Date.now();
   document.getElementById('stats-overlay').style.display = 'flex';
+  setTimeout(() => { document.querySelector('#stats-overlay .close-btn')?.focus(); }, 10);
   requestAnimationFrame(() => {
     const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES) || '0');
     const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE) || '0');
@@ -1108,9 +1135,11 @@ export function openStats() {
             const cleanLabel = ach.label.replace(/'/g, "\\'");
             const cleanDesc  = ach.description.replace(/'/g, "\\'");
             return `
-              <div class="ach-badge-wrap" style="position:relative;cursor:pointer"
+              <div class="ach-badge-wrap" style="position:relative;cursor:pointer" tabindex="0"
                    onmouseenter="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
                    onmouseleave="hideAchTooltip()"
+                   onfocus="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
+                   onblur="hideAchTooltip()"
                    onclick="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')">
                 <div class="ach-badge ${isUnlocked?'unlocked':'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked?'rgba(0,200,255,0.1)':'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked?'var(--cyan)':'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked?'0 0 10px rgba(0,200,255,0.3)':'none'};opacity:${isUnlocked?1:0.25}">
                   ${ach.icon}

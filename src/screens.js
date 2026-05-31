@@ -15,6 +15,18 @@ import {
 
 const $overlay = document.getElementById('overlay');
 
+function rollNumber(el, val, dur) {
+  if (!el) return;
+  const start = performance.now();
+  function update(t) {
+    const p = Math.min(1, (t - start) / dur);
+    const easeOutExp = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+    el.textContent = Math.floor(easeOutExp * val).toLocaleString();
+    if (p < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
 let _gateTimer = null;
 
 export function showDailyGateOverlay(todayStr) {
@@ -37,14 +49,14 @@ export function showDailyGateOverlay(todayStr) {
 
   $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600">🏆 DAILY CHALLENGE</h1>
-      <div style="font-size:36px;margin:10px 0">🏅</div>
-      <div style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.75);margin-bottom:14px;text-align:center;">
+      <h1 class="daily-header">🏆 DAILY CHALLENGE</h1>
+      <div class="daily-icon">🏅</div>
+      <div class="daily-completed-lbl">
         CHALLENGE COMPLETED FOR TODAY!<br>COME BACK TOMORROW.
       </div>
-      <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,0.6);text-transform:uppercase;margin-bottom:2px">NEXT CHALLENGE IN</div>
+      <div class="daily-countdown-lbl">NEXT CHALLENGE IN</div>
       <div id="daily-countdown" style="font-size:24px;font-weight:900;color:var(--cyan);text-shadow:0 0 10px var(--cyan);margin-bottom:20px;letter-spacing:1.5px">--:--:--</div>
-      <button class="action-btn" style="width:100%" onclick="showModeSelector()">BACK</button>
+      <button class="action-btn full-width" onclick="showModeSelector()">BACK</button>
     </div>
   `;
   $overlay.style.display = 'flex';
@@ -60,25 +72,25 @@ export function startDailyChallenge() {
   }
 
   $overlay.innerHTML = `
-    <div class="glass-panel" style="width: min(300px, 90vw);">
-      <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600;letter-spacing:2px">🏆 DAILY CHALLENGE</h1>
-      <div style="font-size:36px;margin:10px 0;animation:pulse 1.5s infinite">🛰️</div>
-      <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SAME BLOCKS FOR EVERYONE!</div>
+    <div class="glass-panel">
+      <h1 class="daily-header">🏆 DAILY CHALLENGE</h1>
+      <div class="daily-icon pulse">🛰️</div>
+      <div class="daily-subtitle">SAME BLOCKS FOR EVERYONE!</div>
 
-      <div id="briefing-box" style="font-size:10px;line-height:1.6;color:rgba(255,255,255,0.8);text-align:left;margin-bottom:12px;padding:12px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:100%;box-sizing:border-box">
-        <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
-        <p style="margin:0 0 8px 0">Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
-        <p style="margin:0;color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
+      <div class="briefing-card">
+        <p style="color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
+        <p>Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
+        <p style="color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
       </div>
 
-      <div style="font-size:9px;line-height:1.4;color:#ff5b5b;font-weight:700;text-align:center;margin-bottom:12px;padding:8px 10px;background:rgba(255,91,91,0.08);border:1px solid rgba(255,91,91,0.25);border-radius:6px;width:100%;box-sizing:border-box">
+      <div class="warning-card">
         ⚠️ Warning: You can only play ONCE today!<br>
         Once you start, there are no retries!
       </div>
 
-      <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
-        <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">START CHALLENGE</button>
-        <button class="action-btn ghost" style="width:100%" onclick="showModeSelector()">GO BACK</button>
+      <div class="btn-row main-actions">
+        <button class="action-btn" id="daily-launch-btn" onclick="launchDailyChallenge()">START CHALLENGE</button>
+        <button class="action-btn ghost" onclick="showModeSelector()">GO BACK</button>
       </div>
     </div>
   `;
@@ -93,8 +105,8 @@ export function togglePause(){
     pauseBGM();
     $overlay.innerHTML=`
       <div class="glass-panel">
-        <h1 style="font-size:22px;margin-bottom:14px">PAUSED</h1>
-        <div class="settings-box" style="width:100%">
+        <h1 class="pause-header">PAUSED</h1>
+        <div class="settings-box">
           <button class="toggle-btn${S.muteAudio?' muted':''}" id="ov-mute-btn" onclick="toggleMute()">${S.muteAudio?'🔇 AUDIO OFF':'🔊 AUDIO ON'}</button>
           <button class="toggle-btn${S.ghostVisible?'':' muted'}" id="ov-ghost-btn" onclick="updateGhost()">${S.ghostVisible?'👻 GHOST ON':'👻 GHOST OFF'}</button>
           <button class="toggle-btn${S.colorblindMode?' cb-active':' muted'}" id="ov-cb-btn" onclick="updateColorblind()">${S.colorblindMode?'🔳 CB MODE ON':'🔳 CB MODE OFF'}</button>
@@ -115,8 +127,8 @@ export function togglePause(){
             <span class="settings-val" id="ov-lock-val">${S.lockMs}ms</span>
           </div>
         </div>
-        <button class="action-btn" style="width:100%" onclick="togglePause()">RESUME</button>
-        <button class="action-btn ghost" style="margin-top:8px;width:100%" onclick="showStartScreen()">RESTART</button>
+        <button class="action-btn full-width" onclick="togglePause()">RESUME</button>
+        <button class="action-btn ghost full-width restart" onclick="showStartScreen()">RESTART</button>
       </div>`;
     $overlay.style.display='flex';
   } else {
@@ -184,7 +196,7 @@ export function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, i
 
   let pbBadges = [];
   if (S.isDailyMode) {
-    pbBadges.push(`<div class="pb-badge score-pb" style="background:rgba(255,230,0,0.12);border-color:#ffe600;color:#ffe600">🏅 DAILY CHALLENGE</div>`);
+    pbBadges.push(`<div class="pb-badge score-pb">🏅 DAILY CHALLENGE</div>`);
   } else {
     if (isNewBest)  pbBadges.push(`<div class="pb-badge score-pb">🏆 RECORD SCORE</div>`);
     if (isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">👑 RECORD LEVEL: L${S.level}</div>`);
@@ -206,24 +218,35 @@ export function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, i
 
   $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:20px;margin-bottom:18px">${S.isDailyMode ? 'DAILY CHALLENGE' : 'GAME OVER'}</h1>
-      ${!S.isDailyMode && isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>' : ''}
-      <div style="width:100%;text-align:center;margin-bottom:${badgesHTML ? '16px' : '22px'}">
-        <div class="sub" style="margin-bottom:3px">SCORE: ${S.score.toLocaleString()}</div>
-        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${S.hiScore.toLocaleString()}</div>
+      <h1 class="game-over-header">${S.isDailyMode ? 'DAILY CHALLENGE' : 'GAME OVER'}</h1>
+      ${!S.isDailyMode && isNewBest ? '<div class="new-best-badge">★ NEW BEST ★</div>' : ''}
+      
+      <div class="game-over-stats">
+        <div class="stat-item">
+          <span class="stat-label">SCORE</span>
+          <span class="stat-val" id="gov-score-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">BEST</span>
+          <span class="stat-val highlight" id="gov-hi-val">0</span>
+        </div>
       </div>
+
       ${badgesHTML ? `<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>` : ''}
+      
       <div style="width:100%">
-        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
-        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
-          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
-          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
+        <div class="btn-row sub-actions">
+          <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
+          <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
       ${_donationHTML()}
     </div>`;
   $overlay.style.display = 'flex';
+  rollNumber(document.getElementById('gov-score-val'), S.score, 1400);
+  rollNumber(document.getElementById('gov-hi-val'), S.hiScore, 1400);
   const inp = document.getElementById('lb-name');
   inp.focus(); inp.select();
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitScore(); });
@@ -237,18 +260,20 @@ export function _renderSprintScreen(timeMs, isNewBest, prevBest) {
 
   $overlay.innerHTML=`
     <div class="glass-panel">
-      <h1 style="font-size:20px;margin-bottom:6px">🏁 SPRINT COMPLETE!</h1>
-      ${isNewBest?'<div class="new-best-badge" style="margin-bottom:10px">★ NEW BEST ★</div>':prevBestLine}
-      <div style="width:100%;text-align:center;margin-bottom:16px">
-        <div style="font-size:9px;letter-spacing:3px;color:rgba(0,200,255,0.6);margin-bottom:4px">FINISH TIME</div>
-        <div style="font-size:46px;font-weight:900;color:#ffe600;text-shadow:0 0 20px rgba(255,230,0,0.7);letter-spacing:2px;font-family:monospace">${fmtTime(timeMs)}</div>
-        <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-top:6px">${lpm} LPM</div>
+      <h1 class="game-over-header" style="margin-bottom:8px !important">🏁 SPRINT COMPLETE!</h1>
+      ${isNewBest?'<div class="new-best-badge">★ NEW BEST ★</div>':prevBestLine}
+      
+      <div class="game-over-stats" style="padding:16px 12px">
+        <div style="font-size:9px;letter-spacing:3px;color:rgba(0,200,255,0.6);margin-bottom:6px">FINISH TIME</div>
+        <div style="font-size:40px;font-weight:900;color:#ffe600;text-shadow:0 0 20px rgba(255,230,0,0.7);letter-spacing:2px;font-family:monospace;line-height:1.2">${fmtTime(timeMs)}</div>
+        <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.55);margin-top:8px">${lpm} LPM</div>
       </div>
+
       <div style="width:100%">
-        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
-        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
-          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitSprintScore(${timeMs})">SUBMIT</button>
-          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
+        <div class="btn-row sub-actions">
+          <button id="lb-submit-btn" class="action-btn sm" onclick="submitSprintScore(${timeMs})">SUBMIT</button>
+          <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
@@ -276,10 +301,10 @@ export function showStartScreen(){
     <div class="glass-panel">
       <h1>GLOWTRIS</h1>
       <div id="start-lb">
-        <div class="lb-mode-toggle" style="display:flex;gap:4px;margin-bottom:6px;width:100%">
-          <button id="lb-mode-marathon" class="lb-tab ${S.lbMode==='marathon'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('marathon')">MARATHON</button>
-          <button id="lb-mode-sprint" class="lb-tab ${S.lbMode==='sprint'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('sprint')">⚡ SPRINT</button>
-          <button id="lb-mode-daily" class="lb-tab ${S.lbMode==='daily'?'active':''}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">🏆 DAILY</button>
+        <div class="lb-mode-toggle">
+          <button id="lb-mode-marathon" class="lb-tab ${S.lbMode==='marathon'?'active':''}" onclick="setLbMode('marathon')">MARATHON</button>
+          <button id="lb-mode-sprint" class="lb-tab ${S.lbMode==='sprint'?'active':''}" onclick="setLbMode('sprint')">⚡ SPRINT</button>
+          <button id="lb-mode-daily" class="lb-tab ${S.lbMode==='daily'?'active':''}" onclick="setLbMode('daily')">🏆 DAILY</button>
         </div>
         <div class="lb-tabs-container lb-tabs">
           ${S.lbMode==='daily' ? `
@@ -297,15 +322,15 @@ export function showStartScreen(){
         </div>
         <div class="lb-inner"></div>
       </div>
-      <div class="btn-row" style="margin-bottom:6px;width:100%;flex-direction:column;gap:6px;flex-wrap:nowrap">
-        <button class="action-btn" style="width:100%" onclick="showModeSelector()">PLAY</button>
+      <div class="btn-row main-actions">
+        <button class="action-btn" onclick="showModeSelector()">PLAY</button>
       </div>
-      <div class="btn-row" style="gap:6px;width:100%">
-        <button class="action-btn ghost" style="flex:1" onclick="openHowToPlay()">HOW TO PLAY</button>
-        <button class="action-btn ghost" style="flex:1" onclick="openStats()">STATS</button>
+      <div class="btn-row sub-actions">
+        <button class="action-btn ghost" onclick="openHowToPlay()">HOW TO PLAY</button>
+        <button class="action-btn ghost" onclick="openStats()">STATS</button>
       </div>
       ${_donationHTML()}
-      <div style="margin-top:10px;text-align:center;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.18)">
+      <div class="footer-links-wrap">
         <a href="/privacy.html" class="footer-link">PRIVACY</a>
         <span style="color:rgba(255,255,255,0.12)">·</span>
         <a href="/terms.html" class="footer-link">TERMS</a>
@@ -316,55 +341,55 @@ export function showStartScreen(){
 }
 
 export function showModeSelector(){
-  const sprintBest=S._sprintHiTime>0?`<span style="color:rgba(0,255,136,0.7)">Best: ${fmtTime(S._sprintHiTime)}</span>`:'<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
+  const sprintBest=S._sprintHiTime>0?`<span style="color:rgba(0,255,136,0.75)">Best: ${fmtTime(S._sprintHiTime)}</span>`:'<span style="color:rgba(255,255,255,0.3)">No record yet</span>';
   const hiS=parseInt(localStorage.getItem(LS.HI)||'0');
-  const marathonBest=hiS>0?`<span style="color:rgba(0,200,255,0.7)">Best: ${hiS.toLocaleString()}</span>`:'<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
+  const marathonBest=hiS>0?`<span style="color:rgba(0,200,255,0.75)">Best: ${hiS.toLocaleString()}</span>`:'<span style="color:rgba(255,255,255,0.3)">No record yet</span>';
   const todayStr=new Date().toISOString().slice(0,10).replace(/-/g,'');
   const dailyDone=localStorage.getItem(LS.DAILY_DATE)===todayStr;
-  const dailySub=dailyDone?'<span style="color:rgba(255,230,0,0.7)">✓ Completed today</span>':'<span style="color:rgba(255,255,255,0.25)">Not played today</span>';
+  const dailySub=dailyDone?'<span style="color:rgba(255,230,0,0.75)">✓ Completed today</span>':'<span style="color:rgba(255,255,255,0.3)">Not played today</span>';
 
   $overlay.innerHTML=`
     <div class="glass-panel">
-      <h1 style="font-size:16px;margin-bottom:16px;letter-spacing:3px">SELECT MODE</h1>
+      <h1 style="font-size:16px;margin-bottom:18px;letter-spacing:3px">SELECT MODE</h1>
 
-      <div style="width:100%;display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
 
         <!-- MARATHON -->
-        <div onclick="startGame()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,200,255,0.25);background:rgba(0,200,255,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(0,200,255,0.12)';this.style.borderColor='rgba(0,200,255,0.5)'" onmouseout="this.style.background='rgba(0,200,255,0.05)';this.style.borderColor='rgba(0,200,255,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">🎮</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:var(--cyan);margin-bottom:3px">MARATHON</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Clear lines, rack up score. No time limit — how high can you go?</div>
-            <div style="font-size:8px;margin-top:4px">${marathonBest}</div>
+        <div class="mode-card marathon" tabindex="0" onclick="startGame()">
+          <div class="mode-icon">🎮</div>
+          <div class="mode-info">
+            <div class="mode-name">MARATHON</div>
+            <div class="mode-desc">Clear lines, rack up score. No time limit — how high can you go?</div>
+            <div class="mode-best">${marathonBest}</div>
           </div>
-          <div style="font-size:18px;color:rgba(0,200,255,0.5);flex-shrink:0">›</div>
+          <div class="mode-arrow">›</div>
         </div>
 
         <!-- SPRINT -->
-        <div onclick="startSprintMode()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,255,136,0.25);background:rgba(0,255,136,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(0,255,136,0.12)';this.style.borderColor='rgba(0,255,136,0.5)'" onmouseout="this.style.background='rgba(0,255,136,0.05)';this.style.borderColor='rgba(0,255,136,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">⚡</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#00ff88;margin-bottom:3px">SPRINT 40L</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Clear 40 lines as fast as possible. Fastest time wins the leaderboard.</div>
-            <div style="font-size:8px;margin-top:4px">${sprintBest}</div>
+        <div class="mode-card sprint" tabindex="0" onclick="startSprintMode()">
+          <div class="mode-icon">⚡</div>
+          <div class="mode-info">
+            <div class="mode-name">SPRINT 40L</div>
+            <div class="mode-desc">Clear 40 lines as fast as possible. Fastest time wins the leaderboard.</div>
+            <div class="mode-best">${sprintBest}</div>
           </div>
-          <div style="font-size:18px;color:rgba(0,255,136,0.5);flex-shrink:0">›</div>
+          <div class="mode-arrow">›</div>
         </div>
 
         <!-- DAILY CHALLENGE -->
-        <div onclick="startDailyChallenge()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,230,0,0.25);background:rgba(255,230,0,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(255,230,0,0.1)';this.style.borderColor='rgba(255,230,0,0.5)'" onmouseout="this.style.background='rgba(255,230,0,0.05)';this.style.borderColor='rgba(255,230,0,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">🏆</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#ffe600;margin-bottom:3px">DAILY CHALLENGE</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Today's fixed piece sequence. Same for everyone — pure skill, no luck.</div>
-            <div style="font-size:8px;margin-top:4px">${dailySub}</div>
+        <div class="mode-card daily" tabindex="0" onclick="startDailyChallenge()">
+          <div class="mode-icon">🏆</div>
+          <div class="mode-info">
+            <div class="mode-name">DAILY CHALLENGE</div>
+            <div class="mode-desc">Today's fixed piece sequence. Same for everyone — pure skill, no luck.</div>
+            <div class="mode-best">${dailySub}</div>
           </div>
-          <div style="font-size:18px;color:rgba(255,230,0,0.5);flex-shrink:0">›</div>
+          <div class="mode-arrow">›</div>
         </div>
 
       </div>
 
-      <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">← BACK</button>
+      <button class="action-btn ghost full-width" onclick="showStartScreen()">← BACK</button>
     </div>`;
   $overlay.style.display='flex';
 }

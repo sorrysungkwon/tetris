@@ -409,6 +409,18 @@
     <div class="footer-copy">© 2026 Glowtris. All rights reserved.</div>
   </footer>
 
-</div>
+  </div>
+  <script>
+    document.addEventListener('keydown', function(e) {
+      if (e.code === 'Escape' || e.code === 'Backspace') {
+        e.preventDefault();
+        if (document.referrer.includes(window.location.host)) {
+          history.back();
+        } else {
+          window.location.href = '/';
+        }
+      }
+    });
+  </script>
 </body>
 </html>
