@@ -261,15 +261,39 @@ function updateKeyGuideState(code, isPressed) {
 }
 function handleUINavigation(e) {
   const overlay = document.getElementById('overlay');
-  if (!overlay || overlay.style.display !== 'flex') return false;
+  const help = document.getElementById('help-overlay');
+  const stats = document.getElementById('stats-overlay');
+
+  let activeOverlay = null;
+  if (help && help.style.display === 'flex') activeOverlay = help;
+  else if (stats && stats.style.display === 'flex') activeOverlay = stats;
+  else if (overlay && overlay.style.display === 'flex') activeOverlay = overlay;
+
+  if (!activeOverlay) return false;
   
   const active = document.activeElement;
+
+  if (e.code === 'Escape' || e.code === 'Backspace') {
+    if (e.code === 'Backspace' && active && active.tagName === 'INPUT' && active.type === 'text') return false;
+    
+    const btn = Array.from(activeOverlay.querySelectorAll('button')).find(b => {
+      const t = b.textContent.toUpperCase();
+      return b.classList.contains('close-btn') || t.includes('BACK') || t === 'RESUME';
+    });
+    if (btn) {
+      e.preventDefault();
+      sfxUIClick();
+      btn.click();
+      return true;
+    }
+  }
+
   if (active && active.tagName === 'INPUT' && active.type === 'text') {
-    if (e.code === 'Enter' || e.code === 'Escape') return false;
+    if (e.code === 'Enter') return false;
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
   }
 
-  const focusables = Array.from(overlay.querySelectorAll('button, input, [tabindex="0"]'))
+  const focusables = Array.from(activeOverlay.querySelectorAll('button, input, [tabindex="0"]'))
     .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
   
   if (focusables.length === 0) return false;
@@ -315,7 +339,7 @@ document.addEventListener('keydown',e=>{
   if(!S._kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
   if(KEYS[e.code])return;KEYS[e.code]=true;
   if(!S.gameRunning)return;
-  if(e.code==='KeyP'){togglePause();return;}
+  if(e.code==='KeyP' || e.code==='Escape'){togglePause();return;}
   if(S.gamePaused||S._countdownVal)return;
   switch(e.code){
     case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
