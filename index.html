@@ -59,13 +59,13 @@
   }
 
   /* Focus indicator for keyboard navigation */
-  *:focus-visible {
+  .using-kb *:focus {
     outline: 2px solid var(--cyan) !important;
     outline-offset: 4px;
     border-radius: inherit;
   }
-  input[type="range"]:focus-visible { outline-offset: 8px; }
-  input[type="text"]:focus-visible { outline-offset: 0px; }
+  .using-kb input[type="range"]:focus { outline-offset: 8px; }
+  .using-kb input[type="text"]:focus { outline-offset: 0px; }
 
   /* ─── BG Canvas ─── */
   #bg-canvas { position:fixed; inset:0; z-index:0; width:100%; height:100%; }
@@ -4393,6 +4393,7 @@ ${window.location.origin}`;
     if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
   });
   document.addEventListener("pointerdown", (e) => {
+    document.body.classList.remove("using-kb");
     if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap")) sfxUIClick();
   }, { passive: true });
   document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
@@ -4738,6 +4739,7 @@ ${window.location.origin}`;
     return false;
   }
   document.addEventListener("keydown", (e) => {
+    document.body.classList.add("using-kb");
     if (e.code === "KeyM") toggleMute();
     if (handleUINavigation(e)) return;
     updateKeyGuideState(e.code, true);

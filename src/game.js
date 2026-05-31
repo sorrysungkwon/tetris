@@ -6,6 +6,7 @@ document.addEventListener('mouseover', (e) => {
   if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
 });
 document.addEventListener('pointerdown', (e) => {
+  document.body.classList.remove('using-kb');
   if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap')) sfxUIClick();
 }, {passive: true});
 import {
@@ -339,6 +340,7 @@ function handleUINavigation(e) {
 }
 
 document.addEventListener('keydown',e=>{
+  document.body.classList.add('using-kb');
   if(e.code==='KeyM') toggleMute();
   if (handleUINavigation(e)) return;
   updateKeyGuideState(e.code, true);
