@@ -15,7 +15,7 @@ import {
   initLayout, initStars, drawBackground,
   drawBoard, drawNext, drawHold, getCellSprite,
   spawnLineClearParticles, spawnLockParticles, spawnFloatingText, spawnDropTrail, spawnHardDropParticles, updateParticles,
-  applyShake, nudgeUI, _enableKbMode, _disableKbMode,
+  applyShake, _enableKbMode, _disableKbMode,
   updateUI, updateSprintTimer, showScorePopup,
   updateDAS, updateARR, updateLockDelay, updateGhost, updateColorblind, cycleAnimIntensity, _animLabel,
   triggerScreenFlash, triggerAllClearFlash, triggerLevelUpVisuals, spawnGoldBurst,
@@ -348,8 +348,8 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP' || e.code==='Escape'){togglePause();return;}
   if(S.gamePaused||S._countdownVal)return;
   switch(e.code){
-    case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
-    case'ArrowRight':case'KeyD': moveX(1); startDAS(1); nudgeUI(-12,-2);break;
+    case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);break;
+    case'ArrowRight':case'KeyD': moveX(1); startDAS(1); break;
     case'ArrowDown':case'KeyS':  softDrop();startDASDown();e.preventDefault();break;
     case'ArrowUp':case'KeyW':    rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
