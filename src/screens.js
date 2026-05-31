@@ -15,6 +15,18 @@ import {
 
 const $overlay = document.getElementById('overlay');
 
+function rollNumber(el, val, dur) {
+  if (!el) return;
+  const start = performance.now();
+  function update(t) {
+    const p = Math.min(1, (t - start) / dur);
+    const easeOutExp = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+    el.textContent = Math.floor(easeOutExp * val).toLocaleString();
+    if (p < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
 let _gateTimer = null;
 
 export function showDailyGateOverlay(todayStr) {
@@ -212,11 +224,11 @@ export function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, i
       <div class="game-over-stats">
         <div class="stat-item">
           <span class="stat-label">SCORE</span>
-          <span class="stat-val">${S.score.toLocaleString()}</span>
+          <span class="stat-val" id="gov-score-val">0</span>
         </div>
         <div class="stat-item">
           <span class="stat-label">BEST</span>
-          <span class="stat-val highlight">${S.hiScore.toLocaleString()}</span>
+          <span class="stat-val highlight" id="gov-hi-val">0</span>
         </div>
       </div>
 
@@ -233,6 +245,8 @@ export function _renderGameOverScreen({ isNewBest, newStreak, displayMaxCombo, i
       ${_donationHTML()}
     </div>`;
   $overlay.style.display = 'flex';
+  rollNumber(document.getElementById('gov-score-val'), S.score, 1400);
+  rollNumber(document.getElementById('gov-hi-val'), S.hiScore, 1400);
   const inp = document.getElementById('lb-name');
   inp.focus(); inp.select();
   inp.addEventListener('keydown', e => { if (e.key === 'Enter') submitScore(); });

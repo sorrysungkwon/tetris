@@ -712,9 +712,28 @@ export function drawHold() {
 }
 
 // ─── Particles ────────────────────────────────────────────────────────────────
-export function spawnLineClearParticles(rows) {
+export function spawnLineClearParticles(rows, tspin=false, isAllClear=false) {
   if (S.animIntensity === 'off') return;
   if (S.particles.length >= MAX_PARTICLES) return;
+  if (isAllClear) {
+    const starCount = S.lowPerfMode ? 30 : 60;
+    for (let i = 0; i < starCount; i++) {
+      const a = Math.random()*Math.PI*2, sp = Math.random()*15+5;
+      S.particles.push({x:COLS/2*S.CELL,y:ROWS/2*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,decay:Math.random()*.015+.008,color:['#ffe600','#ffffff','#ffaa00'][Math.floor(Math.random()*3)],size:Math.random()*8+4,type:'star'});
+    }
+    return;
+  }
+  if (tspin) {
+    const pCount = S.lowPerfMode ? 10 : 20;
+    for (const row of rows) {
+      for (let i = 0; i < pCount; i++) {
+        const a = Math.random()*Math.PI*2, sp = Math.random()*8+3;
+        S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-1,life:1,decay:Math.random()*.02+.01,color:['#a000ff','#ff0080','#ffffff'][Math.floor(Math.random()*3)],size:Math.random()*6+3,type:'star'});
+      }
+      S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.03,color:'#a000ff',size:6,maxRadius:(COLS/2)*S.CELL*2.5,type:'radial-ring'});
+    }
+    return;
+  }
   for (const row of rows) {
     S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.04,color:'#ffffff',size:3,maxRadius:(COLS/2)*S.CELL*1.5,type:'radial-ring'});
     S.particles.push({x:(COLS/2)*S.CELL,y:(row+0.5)*S.CELL,vx:0,vy:0,life:1,decay:0.03,color:'#00c8ff',size:5,maxRadius:(COLS/2)*S.CELL*2.3,type:'radial-ring'});

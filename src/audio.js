@@ -272,6 +272,8 @@ export function sfxTSpin(){
   playBeep(1046,'square',.06,.18,.06);
   playBeep(1318,'sawtooth',.14,.28,.1);
 }
+export function sfxUIHover(){ if(!S.muteAudio) playBeep(800, 'sine', 0.04, 0.02); }
+export function sfxUIClick(){ if(!S.muteAudio) { playBeep(1200, 'square', 0.05, 0.04); playBeep(1600, 'sine', 0.05, 0.03, 0.02); } }
 export function sfxAchievementUnlock(){
   if(S.muteAudio)return;
   [523, 659, 784, 1047].forEach((f, i) => {

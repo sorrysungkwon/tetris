@@ -1,5 +1,15 @@
 import { S, LS, ACHIEVEMENTS, COLS, ROWS, COLOR_TO_KEY, SUPPORT_URL, MAX_PARTICLES, PIECES, SPRINT_LINES, LEVEL_LINES, SCORE_TABLE, TSPIN_SCORE, TSPIN_MINI_SCORE, mulberry32, fmtTime, _getAchievements, _getLifetime } from './shared.js';
-import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio } from './audio.js';
+import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio, sfxUIHover, sfxUIClick } from './audio.js';
+
+document.addEventListener('mouseover', (e) => {
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap')) sfxUIHover();
+});
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+});
+document.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+}, {passive: true});
 import {
   gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
   measureFPS, setLowPerfMode, resetPerfHold, _detectLowEndGPU,
@@ -105,7 +115,15 @@ function lockPiece(){
       :SCORE_TABLE[Math.min(cleared.length,4)]*S.level*mul;
     sfxLineClear(cleared.length);
     if(tspin){sfxTSpin();if(S.animIntensity==='full'){S.shakeFrames=Math.max(S.shakeFrames,12+cleared.length*6);S.shakeMag=Math.max(S.shakeMag,0.55);}}
-    if(S.combo>1&&S.animIntensity!=='off'){S.comboFlash=15;S.comboFlashColor=S.combo>=5?'#ff0080':S.combo>=3?'#a000ff':'#00c8ff';}
+    if(S.combo>1&&S.animIntensity!=='off'){
+      S.comboFlash=15 + (S.combo>=4 ? 15 : 0);
+      S.comboFlashColor=S.combo>=5?'#ff0080':S.combo>=3?'#a000ff':'#00c8ff';
+      if(S.combo>=4 && S.animIntensity==='full') {
+        S.shakeFrames=Math.max(S.shakeFrames, 10 + S.combo*3);
+        S.shakeMag=Math.max(S.shakeMag, Math.min(2.5, S.combo*0.35));
+        S.shakeAllDir=true;
+      }
+    }
     addScore(pts,cleared.length,tspin);
     S.lines+=cleared.length;
 
@@ -148,7 +166,7 @@ function lockPiece(){
       // Guard: if game was reset before this fires bail out immediately.
       if(!S.gameRunning&&!gameOver)return;
       for(const r of snap.slice().sort((a,b)=>a-b)){S.board.splice(r,1);S.board.unshift(Array(COLS).fill(null));}
-      spawnLineClearParticles(snap);
+      spawnLineClearParticles(snap, tspin, false);
       if(snap.length>=4&&!tspin&&S.animIntensity==='full'){S.shakeFrames=25;S.shakeMag=0.7;}
       if(snap.length>=4){triggerScreenFlash();if(S.animIntensity!=='off')S.rainbowBorder=45;}
       // All-clear bonus: board completely empty
@@ -157,6 +175,7 @@ function lockPiece(){
         addScore(bonus,0,false);
         showScorePopup(bonus,-1,false); // -1 signals all-clear
         triggerAllClearFlash();
+        spawnLineClearParticles(snap, false, true);
         unlockAchievement('all_clear');
       }
       S.flashLines=new Set();
