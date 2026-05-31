@@ -6,20 +6,15 @@ export function _openDonation(){
   if(!SUPPORT_URL)return;
   const modal=document.createElement('div');
   modal.id='donation-modal';
-  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(6px)';
   modal.innerHTML=`
-    <div style="background:rgba(4,4,30,0.97);border:1px solid rgba(255,215,0,0.35);border-radius:14px;padding:26px 22px;max-width:270px;width:88%;text-align:center;font-family:'Orbitron',monospace;box-shadow:0 0 40px rgba(255,215,0,0.12)">
-      <div style="font-size:26px;margin-bottom:12px">☕</div>
-      <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#ffe600;margin-bottom:8px">SUPPORT GLOWTRIS</div>
-      <div style="font-size:8.5px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;line-height:1.7;margin-bottom:20px">Opens Ko-fi in a new tab.</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('donation-modal').remove()"
-          style="flex:1;padding:10px 0;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:rgba(255,255,255,0.4);font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1.5px;cursor:pointer;transition:border-color 0.15s"
-          onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">CANCEL</button>
+    <div class="donation-modal-box">
+      <div class="donation-coffee">☕</div>
+      <div class="donation-title">SUPPORT GLOWTRIS</div>
+      <div class="donation-desc">Opens Ko-fi in a new tab.</div>
+      <div class="donation-buttons">
+        <button onclick="document.getElementById('donation-modal').remove()" class="donation-btn cancel">CANCEL</button>
         <a href="${SUPPORT_URL}" target="_blank" rel="noopener noreferrer"
-          onclick="document.getElementById('donation-modal').remove()"
-          style="flex:1;padding:10px 0;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);border-radius:8px;color:#ffe600;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1.5px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s"
-          onmouseover="this.style.background='rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.1)'">OPEN ↗</a>
+          onclick="document.getElementById('donation-modal').remove()" class="donation-btn open">OPEN ↗</a>
       </div>
     </div>`;
   modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
@@ -28,12 +23,9 @@ export function _openDonation(){
 
 export function _donationHTML(){
   if(!SUPPORT_URL)return'';
-  return`<div style="margin-top:14px;width:100%;text-align:center">
-    <button onclick="_openDonation()"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.3);border-radius:9px;color:#ffe600;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:background 0.2s,box-shadow 0.2s"
-       onmouseover="this.style.background='rgba(255,215,0,0.14)';this.style.boxShadow='0 0 12px rgba(255,215,0,0.2)'"
-       onmouseout="this.style.background='rgba(255,215,0,0.07)';this.style.boxShadow='none'">☕ BUY ME A COFFEE</button>
-    <div style="font-size:7px;letter-spacing:1.5px;color:rgba(255,255,255,0.22);margin-top:5px">keeps glowtris 100% ad-free</div>
+  return`<div class="donation-footer-wrap">
+    <button onclick="_openDonation()" class="coffee-btn">☕ BUY ME A COFFEE</button>
+    <div class="coffee-sub">keeps glowtris 100% ad-free</div>
   </div>`;
 }
 
