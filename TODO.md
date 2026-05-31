@@ -533,6 +533,18 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
+## 🔲 Pre-v1.2 — UI Polish — assigned to Antigravity
+
+> Goal: better readability, visual grouping (Gestalt principles), and usability across all screens.
+> Deploy to preview first; rollback URL (pre-polish production): https://glowtris-5qmbjb2y7-sgkwon-team.vercel.app
+
+- [ ] **Readability**: improve font sizes, contrast, spacing where content feels cramped or hard to scan
+- [ ] **Gestalt grouping**: related UI elements (score/level/lines, mode cards, leaderboard rows) should feel visually cohesive — proximity, similarity, and alignment
+- [ ] **Usability**: review touch target sizes, button clarity, navigation flow across start screen → mode selector → game → game over
+- [ ] Verify on both desktop and mobile before deploying to preview
+
+---
+
 ## 🔮 Planned: v1.2 — Ultra Mode + Streak
 > DAU goal: **700** | Key driver: time-pressure mode + daily return habit
 
