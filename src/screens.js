@@ -355,7 +355,7 @@ export function showModeSelector(){
       <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
 
         <!-- MARATHON -->
-        <div class="mode-card marathon" onclick="startGame()">
+        <div class="mode-card marathon" tabindex="0" onclick="startGame()">
           <div class="mode-icon">🎮</div>
           <div class="mode-info">
             <div class="mode-name">MARATHON</div>
@@ -366,7 +366,7 @@ export function showModeSelector(){
         </div>
 
         <!-- SPRINT -->
-        <div class="mode-card sprint" onclick="startSprintMode()">
+        <div class="mode-card sprint" tabindex="0" onclick="startSprintMode()">
           <div class="mode-icon">⚡</div>
           <div class="mode-info">
             <div class="mode-name">SPRINT 40L</div>
@@ -377,7 +377,7 @@ export function showModeSelector(){
         </div>
 
         <!-- DAILY CHALLENGE -->
-        <div class="mode-card daily" onclick="startDailyChallenge()">
+        <div class="mode-card daily" tabindex="0" onclick="startDailyChallenge()">
           <div class="mode-icon">🏆</div>
           <div class="mode-info">
             <div class="mode-name">DAILY CHALLENGE</div>

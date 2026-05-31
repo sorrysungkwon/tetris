@@ -259,7 +259,58 @@ function updateKeyGuideState(code, isPressed) {
   else if (code === 'KeyM')                           el = _keyGuide.mute;
   if (el) el.classList.toggle('key-pressed', isPressed);
 }
+function handleUINavigation(e) {
+  const overlay = document.getElementById('overlay');
+  if (!overlay || overlay.style.display !== 'flex') return false;
+  
+  const active = document.activeElement;
+  if (active && active.tagName === 'INPUT' && active.type === 'text') {
+    if (e.code === 'Enter' || e.code === 'Escape') return false;
+    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
+  }
+
+  const focusables = Array.from(overlay.querySelectorAll('button, input, [tabindex="0"]'))
+    .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
+  
+  if (focusables.length === 0) return false;
+
+  let idx = focusables.indexOf(active);
+  
+  const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
+  const isUp   = e.code === 'ArrowUp'   || e.code === 'KeyW';
+  const isRight= e.code === 'ArrowRight'|| e.code === 'KeyD';
+  const isLeft = e.code === 'ArrowLeft' || e.code === 'KeyA';
+
+  if (isDown || isRight || (e.code === 'Tab' && !e.shiftKey)) {
+    if (active && active.type === 'range' && (isLeft || isRight)) return false;
+    e.preventDefault();
+    idx = (idx + 1) % focusables.length;
+    focusables[idx].focus();
+    sfxUIHover();
+    return true;
+  }
+  if (isUp || isLeft || (e.code === 'Tab' && e.shiftKey)) {
+    if (active && active.type === 'range' && (isLeft || isRight)) return false;
+    e.preventDefault();
+    idx = idx <= 0 ? focusables.length - 1 : idx - 1;
+    focusables[idx].focus();
+    sfxUIHover();
+    return true;
+  }
+  if (e.code === 'Enter' || e.code === 'Space') {
+    if (active && focusables.includes(active) && active.tagName !== 'INPUT') {
+      e.preventDefault();
+      sfxUIClick();
+      active.click();
+      return true;
+    }
+  }
+  return false;
+}
+
 document.addEventListener('keydown',e=>{
+  if(e.code==='KeyM') toggleMute();
+  if (handleUINavigation(e)) return;
   updateKeyGuideState(e.code, true);
   if(!S._kbMode && window.matchMedia('(pointer:coarse)').matches) _enableKbMode();
   if(KEYS[e.code])return;KEYS[e.code]=true;
@@ -273,7 +324,6 @@ document.addEventListener('keydown',e=>{
     case'ArrowUp':case'KeyW':    rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
-    case'KeyM':toggleMute();break;
   }
 });
 document.addEventListener('keyup',e=>{

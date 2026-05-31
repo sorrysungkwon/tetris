@@ -1133,9 +1133,11 @@ export function openStats() {
             const cleanLabel = ach.label.replace(/'/g, "\\'");
             const cleanDesc  = ach.description.replace(/'/g, "\\'");
             return `
-              <div class="ach-badge-wrap" style="position:relative;cursor:pointer"
+              <div class="ach-badge-wrap" style="position:relative;cursor:pointer" tabindex="0"
                    onmouseenter="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
                    onmouseleave="hideAchTooltip()"
+                   onfocus="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
+                   onblur="hideAchTooltip()"
                    onclick="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')">
                 <div class="ach-badge ${isUnlocked?'unlocked':'locked'}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked?'rgba(0,200,255,0.1)':'rgba(255,255,255,0.03)'};border:1px solid ${isUnlocked?'var(--cyan)':'rgba(255,255,255,0.1)'};box-shadow:${isUnlocked?'0 0 10px rgba(0,200,255,0.3)':'none'};opacity:${isUnlocked?1:0.25}">
                   ${ach.icon}
