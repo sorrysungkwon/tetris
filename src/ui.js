@@ -187,7 +187,7 @@ export function nudgeUI(dx, dy) {
 // ─── iPad keyboard mode ───────────────────────────────────────────────────────
 export function _enableKbMode() {
   if (S._kbMode) return;
-  if (Math.min(window.screen.width, window.screen.height) < 600) return;
+  if (Math.min(window.innerWidth, window.innerHeight) <= 600) return;
   S._kbMode = true;
   document.documentElement.classList.add('kb-mode');
   initLayout(); initStars();
