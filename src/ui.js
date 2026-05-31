@@ -173,6 +173,7 @@ export function initLayout() {
 
 // ─── Keyboard parallax nudge ──────────────────────────────────────────────────
 export function nudgeUI(dx, dy) {
+  if(S.animIntensity !== 'full') return;
   _nudgeActive = true;
   clearTimeout(_nudgeTimer);
   $app.style.transition = 'none';
