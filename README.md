@@ -1,6 +1,6 @@
 # Glowtris
 
-A neon-styled block stacking game built as a single HTML file.
+A neon-styled block stacking game built with ES modules and canvas.
 
 **Live:** https://glowtris.com
 

@@ -1,7 +1,7 @@
 # Glowtris Agent Shared TODO & Guidelines
 
 ## 🚨 Behavioral Guidelines (Must read first!)
-- **Single File Rule**: Always maintain the single `index.html` structure. No external frontend libraries allowed.
+- **ES Modules Architecture**: Always maintain the ES modules split (`src/`). The build step generates the single `index.html`. No external frontend libraries allowed.
 - **English-Only Rule**: All code changes, comments, logs, documentation, and Git commit messages MUST be written entirely in English.
 - **Workflow Integrity**: Before starting any task, read your agent doc (`CLAUDE.md` or `AGENTS.md`) first, then this file. `README.md` is human-facing — use it for feature context only. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then `git add . && git commit -m "description"` — report to user and wait. **Push only when user says "push해".** Docs-only commits accumulate locally and are bundled with the next code push.
 
