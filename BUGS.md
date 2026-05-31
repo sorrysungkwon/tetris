@@ -19,6 +19,12 @@
 
 ## ✅ Fixed
 
+### [BUG-006] WASD keys blocked in text inputs
+- **Reported:** 2026-05-31
+- **Symptom:** Cannot type W, A, S, or D when entering a name in the leaderboard submission form. Focus jumps to other buttons instead.
+- **Root cause:** The UI navigation logic (`handleUINavigation`) intercepted W/A/S/D key presses unconditionally, triggering `e.preventDefault()` and shifting focus, even when a text input was active.
+- **Fix:** Added a guard in `handleUINavigation` to return `false` early (bypassing interception) for all keys except `Tab`, `Enter`, and `Escape` when the active element is a text input.
+
 ### [BUG-005] T-spin detection fails / T-piece can't rotate into slot
 - **Reported:** 2026-05-31 | **Priority:** 🔴 Critical
 - **Symptom:** T-piece cannot rotate into T-spin setups (piece doesn't kick into the slot)
