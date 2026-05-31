@@ -328,8 +328,11 @@ function handleUINavigation(e) {
   }
 
   if (active && active.tagName === 'INPUT' && active.type === 'text') {
-    if (e.code === 'Enter') return false;
-    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
+    if (e.code !== 'Tab' && e.code !== 'Enter' && e.code !== 'Escape') return false;
+    if (e.code === 'Enter') {
+      // Let the keydown bubble up or just return false so the input handles it
+      return false; 
+    }
   }
 
   const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
