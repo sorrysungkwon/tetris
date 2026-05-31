@@ -4,6 +4,7 @@ import { showStartScreen } from './screens.js';
 
 export function _openDonation(){
   if(!SUPPORT_URL)return;
+  if(document.getElementById('donation-modal')) return;
   const modal=document.createElement('div');
   modal.id='donation-modal';
   modal.innerHTML=`
@@ -19,6 +20,7 @@ export function _openDonation(){
     </div>`;
   modal.addEventListener('click',e=>{if(e.target===modal)modal.remove();});
   document.body.appendChild(modal);
+  setTimeout(() => { const btn = modal.querySelector('.cancel'); if(btn) btn.focus(); }, 10);
 }
 
 export function _donationHTML(){

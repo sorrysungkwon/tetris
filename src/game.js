@@ -311,20 +311,15 @@ function handleUINavigation(e) {
     .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
   
   if (focusables.length === 0) return false;
-
   let idx = focusables.indexOf(active);
-  
-  const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
-  const isUp   = e.code === 'ArrowUp'   || e.code === 'KeyW';
-  const isRight= e.code === 'ArrowRight'|| e.code === 'KeyD';
-  const isLeft = e.code === 'ArrowLeft' || e.code === 'KeyA';
+  const oldIdx = idx;
 
   if (isDown || isRight || (e.code === 'Tab' && !e.shiftKey)) {
     if (active && active.type === 'range' && (isLeft || isRight)) return false;
     e.preventDefault();
     idx = (idx + 1) % focusables.length;
     focusables[idx].focus();
-    sfxUIHover();
+    if (idx !== oldIdx) sfxUIHover();
     return true;
   }
   if (isUp || isLeft || (e.code === 'Tab' && e.shiftKey)) {
@@ -332,7 +327,7 @@ function handleUINavigation(e) {
     e.preventDefault();
     idx = idx <= 0 ? focusables.length - 1 : idx - 1;
     focusables[idx].focus();
-    sfxUIHover();
+    if (idx !== oldIdx) sfxUIHover();
     return true;
   }
   if (e.code === 'Enter' || e.code === 'Space') {

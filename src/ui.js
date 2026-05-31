@@ -1093,6 +1093,7 @@ export function _detectLowEndGPU() {
 export function openHowToPlay() {
   _htpOpenTs = Date.now();
   document.getElementById('htp-overlay').style.display = 'flex';
+  setTimeout(() => { document.getElementById('htp-close')?.focus(); }, 10);
 }
 export function closeHowToPlay() {
   if (Date.now() - _htpOpenTs < 350) return;
@@ -1102,6 +1103,7 @@ export function closeHowToPlay() {
 export function openStats() {
   _statsOpenTs = Date.now();
   document.getElementById('stats-overlay').style.display = 'flex';
+  setTimeout(() => { document.querySelector('#stats-overlay .close-btn')?.focus(); }, 10);
   requestAnimationFrame(() => {
     const sGames  = parseInt(localStorage.getItem(LS.TOTAL_GAMES) || '0');
     const sScore  = parseInt(localStorage.getItem(LS.TOTAL_SCORE) || '0');
