@@ -387,7 +387,7 @@ function hardDrop(){
 function makeTouchBtn(id,onPress,mode='repeat'){
   const el=document.getElementById(id);if(!el)return;
   let iv=null,to=null,on=false;
-  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!S.gameRunning&&mode!=='any')return;if((S.gamePaused||S._countdownVal)&&mode==='game')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)onPress();},S.arr);},S.das);}}
+  function press(e){e.preventDefault();e.stopPropagation();if(on)return;on=true;el.classList.add('pressed');if(!S.gameRunning&&mode!=='any')return;if((S.gamePaused||S._countdownVal)&&mode!=='any')return;onPress();if(mode==='repeat'){to=setTimeout(()=>{iv=setInterval(()=>{if(S.gameRunning&&!S.gamePaused&&!S._countdownVal)onPress();},S.arr);},S.das);}}
   function rel(e){if(e)e.preventDefault();if(!on)return;on=false;el.classList.remove('pressed');clearTimeout(to);clearInterval(iv);to=null;iv=null;}
   el.addEventListener('touchstart',press,{passive:false});
   el.addEventListener('touchend',rel,{passive:false});
