@@ -510,7 +510,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
   - Clean code: removed stale comments, WHAT comments, dead re-export (10 lines)
   - Architecture: removed unnecessary `export` from `hexToRgb`, `drawMiniPiece`, `invalidateCellSprites` in ui.js
   - Known: `game.js` ↔ `screens.js` and `leaderboard.js` ↔ `screens.js` circular deps — harmless under esbuild IIFE, but worth resolving in a future dedicated refactor pass
-- [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
+- [x] **JS error monitoring**: `window.onerror` + `window.onunhandledrejection` → structured `console.error` tagged `[glowtris v1.1]`. Sentry deferred until Reddit launch if error volume warrants it.
 
 ---
 

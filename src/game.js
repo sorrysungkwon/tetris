@@ -531,6 +531,22 @@ window.addEventListener('beforeunload',()=>{
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
 });
 
+// ─── Error monitoring ─────────────────────────────────────────────────────────
+const _VERSION = 'v1.1';
+window.onerror = function(msg, src, line, col, err) {
+  console.error('[glowtris ' + _VERSION + '] uncaught error', {
+    msg, src: src ? src.replace(window.location.origin, '') : src, line, col,
+    stack: err && err.stack ? err.stack.split('\n').slice(0, 5).join('\n') : null,
+  });
+};
+window.onunhandledrejection = function(e) {
+  const reason = e.reason;
+  console.error('[glowtris ' + _VERSION + '] unhandled rejection', {
+    msg: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error && reason.stack ? reason.stack.split('\n').slice(0, 5).join('\n') : null,
+  });
+};
+
 // ─── Expose functions needed by inline onclick handlers ───────────────────────
 // esbuild bundles to IIFE — functions are not global by default.
 // HTML template uses onclick="fn()" style which requires window.fn.
