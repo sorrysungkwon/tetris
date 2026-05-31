@@ -261,11 +261,13 @@ function updateKeyGuideState(code, isPressed) {
 }
 function handleUINavigation(e) {
   const overlay = document.getElementById('overlay');
-  const help = document.getElementById('help-overlay');
+  const help = document.getElementById('htp-overlay');
   const stats = document.getElementById('stats-overlay');
+  const donation = document.getElementById('donation-modal');
 
   let activeOverlay = null;
-  if (help && help.style.display === 'flex') activeOverlay = help;
+  if (donation) activeOverlay = donation;
+  else if (help && help.style.display === 'flex') activeOverlay = help;
   else if (stats && stats.style.display === 'flex') activeOverlay = stats;
   else if (overlay && overlay.style.display === 'flex') activeOverlay = overlay;
 
@@ -278,7 +280,7 @@ function handleUINavigation(e) {
     
     const btn = Array.from(activeOverlay.querySelectorAll('button')).find(b => {
       const t = b.textContent.toUpperCase();
-      return b.classList.contains('close-btn') || t.includes('BACK') || t === 'RESUME';
+      return b.classList.contains('close-btn') || b.classList.contains('cancel') || t.includes('BACK') || t === 'RESUME' || t === 'CANCEL';
     });
     if (btn) {
       e.preventDefault();
@@ -293,7 +295,19 @@ function handleUINavigation(e) {
     if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
   }
 
-  const focusables = Array.from(activeOverlay.querySelectorAll('button, input, [tabindex="0"]'))
+  const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
+  const isUp   = e.code === 'ArrowUp'   || e.code === 'KeyW';
+  const isRight= e.code === 'ArrowRight'|| e.code === 'KeyD';
+  const isLeft = e.code === 'ArrowLeft' || e.code === 'KeyA';
+
+  const scrollable = activeOverlay.querySelector('#htp-scroll, #stats-scroll');
+  if (scrollable && (isDown || isUp)) {
+    scrollable.scrollTop += isDown ? 60 : -60;
+    e.preventDefault();
+    return true;
+  }
+
+  const focusables = Array.from(activeOverlay.querySelectorAll('button, input, a[href], [tabindex="0"]'))
     .filter(el => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
   
   if (focusables.length === 0) return false;
