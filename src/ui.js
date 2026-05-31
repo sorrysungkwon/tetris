@@ -879,7 +879,7 @@ export function updateUI() {
 }
 
 export function updateSprintTimer() {
-  const elapsed = performance.now() - S._sprintStartTime;
+  const elapsed = S._sprintStartTime > 0 ? performance.now() - S._sprintStartTime : 0;
   const fmt = fmtTime(elapsed);
   $score.textContent = fmt; if ($scoreM) $scoreM.textContent = fmt;
 }
