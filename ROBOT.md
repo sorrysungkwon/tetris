@@ -20,7 +20,8 @@
 - Update TODO.md task progress (`[x]`) after each task is completed. Update README.md roadmap only when releasing a new version.
 - **No Private Brain Directory**: NEVER create or write to any private brain/app-data directories (such as `task.md` or `walkthrough.md` under `<appDataDir>/brain/`).
 - **Unified Workspace**: Keep all technical specifications, tasks, and walkthrough reports inside the shared project directory (using `TODO.md` and `WALKTHROUGH.md` in the project root).
-- Keep single file structure (`index.html` only)
+- **Single-file OUTPUT rule**: The deployed artifact must be a single `index.html`. Source files may be split under `src/`. Always edit `src/style.css` and `src/game.js` — never edit the generated `index.html` directly.
+- **Build step**: `npm run build` → `node scripts/build.js` assembles `index.html` from `src/`. Run before local testing or committing. Vercel runs this automatically on deploy (`buildCommand` set in `vercel.json`).
 - **Document language rule**: GitHub-tracked files (README, TODO, CLAUDE, AGENTS, ROBOT, code, comments, commits) must be **English only**. Gitignored local files (MONETIZATION.md, GROWTHPLAN.md) may use Korean.
 - **TODO.md scope**: TODO.md is for feature tasks and bug fix records only. Business metrics, cost tables, and monetization notes do NOT belong in TODO.md.
 

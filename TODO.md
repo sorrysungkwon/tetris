@@ -13,7 +13,7 @@
 |---|---:|---|
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | ✅ Done |
-| v1.1 Sprint Mode + Domain | 500 | 🔲 Domain pending (~Jun 10) |
+| v1.1 Sprint Mode + Domain | 500 | ✅ Done |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -443,17 +443,16 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: v1.1 Release — Domain Setup
-> Target: ~June 10, 2026
+## ✅ Completed: v1.1 Release — Domain Setup (2026-05-30)
 
-### Domain Setup (user action)
-- [ ] **Purchase domain** (e.g. `glowtris.com`) and connect to Vercel project.
-- [ ] **Set up Cloudflare proxy** — point domain NS to Cloudflare, then proxy to Vercel. DDoS protection + free SSL.
-- [ ] **After domain is live** (agent tasks):
-  - Update `og:url` in `index.html` (`https://glowtris.vercel.app` → new domain)
-  - Update `README.md` production URL
-  - Update `ROBOT.md` dashboard/URL references
-  - Redeploy to production
+### Domain Setup
+- [x] **Purchase domain** `glowtris.com` and connect to Vercel project.
+- [x] **Set up Cloudflare proxy** — domain NS pointed to Cloudflare, proxied to Vercel.
+- [x] **URLs updated** (merged to master via PR #10 on 2026-05-30):
+  - `og:url` → `https://glowtris.com`
+  - `og:image` / `twitter:image` → `https://glowtris.com/api/og`
+  - Sprint share card caption → `glowtris.com`
+  - `README.md` + `ROBOT.md` production URL updated
 
 ### Donation URL
 - [x] Ko-fi account set up: `https://ko-fi.com/sorrysungkwon`
@@ -487,16 +486,31 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## 🔮 Planned: Pre-v1.2 — Architecture Review
-> DAU goal: — | Key driver: code health before multi-mode complexity
+## ✅ Completed: Pre-v1.2 — Architecture Review — by Claude (2026-05-30)
+
 > ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
 
-`index.html` is **4,059 lines** after v1.1. Decide the code architecture before adding more game modes:
-
-- [ ] **Measure**: Count lines, functions, and variable count after v1.1 merge.
-- [ ] **Decide**: Keep single-file with stricter section discipline OR introduce a minimal build step (e.g. `npx esbuild` to bundle separate CSS/JS source files into one `index.html` at deploy time — preserves single-file output while making source maintainable). *(Antigravity Suggestion: Highly recommended to avoid massive single-file bloat before introducing multi-mode complexity in v1.2)*.
-- [ ] **If build step chosen**: Set up `package.json` + build script; verify Vercel builds correctly; update `ROBOT.md` single-file rule.
-- [ ] **JS error monitoring**: Add `window.onerror` → structured `console.error` with version tag. Consider Sentry free tier (5K errors/month) if unhandled errors become frequent after Reddit launch.
+- [x] **Measured**: `index.html` was 4,108 lines (768 CSS + 3,132 JS + 206 HTML) after v1.1.
+- [x] **Decided**: Build step introduced — source files in `src/`, output `index.html` generated at deploy time.
+- [x] **Build step implemented** (`scripts/build.js` — pure Node.js, no extra deps):
+  - `src/template.html` — HTML shell with `<!--BUILD_CSS-->` / `<!--BUILD_JS-->` markers
+  - `src/style.css` — 768 lines of CSS
+  - `src/game.js` — 3,132 lines of JS (edit here, not `index.html`)
+  - `npm run build` → inlines CSS+JS into template → writes `index.html`
+  - `npm run dev` → build + serve at http://localhost:3000
+  - **Vercel**: `"buildCommand": "npm run build"`, `"outputDirectory": "."` added to `vercel.json`
+  - `index.html` added to `.gitignore` (generated artifact; Vercel regenerates on every deploy)
+- [x] **For v1.2**: Split `src/game.js` into modules — esbuild bundle mode active. Branch: `feature/es-modules`.
+  - [x] Session 1: `src/shared.js` — constants, `LS`, `ACHIEVEMENTS`, `mulberry32`, `fmtTime`, `S` state object; `scripts/build.js` esbuild auto-detect
+  - [x] Session 2: `src/audio.js` — BGM, SFX, `toggleMute`, lifecycle helpers (`onPageHide/onPageShow/closeAudio`); game.js 3132→2843 lines
+  - [x] Session 3: `src/ui.js` — layout, drawing, particles, UI update, settings UI (1165 lines) — by Antigravity (2026-05-30)
+  - [x] Session 4: `src/leaderboard.js` — lbHTML, submitScore, submitSprintScore, shareScore, shareSprintScore, captureGameImage, captureSprintImage, loadStartLeaderboard, renderLbTab, setLbMode (~448 lines) — by Antigravity (2026-05-30)
+  - [x] Session 5: `src/screens.js` — extract screens/overlays; create `src/screens.js`; move `showStartScreen`, `showModeSelector`, `togglePause`, `startDailyChallenge`, `showDailyGateOverlay`, `_renderGameOverScreen`, `_renderSprintScreen`; ensure `window` bindings remain in `game.js` for `onclick` references.
+- [x] Post-split: browser test → clean code/refactor/bug fix → architecture review → deploy to preview
+  - Clean code: removed stale comments, WHAT comments, dead re-export (10 lines)
+  - Architecture: removed unnecessary `export` from `hexToRgb`, `drawMiniPiece`, `invalidateCellSprites` in ui.js
+  - Known: `game.js` ↔ `screens.js` and `leaderboard.js` ↔ `screens.js` circular deps — harmless under esbuild IIFE, but worth resolving in a future dedicated refactor pass
+- [x] **JS error monitoring**: `window.onerror` + `window.onunhandledrejection` → structured `console.error` tagged `[glowtris v1.1]`. Sentry deferred until Reddit launch if error volume warrants it.
 
 ---
 
