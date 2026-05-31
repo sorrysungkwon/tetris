@@ -58,7 +58,7 @@ export async function submitSprintScore(timeMs){
         <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.sprintDailyBoard||[],name,data.sprintDailyRank,timeMs,true)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareSprintScore(${timeMs},${data.sprintRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareSprintScore(${timeMs},${data.sprintRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
@@ -191,7 +191,7 @@ export async function submitScore(){
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.challengeBoard||[], name, data.challengeRank, S.score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.challengeRank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }
     else if(data.board){
       S._lbCache = {
@@ -213,7 +213,7 @@ export async function submitScore(){
         <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.dailyBoard||[], name, data.dailyRank, S.score)}</div>`;
-      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`+_donationHTML();
+      res.innerHTML=rankMsg+tabs+`<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.rank||0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
     }else{
       btn.disabled=false;inp.disabled=false;
       res.innerHTML='<div class="sub">Save failed — please try again</div>';
