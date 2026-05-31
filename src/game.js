@@ -155,8 +155,6 @@ function lockPiece(){
       if(S.level>=5) unlockAchievement('level_5');
       if(S.level>=10) unlockAchievement('level_10');
       if(S.level>=15) unlockAchievement('level_15');
-    } else {
-      S.level=nextLvl;
     }
     dropInterval=Math.max(80,800-(S.level-1)*70);
     updateUI();
