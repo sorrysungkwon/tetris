@@ -787,8 +787,8 @@ export function updateParticles() {
       continue;
     }
     if (p.type === 'ring' || p.type === 'radial-ring') {
-      if (S.lowPerfMode) { p.life -= p.decay; continue; }
       p.life -= p.decay;
+      if (S.lowPerfMode) { continue; }
       pctx.save(); pctx.globalAlpha = Math.max(0, p.life);
       pctx.strokeStyle = p.color; pctx.lineWidth = p.size*p.life;
       if (!S.lowPerfMode) { pctx.shadowColor = p.color; pctx.shadowBlur = 15; }
@@ -896,7 +896,7 @@ export function updateUI() {
   $lines.textContent = S.lines; if ($linesM) $linesM.textContent = S.lines;
   $level.textContent = S.level; if ($levelM) $levelM.textContent = S.level;
   const hi = S.hiScore.toLocaleString();
-  $hiScore.textContent = hi; $hiScoreM.textContent = hi;
+  $hiScore.textContent = hi; if ($hiScoreM) $hiScoreM.textContent = hi;
   const pct = ((S.lines % LEVEL_LINES) / LEVEL_LINES) * 100;
   const hue = (S.level-1)*30;
   $levelBar.style.width      = pct + '%';
