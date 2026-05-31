@@ -206,20 +206,21 @@
     overflow-y:auto;
   }
   #overlay h1 {
-    font-size:26px; font-weight:900; letter-spacing:5px;
+    font-size:28px; font-weight:900; letter-spacing:6px;
     width:100%; text-align:center;
     background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    animation:pulse 2s ease-in-out infinite; margin-bottom:20px;
+    animation:pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin-bottom:20px;
+    filter: drop-shadow(0 0 15px rgba(0,200,255,0.6));
   }
-  #overlay .sub { color:rgba(0,200,255,0.55); font-size:9px; letter-spacing:3px; margin-bottom:20px; }
+  #overlay .sub { color:rgba(0,200,255,0.8); font-size:10px; letter-spacing:4px; margin-bottom:20px; text-shadow:0 0 8px rgba(0,200,255,0.5); }
   .action-btn {
     position: relative;
-    background: linear-gradient(135deg, rgba(0,200,255,0.25), rgba(160,0,255,0.25));
-    border: 1px solid rgba(0,200,255,0.5); color: #fff;
+    background: linear-gradient(135deg, rgba(0,200,255,0.35), rgba(160,0,255,0.35));
+    border: 1px solid rgba(0,200,255,0.6); color: #fff;
     font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; letter-spacing: 3px;
     padding: 11px 26px; border-radius: 8px; cursor: pointer; text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(0,200,255,0.8);
+    text-shadow: 0 0 15px rgba(0,200,255,1);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.3s ease, 
                 border-color 0.3s ease;
@@ -230,14 +231,14 @@
     position: absolute;
     top: 0; left: -100%;
     width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
     transform: skewX(-25deg);
     transition: none;
   }
   .action-btn:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 0 25px rgba(0,200,255,0.55), 0 0 8px rgba(160,0,255,0.35);
-    transform: scale(1.05);
+    border-color: #fff;
+    box-shadow: 0 0 40px rgba(0,200,255,0.8), 0 0 15px rgba(160,0,255,0.6), inset 0 0 15px rgba(0,200,255,0.4);
+    transform: scale(1.08);
   }
   .action-btn:hover::after {
     left: 150%;
@@ -253,7 +254,10 @@
     opacity:0; z-index:20;
   }
 
-  @keyframes pulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.6)} }
+  @keyframes pulse { 
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(0,200,255,0.4)); transform: scale(1); } 
+    50% { filter: brightness(1.8) drop-shadow(0 0 25px rgba(255,0,128,0.7)); transform: scale(1.05); } 
+  }
 
   /* Mini canvases */
   .mini-cv { border:1px solid var(--border); border-radius:3px; display:block; margin:0 auto; background:rgba(0,0,15,0.55); }
@@ -495,7 +499,7 @@
   .action-btn.ghost:hover { border-color:rgba(0,200,255,0.4); color:var(--cyan); background:rgba(0,200,255,0.08); }
   #daily-challenge-btn, #daily-launch-btn {
     background: linear-gradient(90deg, #ffe600, #ffaa00);
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+    box-shadow: 0 0 25px rgba(255, 170, 0, 0.6), inset 0 0 10px rgba(255,255,255,0.5);
     border-color: #ffe600;
     color: #000;
     font-weight: 900;
@@ -503,18 +507,24 @@
   }
   #daily-challenge-btn:hover, #daily-launch-btn:hover {
     border-color: #fff;
-    box-shadow: 0 0 25px rgba(255, 230, 0, 0.8), 0 0 8px rgba(255, 170, 0, 0.6);
+    box-shadow: 0 0 40px rgba(255, 230, 0, 1), 0 0 15px rgba(255, 170, 0, 0.8), inset 0 0 15px rgba(255,255,255,0.8);
     color: #000;
+    transform: scale(1.1);
   }
 
   /* Sleek Glass Panel for overlays */
   .glass-panel {
     position: relative; display: flex; flex-direction: column; align-items: center;
-    width: min(290px, 86vw); background: rgba(4,4,30,0.92);
-    border: 1px solid rgba(0,200,255,0.25); border-radius: 16px;
-    padding: 24px 20px 20px; box-shadow: 0 0 35px rgba(0,200,255,0.12);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    width: min(290px, 86vw); background: rgba(2,2,18,0.85);
+    border: 1px solid rgba(0,200,255,0.4); border-radius: 16px;
+    padding: 24px 20px 20px; 
+    box-shadow: 0 0 50px rgba(0,200,255,0.25), inset 0 0 20px rgba(0,200,255,0.1);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .glass-panel:hover {
+    box-shadow: 0 0 60px rgba(0,200,255,0.35), inset 0 0 30px rgba(0,200,255,0.15);
+    border-color: rgba(0,200,255,0.6);
   }
   
   /* Custom Scrollbar for a sleek premium look */
