@@ -68,7 +68,29 @@ const $combo    = document.getElementById('combo-display');
 // ─── Bag / Pieces ─────────────────────────────────────────────────────────────
 function refillBag(){bag=[...Object.keys(PIECES)];for(let i=bag.length-1;i>0;i--){const randVal=_prng?_prng():Math.random();const j=Math.floor(randVal*(i+1));[bag[i],bag[j]]=[bag[j],bag[i]];}}
 function nextFromBag(){if(!bag.length)refillBag();return bag.pop();}
-function makePiece(key){const d=PIECES[key];return{key,shape:d.shape.map(r=>[...r]),color:d.color,x:Math.floor(COLS/2)-Math.floor(d.shape[0].length/2),y:0};}
+function makePiece(key){const d=PIECES[key];return{key,shape:d.shape.map(r=>[...r]),color:d.color,x:Math.floor(COLS/2)-Math.floor(d.shape[0].length/2),y:0,rot:0};}
+
+// SRS kick tables — canvas y-down (wiki y-up values with y negated)
+const KICKS_JLSTZ = {
+  '0>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '1>0':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+  '1>2':[[0,0],[1,0],[1,1],[0,-2],[1,-2]],
+  '2>1':[[0,0],[-1,0],[-1,-1],[0,2],[-1,2]],
+  '2>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+  '3>2':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '3>0':[[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]],
+  '0>3':[[0,0],[1,0],[1,-1],[0,2],[1,2]],
+};
+const KICKS_I = {
+  '0>1':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+  '1>0':[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+  '1>2':[[0,0],[-1,0],[2,0],[-1,2],[2,-1]],
+  '2>1':[[0,0],[1,0],[-2,0],[1,-2],[-2,1]],
+  '2>3':[[0,0],[2,0],[-1,0],[2,1],[-1,-2]],
+  '3>2':[[0,0],[-2,0],[1,0],[-2,-1],[1,2]],
+  '3>0':[[0,0],[1,0],[-2,0],[1,2],[-2,-1]],
+  '0>3':[[0,0],[-1,0],[2,0],[-1,-2],[2,1]],
+};
 
 // ─── Board / Logic ────────────────────────────────────────────────────────────
 function createBoard(){return Array.from({length:ROWS},()=>Array(COLS).fill(null));}
@@ -84,11 +106,30 @@ function validPos(piece,ox=0,oy=0,shape=null){
   return true;
 }
 
-function rotate(shape){const R=shape.length,C=shape[0].length;return Array.from({length:C},(_,c)=>Array.from({length:R},(_,r)=>shape[R-1-r][c]));}
+function rotateCW(shape){const R=shape.length,C=shape[0].length;return Array.from({length:C},(_,c)=>Array.from({length:R},(_,r)=>shape[R-1-r][c]));}
+function rotateCCW(shape){const R=shape.length,C=shape[0].length;return Array.from({length:C},(_,c)=>Array.from({length:R},(_,r)=>shape[r][C-1-c]));}
 
-function rotatePiece(){
-  const rot=rotate(S.current.shape);
-  for(const k of [0,-1,1,-2,2]){if(validPos(S.current,k,0,rot)){S.current.shape=rot;S.current.x+=k;cancelLock();lastWasRotate=true;sfxRotate();return;}}
+function _tryRotate(newShape, fromRot, toRot) {
+  const key = `${fromRot}>${toRot}`;
+  const kicks = S.current.key === 'I' ? KICKS_I : S.current.key === 'O' ? [[0,0]] : KICKS_JLSTZ;
+  const table = kicks[key] || [[0,0]];
+  for (const [dx,dy] of table) {
+    if (validPos(S.current, dx, dy, newShape)) {
+      S.current.shape = newShape;
+      S.current.x += dx;
+      S.current.y += dy;
+      S.current.rot = toRot;
+      cancelLock(); lastWasRotate = true; sfxRotate();
+      return true;
+    }
+  }
+  return false;
+}
+
+function rotatePiece(ccw=false){
+  const from = S.current.rot;
+  const to = ccw ? (from+3)%4 : (from+1)%4;
+  _tryRotate(ccw ? rotateCCW(S.current.shape) : rotateCW(S.current.shape), from, to);
 }
 
 function cancelLock(){S.lockActive=false;S.lockTimer=0;}
@@ -287,8 +328,11 @@ function handleUINavigation(e) {
   }
 
   if (active && active.tagName === 'INPUT' && active.type === 'text') {
-    if (e.code === 'Enter') return false;
-    if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return false;
+    if (e.code !== 'Tab' && e.code !== 'Enter' && e.code !== 'Escape') return false;
+    if (e.code === 'Enter') {
+      // Let the keydown bubble up or just return false so the input handles it
+      return false; 
+    }
   }
 
   const isDown = e.code === 'ArrowDown' || e.code === 'KeyS';
@@ -351,7 +395,8 @@ document.addEventListener('keydown',e=>{
     case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);break;
     case'ArrowRight':case'KeyD': moveX(1); startDAS(1); break;
     case'ArrowDown':case'KeyS':  softDrop();startDASDown();e.preventDefault();break;
-    case'ArrowUp':case'KeyW':    rotatePiece();break;
+    case'ArrowUp':case'KeyW':case'KeyX': rotatePiece();break;
+    case'KeyZ':case'ControlLeft':case'ControlRight': rotatePiece(true);break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
   }
