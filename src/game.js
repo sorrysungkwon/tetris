@@ -645,7 +645,7 @@ window.addEventListener('beforeunload',()=>{
 });
 
 // ─── Error monitoring ─────────────────────────────────────────────────────────
-const _VERSION = 'v1.1';
+const _VERSION = 'v1.1.1';
 window.onerror = function(msg, src, line, col, err) {
   console.error('[glowtris ' + _VERSION + '] uncaught error', {
     msg, src: src ? src.replace(window.location.origin, '') : src, line, col,

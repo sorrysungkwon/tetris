@@ -14,6 +14,7 @@
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | ✅ Done |
 | v1.1 Sprint Mode + Domain | 500 | ✅ Done |
+| v1.1.1 UX Polish | — | ✅ Done |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -533,7 +534,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## ✅ Completed: Pre-v1.2 — Comprehensive UX/UI Polish & Keyboard Nav — by Antigravity (2026-05-31)
+## ✅ Completed: v1.1.1 — Comprehensive UX/UI Polish & Keyboard Nav — by Antigravity (2026-05-31)
 
 > Goal: better readability, visual grouping (Gestalt principles), and seamless usability across all screens.
 
