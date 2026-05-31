@@ -2,7 +2,8 @@ import { S, LS, ACHIEVEMENTS, COLS, ROWS, COLOR_TO_KEY, SUPPORT_URL, MAX_PARTICL
 import { toggleMute, startBGM, stopBGM, pauseBGM, resumeBGM, playBeep, sfxMove, sfxRotate, sfxHardDrop, sfxHold, sfxLineClear, sfxGameOver, sfxTSpin, sfxAchievementUnlock, applyMuteToGain, onPageHide, onPageShow, closeAudio, sfxUIHover, sfxUIClick } from './audio.js';
 
 document.addEventListener('mouseover', (e) => {
-  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap')) sfxUIHover();
+  const btn = e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap');
+  if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
 });
 document.addEventListener('mousedown', (e) => {
   if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
