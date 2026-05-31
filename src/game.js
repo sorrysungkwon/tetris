@@ -5,11 +5,9 @@ document.addEventListener('mouseover', (e) => {
   const btn = e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap');
   if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
 });
-document.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
-});
-document.addEventListener('touchstart', (e) => {
-  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+document.addEventListener('pointerdown', (e) => {
+  document.body.classList.remove('using-kb');
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap')) sfxUIClick();
 }, {passive: true});
 import {
   gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
@@ -342,6 +340,7 @@ function handleUINavigation(e) {
 }
 
 document.addEventListener('keydown',e=>{
+  document.body.classList.add('using-kb');
   if(e.code==='KeyM') toggleMute();
   if (handleUINavigation(e)) return;
   updateKeyGuideState(e.code, true);
@@ -645,7 +644,7 @@ window.addEventListener('beforeunload',()=>{
 });
 
 // ─── Error monitoring ─────────────────────────────────────────────────────────
-const _VERSION = 'v1.1';
+const _VERSION = 'v1.1.1';
 window.onerror = function(msg, src, line, col, err) {
   console.error('[glowtris ' + _VERSION + '] uncaught error', {
     msg, src: src ? src.replace(window.location.origin, '') : src, line, col,

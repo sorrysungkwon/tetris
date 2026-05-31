@@ -1,7 +1,7 @@
 # Glowtris Agent Shared TODO & Guidelines
 
 ## 🚨 Behavioral Guidelines (Must read first!)
-- **Single File Rule**: Always maintain the single `index.html` structure. No external frontend libraries allowed.
+- **ES Modules Architecture**: Always maintain the ES modules split (`src/`). The build step generates the single `index.html`. No external frontend libraries allowed.
 - **English-Only Rule**: All code changes, comments, logs, documentation, and Git commit messages MUST be written entirely in English.
 - **Workflow Integrity**: Before starting any task, read your agent doc (`CLAUDE.md` or `AGENTS.md`) first, then this file. `README.md` is human-facing — use it for feature context only. After completing any task, update progress here (`[x]`) and in `README.md`'s roadmap, then `git add . && git commit -m "description"` — report to user and wait. **Push only when user says "push해".** Docs-only commits accumulate locally and are bundled with the next code push.
 
@@ -14,6 +14,7 @@
 | v1.0.9.4 | 100 | ✅ Done |
 | Pre-v1.1 | — | ✅ Done |
 | v1.1 Sprint Mode + Domain | 500 | ✅ Done |
+| v1.1.1 UX Polish | — | ✅ Done |
 | v1.2 Ultra + Streak | 700 | 🔲 |
 | v1.3 Training & Finesse | 1,200 | 🔲 |
 | v1.4 Visual Customization | 1,800 | 🔲 |
@@ -533,7 +534,7 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## ✅ Completed: Pre-v1.2 — Comprehensive UX/UI Polish & Keyboard Nav — by Antigravity (2026-05-31)
+## ✅ Completed: v1.1.1 — Comprehensive UX/UI Polish & Keyboard Nav — by Antigravity (2026-05-31)
 
 > Goal: better readability, visual grouping (Gestalt principles), and seamless usability across all screens.
 
@@ -546,6 +547,10 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [x] **Touch Control Fix**: Blocked touch repeat buttons (Left, Right, Soft Drop) during the 3-2-1 game start countdown.
 - [x] **Duplicate Modal Fix**: Prevented multiple invisible layers of the `donation-modal` from spawning on repeated clicks.
 - [x] **Hover Sound Logic**: `sfxUIHover` only plays when keyboard focus *actually* moves, preventing sound spam when focus is trapped.
+- [x] **Touch Sound Fix**: Upgraded `sfxUIClick` to use `pointerdown` instead of debounced `touchstart` + `mousedown`, completely eliminating double-firing on touch screens. Also removed game control `.tbtn` from UI sound listeners.
+- [x] **Pause Audio Fix**: Refactored `pauseBGM` to stop the BGM scheduler instead of suspending the entire `AudioContext` or zeroing `masterGain`. This ensures UI sounds continue to work in the pause menu and after returning to the main menu.
+- [x] **Keyboard UI Visibility Fix**: Updated `_enableKbMode` to use `window.innerWidth` (CSS pixels) instead of `screen.width` (physical pixels) to accurately detect mobile devices. Modified `style.css` so that tablets (width > 600px) retain side panels (KEYS, NEXT, HOLD) even when touch controls are activated.
+- [x] **Manual Keyboard Focus Outline Fix**: Replaced browser-native `:focus-visible` with a custom `.using-kb *:focus` class managed manually on `keydown` and `pointerdown`. This guarantees the focus indicator reliably appears when navigating the UI via keyboard, bypassing browser event-interception bugs.
 - [x] **Effects**: Upgraded visual and audio effects for UI interactions.
 
 ---
