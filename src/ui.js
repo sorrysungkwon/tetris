@@ -1162,5 +1162,3 @@ export function hideAchTooltip() {
   setTimeout(() => { if (tooltip.style.opacity === '0') tooltip.style.display = 'none'; }, 150);
 }
 
-// ─── fmtTime re-export (convenience — callers can import from here or shared) ─
-export { fmtTime } from './shared.js';

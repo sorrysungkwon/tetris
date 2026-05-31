@@ -100,7 +100,6 @@ export function mulberry32(a) {
 }
 
 // ─── Time formatter ───────────────────────────────────────────────────────────
-// Formats milliseconds as M:SS.cc. Used by ui.js, leaderboard.js, game.js.
 export function fmtTime(ms) {
   const total = Math.floor(ms / 10);
   const cs    = total % 100;

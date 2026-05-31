@@ -30,7 +30,6 @@ document.addEventListener('touchmove', e=>{ if(e.touches.length>1) e.preventDefa
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let canHold;
-// maxCombo moved to S.maxCombo
 let gameOver;
 let dropInterval;
 let animFrame;
@@ -40,8 +39,6 @@ let prevTs=0;
 let _countdownTimer=null;
 let _prng=null;
 
-// S.* aliases for frequently-used state (reduce property lookups in hot paths)
-// These are written by this module and read here + by ui.js via S.*
 let lastWasRotate=false;
 
 // ─── Keyboard guide DOM refs ───────────────────────────────────────────────────
@@ -130,7 +127,6 @@ function lockPiece(){
     if (lifetime.totalLines >= 100) unlockAchievement('lines_100');
     if (lifetime.totalLines >= 1000) unlockAchievement('lines_1000');
 
-    // Spawn floating score text at center of cleared lines
     const cy = (cleared[0] + cleared[cleared.length-1]) / 2 * S.CELL;
     spawnFloatingText(`+${pts}`, COLS/2*S.CELL, cy, '#00c8ff', 16);
 
@@ -422,8 +418,6 @@ export function stopGameAndReset() {
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
   animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!S.gameRunning)animFrame=requestAnimationFrame(bgOnly);});
 }
-
-
 
 function endGame(){
   S.gameRunning=false;gameOver=true;
