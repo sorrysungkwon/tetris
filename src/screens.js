@@ -44,7 +44,7 @@ export function showDailyGateOverlay(todayStr) {
       </div>
       <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,0.6);text-transform:uppercase;margin-bottom:2px">NEXT CHALLENGE IN</div>
       <div id="daily-countdown" style="font-size:24px;font-weight:900;color:var(--cyan);text-shadow:0 0 10px var(--cyan);margin-bottom:20px;letter-spacing:1.5px">--:--:--</div>
-      <button class="action-btn" style="width:100%" onclick="showStartScreen()">BACK</button>
+      <button class="action-btn" style="width:100%" onclick="showModeSelector()">BACK</button>
     </div>
   `;
   $overlay.style.display = 'flex';
@@ -78,7 +78,7 @@ export function startDailyChallenge() {
 
       <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
         <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">START CHALLENGE</button>
-        <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">GO BACK</button>
+        <button class="action-btn ghost" style="width:100%" onclick="showModeSelector()">GO BACK</button>
       </div>
     </div>
   `;
