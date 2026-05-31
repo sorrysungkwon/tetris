@@ -486,10 +486,11 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## ✅ Completed: Pre-v1.2 — Architecture Review — by Claude (2026-05-30)
+## ✅ Completed: Pre-v1.2 — Architecture & ES Modules Split — by Claude + Antigravity (2026-05-30 ~ 2026-05-31)
 
 > ⚠️ **Upstash PAYG trigger**: ~700 DAU exhausts the free tier even with cache. Switch to Pay-as-you-go (~$1/mo) before or at v1.2 launch.
 
+### Build step — by Claude (2026-05-30)
 - [x] **Measured**: `index.html` was 4,108 lines (768 CSS + 3,132 JS + 206 HTML) after v1.1.
 - [x] **Decided**: Build step introduced — source files in `src/`, output `index.html` generated at deploy time.
 - [x] **Build step implemented** (`scripts/build.js` — pure Node.js, no extra deps):
@@ -500,17 +501,35 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
   - `npm run dev` → build + serve at http://localhost:3000
   - **Vercel**: `"buildCommand": "npm run build"`, `"outputDirectory": "."` added to `vercel.json`
   - `index.html` added to `.gitignore` (generated artifact; Vercel regenerates on every deploy)
-- [x] **For v1.2**: Split `src/game.js` into modules — esbuild bundle mode active. Branch: `feature/es-modules`.
-  - [x] Session 1: `src/shared.js` — constants, `LS`, `ACHIEVEMENTS`, `mulberry32`, `fmtTime`, `S` state object; `scripts/build.js` esbuild auto-detect
-  - [x] Session 2: `src/audio.js` — BGM, SFX, `toggleMute`, lifecycle helpers (`onPageHide/onPageShow/closeAudio`); game.js 3132→2843 lines
-  - [x] Session 3: `src/ui.js` — layout, drawing, particles, UI update, settings UI (1165 lines) — by Antigravity (2026-05-30)
-  - [x] Session 4: `src/leaderboard.js` — lbHTML, submitScore, submitSprintScore, shareScore, shareSprintScore, captureGameImage, captureSprintImage, loadStartLeaderboard, renderLbTab, setLbMode (~448 lines) — by Antigravity (2026-05-30)
-  - [x] Session 5: `src/screens.js` — extract screens/overlays; create `src/screens.js`; move `showStartScreen`, `showModeSelector`, `togglePause`, `startDailyChallenge`, `showDailyGateOverlay`, `_renderGameOverScreen`, `_renderSprintScreen`; ensure `window` bindings remain in `game.js` for `onclick` references.
-- [x] Post-split: browser test → clean code/refactor/bug fix → architecture review → deploy to preview
-  - Clean code: removed stale comments, WHAT comments, dead re-export (10 lines)
-  - Architecture: removed unnecessary `export` from `hexToRgb`, `drawMiniPiece`, `invalidateCellSprites` in ui.js
-  - Known: `game.js` ↔ `screens.js` and `leaderboard.js` ↔ `screens.js` circular deps — harmless under esbuild IIFE, but worth resolving in a future dedicated refactor pass
-- [x] **JS error monitoring**: `window.onerror` + `window.onunhandledrejection` → structured `console.error` tagged `[glowtris v1.1]`. Sentry deferred until Reddit launch if error volume warrants it.
+
+### ES modules split — branch: `feature/es-modules`
+- [x] Session 1 — **by Claude** (2026-05-30): `src/shared.js` — constants, `LS`, `ACHIEVEMENTS`, `mulberry32`, `fmtTime`, `S` state object; `scripts/build.js` esbuild auto-detect
+- [x] Session 2 — **by Claude** (2026-05-30): `src/audio.js` — BGM, SFX, `toggleMute`, lifecycle helpers (`onPageHide/onPageShow/closeAudio`); game.js 3132→2843 lines
+- [x] Session 3 — **by Antigravity** (2026-05-30): `src/ui.js` — layout, drawing, particles, UI update, settings UI (1165 lines)
+- [x] Session 4 — **by Antigravity** (2026-05-30): `src/leaderboard.js` — lbHTML, submitScore, submitSprintScore, shareScore, shareSprintScore, captureGameImage, captureSprintImage, loadStartLeaderboard, renderLbTab, setLbMode (~448 lines)
+- [x] Session 5 — **by Antigravity** (2026-05-30): `src/screens.js` — extract screens/overlays; move `showStartScreen`, `showModeSelector`, `togglePause`, `startDailyChallenge`, `showDailyGateOverlay`, `_renderGameOverScreen`, `_renderSprintScreen`; ensure `window` bindings remain in `game.js` for `onclick` references.
+
+### Post-split bugfixes — by Claude (2026-05-31)
+- [x] Fix: `fmtTime` import missing in `ui.js` after split
+- [x] Fix: two bugs introduced in Session 5 screens.js extraction
+- [x] Fix: sprint timer stale value + BGM not pausing on all platforms
+- [x] Fix: sprint timer zero-guard + block inputs during countdown
+- [x] Fix: reset sprint timer display on game start
+- [x] Fix: reset score/timer display synchronously in `startGame()`
+- [x] Fix: tie keyboard nudge effect to animation intensity setting
+- [x] Fix: ignore touch kb-mode switch while game is paused
+- [x] Fix: reset `gamePaused` in `stopGameAndReset()`
+
+### Post-split clean code & architecture review — by Claude (2026-05-31)
+- [x] Removed stale migration comment, misleading S.* aliases comment, WHAT comments, dead `fmtTime` re-export (10 lines total)
+- [x] Removed unnecessary `export` from `hexToRgb`, `drawMiniPiece`, `invalidateCellSprites` in `ui.js`
+- [x] Documented known circular deps (`game.js` ↔ `screens.js`, `leaderboard.js` ↔ `screens.js`) — harmless under esbuild IIFE
+
+### JS error monitoring — by Claude (2026-05-31)
+- [x] `window.onerror` + `window.onunhandledrejection` → structured `console.error` tagged `[glowtris v1.1]`. Sentry deferred until Reddit launch if error volume warrants it.
+
+### Post-v1.1 polish — by Claude (2026-05-31)
+- [x] WASD keyboard support: A/D → move, W → rotate, S → soft drop (DAS/ARR + nudge wired identically to arrow keys); HUD key guide and HOW TO PLAY updated
 
 ---
 
