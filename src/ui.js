@@ -391,7 +391,7 @@ function _drawChallengeBg() {
 }
 
 // ─── Drawing helpers ──────────────────────────────────────────────────────────
-export function hexToRgb(hex) {
+function hexToRgb(hex) {
   if (_rgbCache.has(hex)) return _rgbCache.get(hex);
   const v = { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
   _rgbCache.set(hex, v); return v;
@@ -432,7 +432,7 @@ export function getCellSprite(color) {
   return _cellSprites[color];
 }
 
-export function invalidateCellSprites() { _cellSprites = {}; }
+function invalidateCellSprites() { _cellSprites = {}; }
 
 function drawCBPattern(ctx, px, py, cs, key) {
   ctx.save();
@@ -679,7 +679,7 @@ function _validPos(piece, ox=0, oy=0, shape=null) {
   return true;
 }
 
-export function drawMiniPiece(ctx, piece, cw, ch) {
+function drawMiniPiece(ctx, piece, cw, ch) {
   ctx.clearRect(0, 0, cw, ch);
   ctx.fillStyle = 'rgba(0,0,15,0.55)'; ctx.fillRect(0, 0, cw, ch);
   if (!piece) return;
