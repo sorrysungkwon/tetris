@@ -231,8 +231,16 @@ export function stopBGM(){
   nodes.forEach(n=>{try{n.stop(audioCtx.currentTime+0.01);}catch(e){} try{n.disconnect();}catch(e){}});
 }
 
-export function pauseBGM(){if(audioCtx&&audioCtx.state==='running')audioCtx.suspend();}
-export function resumeBGM(){if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();}
+export function pauseBGM(){
+  if(!audioCtx)return;
+  if(masterGain)masterGain.gain.setValueAtTime(0,audioCtx.currentTime);
+  if(audioCtx.state==='running')audioCtx.suspend();
+}
+export function resumeBGM(){
+  if(!audioCtx)return;
+  if(masterGain)masterGain.gain.setValueAtTime(S.muteAudio?0:1,audioCtx.currentTime);
+  if(audioCtx.state==='suspended')audioCtx.resume();
+}
 
 export function playBeep(freq,type,dur,vol,delay=0,freqEnd=null){
   const ctx=getAudioCtx();

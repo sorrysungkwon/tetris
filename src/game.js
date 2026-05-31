@@ -362,7 +362,7 @@ function _doStartGame(){
   const lsl=document.getElementById('lines-sub-label');
   if(S.isSprintMode){
     S._sprintHiTime=parseInt(localStorage.getItem(LS.SPRINT_HI)||'0');
-    S._sprintEndTime=0;
+    S._sprintEndTime=0;S._sprintStartTime=0;
     if(psl)psl.textContent='TIME';
     if(lsl)lsl.textContent='LEFT';
   }else{
