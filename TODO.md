@@ -533,15 +533,20 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 
 ---
 
-## ✅ Pre-v1.2 — UI Polish — assigned to Antigravity
+## ✅ Completed: Pre-v1.2 — Comprehensive UX/UI Polish & Keyboard Nav — by Antigravity (2026-05-31)
 
-> Goal: better readability, visual grouping (Gestalt principles), and usability across all screens.
-> Deploy to preview first; rollback URL (pre-polish production): https://glowtris-5qmbjb2y7-sgkwon-team.vercel.app
+> Goal: better readability, visual grouping (Gestalt principles), and seamless usability across all screens.
 
-- [x] **Readability**: improve font sizes, contrast, spacing where content feels cramped or hard to scan
-- [x] **Gestalt grouping**: related UI elements (score/level/lines, mode cards, leaderboard rows) should feel visually cohesive — proximity, similarity, and alignment
-- [x] **Usability**: review touch target sizes, button clarity, navigation flow across start screen → mode selector → game → game over
-- [x] Verify on both desktop and mobile before deploying to preview
+- [x] **Readability**: improved font sizes, contrast, spacing where content feels cramped or hard to scan.
+- [x] **Gestalt grouping**: related UI elements (score/level/lines, mode cards, leaderboard rows) feel visually cohesive — proximity, similarity, and alignment.
+- [x] **Usability**: wider dialog overlays (width 340px) for better spacing.
+- [x] **Keyboard Navigation**: Full keyboard control (WASD, Arrows, Tab, Enter) for all menus, popups, and dialogs.
+- [x] **Auto-focus**: Automatic focus management for modals (`How to Play`, `Stats`, `Buy Me A Coffee`) to prevent focus trapping in the background.
+- [x] **Escape/Backspace bindings**: Intelligent back/close bindings for all overlays, including Privacy and Terms pages.
+- [x] **Touch Control Fix**: Blocked touch repeat buttons (Left, Right, Soft Drop) during the 3-2-1 game start countdown.
+- [x] **Duplicate Modal Fix**: Prevented multiple invisible layers of the `donation-modal` from spawning on repeated clicks.
+- [x] **Hover Sound Logic**: `sfxUIHover` only plays when keyboard focus *actually* moves, preventing sound spam when focus is trapped.
+- [x] **Effects**: Upgraded visual and audio effects for UI interactions.
 
 ---
 
