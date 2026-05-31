@@ -10,7 +10,7 @@ import {
 } from './leaderboard.js';
 import {
   startGame, startSprintMode, launchDailyChallenge,
-  resumeGameTiming, stopGameAndReset
+  pauseGameTiming, resumeGameTiming, stopGameAndReset
 } from './game.js';
 
 const $overlay = document.getElementById('overlay');
@@ -89,6 +89,7 @@ export function togglePause(){
   if(!S.gameRunning)return;
   S.gamePaused=!S.gamePaused;
   if(S.gamePaused){
+    pauseGameTiming();
     pauseBGM();
     $overlay.innerHTML=`
       <div class="glass-panel">
