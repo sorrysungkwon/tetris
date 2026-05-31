@@ -230,9 +230,9 @@ const KEYS={};let dasTimer=null;
 
 function updateKeyGuideState(code, isPressed) {
   let el = null;
-  if (code === 'ArrowLeft' || code === 'ArrowRight') el = _keyGuide.move;
-  else if (code === 'ArrowUp')                        el = _keyGuide.rotate;
-  else if (code === 'ArrowDown')                      el = _keyGuide.soft;
+  if (code === 'ArrowLeft' || code === 'ArrowRight' || code === 'KeyA' || code === 'KeyD') el = _keyGuide.move;
+  else if (code === 'ArrowUp'   || code === 'KeyW')  el = _keyGuide.rotate;
+  else if (code === 'ArrowDown' || code === 'KeyS')  el = _keyGuide.soft;
   else if (code === 'Space')                          el = _keyGuide.hard;
   else if (code === 'KeyC' || code === 'ShiftLeft')   el = _keyGuide.hold;
   else if (code === 'KeyP')                           el = _keyGuide.pause;
@@ -247,10 +247,10 @@ document.addEventListener('keydown',e=>{
   if(e.code==='KeyP'){togglePause();return;}
   if(S.gamePaused||S._countdownVal)return;
   switch(e.code){
-    case'ArrowLeft': moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
-    case'ArrowRight':moveX(1); startDAS(1); nudgeUI(-12,-2);break;
-    case'ArrowDown': softDrop();startDASDown();e.preventDefault();break;
-    case'ArrowUp':   rotatePiece();break;
+    case'ArrowLeft':case'KeyA':  moveX(-1);startDAS(-1);nudgeUI(12,-2);break;
+    case'ArrowRight':case'KeyD': moveX(1); startDAS(1); nudgeUI(-12,-2);break;
+    case'ArrowDown':case'KeyS':  softDrop();startDASDown();e.preventDefault();break;
+    case'ArrowUp':case'KeyW':    rotatePiece();break;
     case'Space':     hardDrop();e.preventDefault();break;
     case'KeyC':case'ShiftLeft':holdPiece();break;
     case'KeyM':toggleMute();break;
@@ -259,8 +259,8 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('keyup',e=>{
   updateKeyGuideState(e.code, false);
   KEYS[e.code]=false;
-  if(e.code==='ArrowLeft'||e.code==='ArrowRight')clearDAS();
-  if(e.code==='ArrowDown')clearDASDown();
+  if(e.code==='ArrowLeft'||e.code==='ArrowRight'||e.code==='KeyA'||e.code==='KeyD')clearDAS();
+  if(e.code==='ArrowDown'||e.code==='KeyS')clearDASDown();
 });
 function startDAS(d){clearDAS();dasTimer=setTimeout(()=>{dasTimer=setInterval(()=>{if(S.gameRunning&&!S.gamePaused)moveX(d);},S.arr);},S.das);}
 function clearDAS(){clearTimeout(dasTimer);clearInterval(dasTimer);dasTimer=null;}
