@@ -6,7 +6,7 @@ document.addEventListener('mouseover', (e) => {
   if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
 });
 document.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap')) sfxUIClick();
 }, {passive: true});
 import {
   gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
