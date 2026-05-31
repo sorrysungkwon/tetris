@@ -547,8 +547,10 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [x] **Touch Control Fix**: Blocked touch repeat buttons (Left, Right, Soft Drop) during the 3-2-1 game start countdown.
 - [x] **Duplicate Modal Fix**: Prevented multiple invisible layers of the `donation-modal` from spawning on repeated clicks.
 - [x] **Hover Sound Logic**: `sfxUIHover` only plays when keyboard focus *actually* moves, preventing sound spam when focus is trapped.
-- [x] **Touch Sound Fix**: Debounced `sfxUIClick` (50ms) to prevent double-firing on touch screens where both `touchstart` and `mousedown` fire.
+- [x] **Touch Sound Fix**: Upgraded `sfxUIClick` to use `pointerdown` instead of debounced `touchstart` + `mousedown`, completely eliminating double-firing on touch screens. Also removed game control `.tbtn` from UI sound listeners.
 - [x] **Pause Audio Fix**: Refactored `pauseBGM` to stop the BGM scheduler instead of suspending the entire `AudioContext` or zeroing `masterGain`. This ensures UI sounds continue to work in the pause menu and after returning to the main menu.
+- [x] **Keyboard UI Visibility Fix**: Updated `_enableKbMode` to use `window.innerWidth` (CSS pixels) instead of `screen.width` (physical pixels) to accurately detect mobile devices. Modified `style.css` so that tablets (width > 600px) retain side panels (KEYS, NEXT, HOLD) even when touch controls are activated.
+- [x] **Manual Keyboard Focus Outline Fix**: Replaced browser-native `:focus-visible` with a custom `.using-kb *:focus` class managed manually on `keydown` and `pointerdown`. This guarantees the focus indicator reliably appears when navigating the UI via keyboard, bypassing browser event-interception bugs.
 - [x] **Effects**: Upgraded visual and audio effects for UI interactions.
 
 ---
