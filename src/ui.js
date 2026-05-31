@@ -294,8 +294,8 @@ export function drawBackground() {
     gc2.clearRect(0, 0, bgc.width, bgc.height);
     for (const neb of nebulae) {
       const gr = gc2.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
-      gr.addColorStop(0,   `hsla(${neb.hue},85%,25%,0.045)`);
-      gr.addColorStop(0.5, `hsla(${(neb.hue+40)%360},80%,15%,0.02)`);
+      gr.addColorStop(0,   `hsla(${neb.hue},95%,35%,0.12)`);
+      gr.addColorStop(0.5, `hsla(${(neb.hue+40)%360},90%,20%,0.06)`);
       gr.addColorStop(1,   'transparent');
       gc2.fillStyle = gr;
       const nbx = Math.max(0, neb.x - neb.r), nby = Math.max(0, neb.y - neb.r);
@@ -867,9 +867,15 @@ export function updateUI() {
     return;
   }
   const s = S.score.toLocaleString();
-  $score.textContent = s; $scoreM.textContent = s;
-  $lines.textContent = S.lines; $linesM.textContent = S.lines;
-  $level.textContent = S.level; $levelM.textContent = S.level;
+  if ($score.textContent !== s && $score.textContent !== '') {
+    if (!S.lowPerfMode) {
+      $score.classList.remove('score-bounce-active'); void $score.offsetWidth; $score.classList.add('score-bounce-active');
+      if ($scoreM) { $scoreM.classList.remove('score-bounce-active'); void $scoreM.offsetWidth; $scoreM.classList.add('score-bounce-active'); }
+    }
+  }
+  $score.textContent = s; if ($scoreM) $scoreM.textContent = s;
+  $lines.textContent = S.lines; if ($linesM) $linesM.textContent = S.lines;
+  $level.textContent = S.level; if ($levelM) $levelM.textContent = S.level;
   const hi = S.hiScore.toLocaleString();
   $hiScore.textContent = hi; $hiScoreM.textContent = hi;
   const pct = ((S.lines % LEVEL_LINES) / LEVEL_LINES) * 100;
