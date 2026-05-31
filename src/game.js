@@ -371,6 +371,7 @@ function _doStartGame(){
   }
 
   spawnPiece();drawNext();drawHold();updateUI();
+  if(S.isSprintMode)updateSprintTimer();
   if(animFrame)cancelAnimationFrame(animFrame);
   prevTs=0;lastDropTs=performance.now();
   startBGM();
