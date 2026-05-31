@@ -339,6 +339,11 @@ function loadSettings(){
 export function startGame(){
   $overlay.style.display='none';
   $combo.textContent='';
+  // Reset display synchronously so overlay-hide and value-reset happen in the
+  // same JS task — prevents a one-frame flash of the previous score/timer.
+  S.score=0; S.lines=0; S.level=1; S._sprintStartTime=0;
+  updateUI();
+  if(S.isSprintMode)updateSprintTimer();
   setTimeout(_doStartGame, 0);
 }
 function _doStartGame(){
