@@ -324,9 +324,9 @@
   .mini-cv { border:1px solid var(--border); border-radius:3px; display:block; margin:0 auto; background:rgba(0,0,15,0.55); }
 
   /* ════════════════════════════════
-     MOBILE  (< 600 px) / TOUCH
+     MOBILE  (< 850 px)
   ════════════════════════════════ */
-  @media (max-width:599px), (pointer:coarse) {
+  @media (max-width:850px) {
     #desktop-header { display:none; }
     #left-panel, #right-panel { display:none; }
 
@@ -584,7 +584,7 @@
   .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:10px; color:rgba(0,200,255,0.5); letter-spacing:1px; }
   .hist-sep { opacity:0.3; }
   .lb-inner { width:100%; max-height:180px; overflow-y:auto; margin:8px 0 14px; }
-  @media (max-width:599px), (pointer:coarse) { .lb-inner { max-height:130px; } }
+  @media (max-width:850px) { .lb-inner { max-height:130px; } }
   .lb-table { width:100%; border-collapse:collapse; display:table; table-layout:fixed; }
   .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.08); }
   .lb-table td { padding:8px 4px; font-size:11px; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -4392,12 +4392,15 @@ ${window.location.origin}`;
     const btn = e.target.closest(".action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap");
     if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
   });
-  document.addEventListener("mousedown", (e) => {
-    if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap")) sfxUIClick();
-  });
+  var _lastTouchTime = 0;
   document.addEventListener("touchstart", (e) => {
+    _lastTouchTime = performance.now();
     if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap")) sfxUIClick();
   }, { passive: true });
+  document.addEventListener("mousedown", (e) => {
+    if (performance.now() - _lastTouchTime < 500) return;
+    if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap")) sfxUIClick();
+  });
   document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
   document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
   document.addEventListener("touchmove", (e) => {

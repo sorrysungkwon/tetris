@@ -5,12 +5,15 @@ document.addEventListener('mouseover', (e) => {
   const btn = e.target.closest('.action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap');
   if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
 });
-document.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
-});
+let _lastTouchTime = 0;
 document.addEventListener('touchstart', (e) => {
+  _lastTouchTime = performance.now();
   if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
 }, {passive: true});
+document.addEventListener('mousedown', (e) => {
+  if (performance.now() - _lastTouchTime < 500) return;
+  if (e.target.closest('.action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap')) sfxUIClick();
+});
 import {
   gc, gctx, pc, ncD, ncDx, hcD, hcDx, ncM, hcM, bgc,
   measureFPS, setLowPerfMode, resetPerfHold, _detectLowEndGPU,
