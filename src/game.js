@@ -417,7 +417,7 @@ export function resumeGameTiming() {
 
 export function stopGameAndReset() {
   clearInterval(_countdownTimer); _countdownTimer=null;
-  S._countdownVal=0; S._countdownGo=0;
+  S._countdownVal=0; S._countdownGo=0; S.gamePaused=false;
   S.gameRunning=false;
   if(animFrame){cancelAnimationFrame(animFrame);animFrame=null;}
   animFrame=requestAnimationFrame(function bgOnly(ts){drawBackground();if(!S.gameRunning)animFrame=requestAnimationFrame(bgOnly);});
