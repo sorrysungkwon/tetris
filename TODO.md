@@ -547,6 +547,8 @@ Root cause: Vercel Analytics reported INP 568ms ("poor" — threshold is >500ms)
 - [x] **Touch Control Fix**: Blocked touch repeat buttons (Left, Right, Soft Drop) during the 3-2-1 game start countdown.
 - [x] **Duplicate Modal Fix**: Prevented multiple invisible layers of the `donation-modal` from spawning on repeated clicks.
 - [x] **Hover Sound Logic**: `sfxUIHover` only plays when keyboard focus *actually* moves, preventing sound spam when focus is trapped.
+- [x] **Touch Sound Fix**: Debounced `sfxUIClick` (50ms) to prevent double-firing on touch screens where both `touchstart` and `mousedown` fire.
+- [x] **Pause Audio Fix**: Refactored `pauseBGM` to stop the BGM scheduler instead of suspending the entire `AudioContext` or zeroing `masterGain`. This ensures UI sounds continue to work in the pause menu and after returning to the main menu.
 - [x] **Effects**: Upgraded visual and audio effects for UI interactions.
 
 ---

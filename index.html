@@ -58,6 +58,15 @@
     color:#fff;
   }
 
+  /* Focus indicator for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--cyan) !important;
+    outline-offset: 4px;
+    border-radius: inherit;
+  }
+  input[type="range"]:focus-visible { outline-offset: 8px; }
+  input[type="text"]:focus-visible { outline-offset: 0px; }
+
   /* ─── BG Canvas ─── */
   #bg-canvas { position:fixed; inset:0; z-index:0; width:100%; height:100%; }
   #screen-flash { position:fixed; inset:0; z-index:98; pointer-events:none; opacity:0; background:radial-gradient(ellipse at center, rgba(0,220,255,0.55) 0%, rgba(160,0,255,0.3) 60%, transparent 100%); }
@@ -146,17 +155,28 @@
     }
   }
   .panel-title {
-    color:rgba(0,200,255,0.55);
-    font-size:7px; letter-spacing:3px;
+    color:rgba(255,255,255,0.7);
+    font-size:7.5px; letter-spacing:4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.9);
     text-transform:uppercase;
     text-align:center; margin-bottom:5px;
   }
   .score-val {
     font-size:22px; font-weight:900; text-align:center;
-    text-shadow:0 0 20px rgba(0,200,255,0.9); letter-spacing:1px;
+    text-shadow: 0 0 20px rgba(0,200,255,0.9), 0 2px 4px rgba(0,0,0,0.8); letter-spacing:1px;
+    transform-origin: center;
+  }
+  @keyframes score-bounce {
+    0% { transform: scale(1); text-shadow: 0 0 20px rgba(0,200,255,0.9), 0 2px 4px rgba(0,0,0,0.8); }
+    30% { transform: scale(1.25); text-shadow: 0 0 40px rgba(255,255,255,1), 0 0 20px rgba(0,200,255,1); color: #fff; }
+    100% { transform: scale(1); text-shadow: 0 0 20px rgba(0,200,255,0.9), 0 2px 4px rgba(0,0,0,0.8); }
+  }
+  .score-bounce-active {
+    animation: score-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
   .score-sub {
-    font-size:7px; letter-spacing:2px; color:rgba(0,200,255,0.4);
+    font-size:7px; letter-spacing:3px; color:rgba(255,255,255,0.6);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     text-align:center; margin-top:2px; margin-bottom:8px;
   }
   #level-bar-wrap { width:100%; height:5px; background:rgba(255,255,255,0.06); border-radius:3px; margin:6px 0 4px; overflow:hidden; }
@@ -242,21 +262,26 @@
     padding:12px 8px;
     overflow-y:auto;
   }
+  @keyframes scaleUpPanel {
+    0% { transform: scale(0.92) translateY(15px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
   #overlay h1 {
-    font-size:26px; font-weight:900; letter-spacing:5px;
+    font-size:28px; font-weight:900; letter-spacing:6px;
     width:100%; text-align:center;
     background:linear-gradient(135deg,var(--cyan),var(--purple),var(--pink));
     -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-    animation:pulse 2s ease-in-out infinite; margin-bottom:20px;
+    animation:pulse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite; margin-bottom:20px;
+    filter: drop-shadow(0 0 15px rgba(0,200,255,0.6));
   }
-  #overlay .sub { color:rgba(0,200,255,0.55); font-size:9px; letter-spacing:3px; margin-bottom:20px; }
+  #overlay .sub { color:rgba(0,200,255,0.8); font-size:10px; letter-spacing:4px; margin-bottom:20px; text-shadow:0 0 8px rgba(0,200,255,0.5); }
   .action-btn {
     position: relative;
-    background: linear-gradient(135deg, rgba(0,200,255,0.25), rgba(160,0,255,0.25));
-    border: 1px solid rgba(0,200,255,0.5); color: #fff;
+    background: linear-gradient(135deg, rgba(0,200,255,0.35), rgba(160,0,255,0.35));
+    border: 1px solid rgba(0,200,255,0.6); color: #fff;
     font-family: 'Orbitron', monospace; font-size: 11px; font-weight: 700; letter-spacing: 3px;
     padding: 11px 26px; border-radius: 8px; cursor: pointer; text-transform: uppercase;
-    text-shadow: 0 0 10px rgba(0,200,255,0.8);
+    text-shadow: 0 0 15px rgba(0,200,255,1);
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 box-shadow 0.3s ease, 
                 border-color 0.3s ease;
@@ -267,14 +292,14 @@
     position: absolute;
     top: 0; left: -100%;
     width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
     transform: skewX(-25deg);
     transition: none;
   }
   .action-btn:hover {
-    border-color: var(--cyan);
-    box-shadow: 0 0 25px rgba(0,200,255,0.55), 0 0 8px rgba(160,0,255,0.35);
-    transform: scale(1.05);
+    border-color: #fff;
+    box-shadow: 0 0 40px rgba(0,200,255,0.8), 0 0 15px rgba(160,0,255,0.6), inset 0 0 15px rgba(0,200,255,0.4);
+    transform: scale(1.08);
   }
   .action-btn:hover::after {
     left: 150%;
@@ -290,7 +315,10 @@
     opacity:0; z-index:20;
   }
 
-  @keyframes pulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.6)} }
+  @keyframes pulse { 
+    0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(0,200,255,0.4)); transform: scale(1); } 
+    50% { filter: brightness(1.8) drop-shadow(0 0 25px rgba(255,0,128,0.7)); transform: scale(1.05); } 
+  }
 
   /* Mini canvases */
   .mini-cv { border:1px solid var(--border); border-radius:3px; display:block; margin:0 auto; background:rgba(0,0,15,0.55); }
@@ -371,6 +399,18 @@
     touch-action:none; -webkit-user-select:none; user-select:none;
     -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
     box-shadow:0 0 10px rgba(0,200,255,0.06), inset 0 1px 0 rgba(255,255,255,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .tbtn::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%; width: 0; height: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: width 0.4s ease-out, height 0.4s ease-out, opacity 0.6s ease-out;
   }
   .tbtn .material-icons-round { font-size:inherit; line-height:1; }
   
@@ -385,8 +425,13 @@
   .tbtn.pressed {
     background:rgba(0,200,255,0.16);
     border-color: var(--cyan);
-    box-shadow:0 0 20px rgba(0,200,255,0.48), inset 0 0 8px rgba(0,100,200,0.3);
+    box-shadow:0 0 30px rgba(0,200,255,0.6), inset 0 0 15px rgba(0,200,255,0.5);
     transform:scale(0.90);
+  }
+  .tbtn.pressed::after {
+    width: 200px; height: 200px;
+    opacity: 1;
+    transition: width 0.1s ease-out, height 0.1s ease-out, opacity 0.1s ease-out;
   }
 
   /* Color variants */
@@ -501,20 +546,49 @@
   .combo-pb { border:1px solid rgba(0,200,255,0.5); color:var(--cyan); background:rgba(0,200,255,0.08); text-shadow:0 0 8px var(--cyan); }
 
   /* Leaderboard */
-  .start-lb-title { font-size:9px; letter-spacing:3px; color:rgba(0,200,255,0.55); margin-bottom:4px; text-align:center; }
+  .start-lb-title { font-size:10px; letter-spacing:3px; color:rgba(0,200,255,0.6); margin-bottom:6px; text-align:center; font-weight:700; }
   #start-lb { width:100%; }
-  .lb-tabs { display:flex; gap:6px; margin-bottom:6px; width:100%; }
-  .lb-tab { flex:1; text-align:center; font-family:'Orbitron',monospace; font-size:8px; letter-spacing:2px; padding:5px 4px; border-radius:4px; border:1px solid rgba(0,200,255,0.3); background:transparent; color:rgba(0,200,255,0.45); cursor:pointer; transition:all .2s; }
-  .lb-tab.active { border-color:var(--cyan); color:var(--cyan); background:rgba(0,200,255,0.1); text-shadow:0 0 8px var(--cyan); }
-  .new-best-badge { font-size:13px; font-weight:900; letter-spacing:4px; color:#ffe600; text-shadow:0 0 18px #ffe600,0 0 36px #ffaa00; margin-bottom:8px; animation:pulse 0.7s ease-in-out infinite; }
-  .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:9px; color:rgba(0,200,255,0.38); letter-spacing:1px; }
+  .lb-tabs { display:flex; gap:6px; margin-bottom:8px; width:100%; }
+  .lb-tab {
+    flex:1; text-align:center; font-family:'Orbitron',monospace;
+    font-size:9px; letter-spacing:2px; padding:7px 4px; border-radius:6px;
+    border:1px solid rgba(0,200,255,0.22); background:transparent;
+    color:rgba(0,200,255,0.5); cursor:pointer; transition:all .2s;
+  }
+  .lb-tab:hover {
+    color: var(--cyan); border-color: rgba(0,200,255,0.5);
+  }
+  .lb-tab.active {
+    border-color:var(--cyan); color:var(--cyan);
+    background:rgba(0,200,255,0.12); text-shadow:0 0 8px var(--cyan);
+  }
+  
+  /* Pill-style leaderboard mode toggler */
+  .lb-mode-toggle {
+    display: flex; gap: 4px; padding: 3px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(0, 200, 255, 0.12);
+    border-radius: 8px; margin-bottom: 8px; width: 100%;
+  }
+  .lb-mode-toggle .lb-tab {
+    border: none; border-radius: 6px; padding: 6px 2px;
+    font-size: 8px; letter-spacing: 1.5px;
+  }
+  .lb-mode-toggle .lb-tab.active {
+    background: rgba(0, 200, 255, 0.16);
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan);
+  }
+
+  .new-best-badge { font-size:14px; font-weight:900; letter-spacing:4px; color:#ffe600; text-shadow:0 0 18px #ffe600,0 0 36px #ffaa00; margin-bottom:10px; animation:pulse 0.7s ease-in-out infinite; }
+  .history-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; font-size:10px; color:rgba(0,200,255,0.5); letter-spacing:1px; }
   .hist-sep { opacity:0.3; }
   .lb-inner { width:100%; max-height:180px; overflow-y:auto; margin:8px 0 14px; }
   @media (max-width:599px), (pointer:coarse) { .lb-inner { max-height:130px; } }
   .lb-table { width:100%; border-collapse:collapse; display:table; table-layout:fixed; }
-  .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.1); }
-  .lb-table td { padding:7px 4px; font-size:10px; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .lb-table td:first-child { color:rgba(0,200,255,0.45); width:32px; text-align:center; }
+  .lb-table tr { border-bottom:1px solid rgba(0,200,255,0.08); }
+  .lb-table td { padding:8px 4px; font-size:11px; letter-spacing:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lb-table td:first-child { color:rgba(0,200,255,0.45); width:32px; text-align:center; font-weight: 700; }
   .lb-table td:nth-child(2) { color:#e0f7ff; text-align:left; }
   .lb-table td:last-child { color:var(--cyan); text-align:right; font-weight:700; }
   .lb-table tr.lb-me td { color:#ffe600; text-shadow:0 0 8px #ffe600; }
@@ -522,17 +596,33 @@
   .neon-input {
     background:rgba(0,200,255,0.08); border:1px solid rgba(0,200,255,0.4);
     color:#fff; font-family:'Orbitron',monospace; font-size:12px; letter-spacing:2px;
-    padding:9px 14px; border-radius:6px; outline:none; width:100%;
-    text-align:center; margin-bottom:10px;
+    padding:10px 14px; border-radius:8px; outline:none; width:100%;
+    text-align:center; margin-bottom:12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
   }
-  .neon-input:focus { border-color:var(--cyan); box-shadow:0 0 12px rgba(0,200,255,0.3); }
+  .neon-input:focus { border-color:var(--cyan); box-shadow:0 0 12px rgba(0,200,255,0.35); }
   .btn-row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
-  .action-btn.sm { font-size:9px; padding:8px 16px; letter-spacing:2px; }
-  .action-btn.ghost { background:transparent; border-color:rgba(255,255,255,0.2); color:rgba(255,255,255,0.5); }
-  .action-btn.ghost:hover { border-color:rgba(0,200,255,0.4); color:var(--cyan); background:rgba(0,200,255,0.08); }
+  
+  /* Unified button rows on start screen */
+  .btn-row.main-actions {
+    margin-bottom: 6px; width: 100%; flex-direction: column; gap: 6px; flex-wrap: nowrap;
+  }
+  .btn-row.main-actions .action-btn {
+    width: 100%;
+  }
+  .btn-row.sub-actions {
+    gap: 6px; width: 100%; display: flex;
+  }
+  .btn-row.sub-actions .action-btn {
+    flex: 1; padding: 10px 12px; font-size: 10px;
+  }
+
+  .action-btn.sm { font-size:10px; padding:9px 18px; letter-spacing:2px; border-radius:6px; }
+  .action-btn.ghost { background:transparent; border-color:rgba(255,255,255,0.22); color:rgba(255,255,255,0.55); }
+  .action-btn.ghost:hover { border-color:rgba(0,200,255,0.45); color:var(--cyan); background:rgba(0,200,255,0.08); }
   #daily-challenge-btn, #daily-launch-btn {
     background: linear-gradient(90deg, #ffe600, #ffaa00);
-    box-shadow: 0 0 15px rgba(255, 170, 0, 0.4);
+    box-shadow: 0 0 25px rgba(255, 170, 0, 0.6), inset 0 0 10px rgba(255,255,255,0.5);
     border-color: #ffe600;
     color: #000;
     font-weight: 900;
@@ -540,18 +630,25 @@
   }
   #daily-challenge-btn:hover, #daily-launch-btn:hover {
     border-color: #fff;
-    box-shadow: 0 0 25px rgba(255, 230, 0, 0.8), 0 0 8px rgba(255, 170, 0, 0.6);
+    box-shadow: 0 0 40px rgba(255, 230, 0, 1), 0 0 15px rgba(255, 170, 0, 0.8), inset 0 0 15px rgba(255,255,255,0.8);
     color: #000;
+    transform: scale(1.1);
   }
 
   /* Sleek Glass Panel for overlays */
   .glass-panel {
     position: relative; display: flex; flex-direction: column; align-items: center;
-    width: min(290px, 86vw); background: rgba(4,4,30,0.92);
-    border: 1px solid rgba(0,200,255,0.25); border-radius: 16px;
-    padding: 24px 20px 20px; box-shadow: 0 0 35px rgba(0,200,255,0.12);
-    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    width: min(340px, 90vw); background: rgba(2,2,18,0.85);
+    border: 1px solid rgba(0,200,255,0.4); border-radius: 16px;
+    padding: 26px 24px 22px; 
+    box-shadow: 0 0 50px rgba(0,200,255,0.25), inset 0 0 20px rgba(0,200,255,0.1);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    animation: scaleUpPanel 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  .glass-panel:hover {
+    box-shadow: 0 0 60px rgba(0,200,255,0.35), inset 0 0 30px rgba(0,200,255,0.15);
+    border-color: rgba(0,200,255,0.6);
   }
   
   /* Custom Scrollbar for a sleek premium look */
@@ -580,10 +677,10 @@
   }
 
   /* Settings in pause overlay */
-  .settings-box { width:100%; max-width:230px; display:flex; flex-direction:column; gap:10px; margin:8px 0 14px; }
+  .settings-box { width:100%; max-width:260px; display:flex; flex-direction:column; gap:12px; margin:8px 0 16px; }
   .settings-row { display:flex; align-items:center; gap:10px; }
-  .settings-lbl { font-size:9px; letter-spacing:2px; color:rgba(0,200,255,0.6); width:36px; }
-  .settings-val { font-size:9px; color:var(--cyan); width:44px; text-align:right; letter-spacing:1px; }
+  .settings-lbl { font-size:10px; letter-spacing:2px; color:rgba(0,200,255,0.65); width:40px; font-weight:700; text-transform:uppercase; }
+  .settings-val { font-size:10px; color:var(--cyan); width:48px; text-align:right; letter-spacing:1px; font-weight:700; }
   input[type=range].neon-range {
     flex: 1; -webkit-appearance: none; appearance: none; background: rgba(0, 200, 255, 0.12);
     height: 6px; border-radius: 3px; outline: none; cursor: pointer;
@@ -597,7 +694,7 @@
     transform: scale(1.25);
   }
   .toggle-btn { 
-    font-family:'Orbitron',monospace; font-size:9px; letter-spacing:2px; padding:7px 12px; border-radius:6px; cursor:pointer; 
+    font-family:'Orbitron',monospace; font-size:10px; letter-spacing:2px; padding:8px 12px; border-radius:6px; cursor:pointer; 
     border:1px solid rgba(0,200,255,0.3); background:rgba(0,200,255,0.08); color:var(--cyan); width:100%; 
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), 
                 border-color 0.2s ease, 
@@ -803,6 +900,266 @@
     transition:color .2s;
   }
   .footer-link:hover { color:var(--cyan); }
+
+  /* ==========================================================================
+     UI POLISH & ACCESSIBILITY ADDITIONS (v1.2 Pre-Release)
+     ========================================================================== */
+
+  /* --- Mode Selector Cards --- */
+  .mode-card {
+    cursor: pointer; display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.02);
+    transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    width: 100%; box-sizing: border-box;
+  }
+  .mode-card .mode-icon {
+    font-size: 32px; line-height: 1; flex-shrink: 0;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .mode-card .mode-info {
+    flex: 1; min-width: 0; text-align: left;
+  }
+  .mode-card .mode-name {
+    font-size: 12px; font-weight: 900; letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+  .mode-card .mode-desc {
+    font-size: 9.5px; color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.5px; line-height: 1.45;
+  }
+  .mode-card .mode-best {
+    font-size: 8px; margin-top: 5px; font-family: 'Orbitron', monospace;
+  }
+  .mode-card .mode-arrow {
+    font-size: 20px; color: rgba(255, 255, 255, 0.25);
+    flex-shrink: 0; transition: transform 0.25s ease, color 0.25s ease;
+  }
+
+  .mode-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  .mode-card:hover .mode-icon {
+    transform: scale(1.15);
+  }
+  .mode-card:hover .mode-arrow {
+    color: #fff; transform: translateX(3px);
+  }
+  .mode-card:active {
+    transform: translateY(1px);
+  }
+
+  /* Marathon Mode Theme (Cyan) */
+  .mode-card.marathon {
+    border-color: rgba(0, 200, 255, 0.22);
+    background: rgba(0, 200, 255, 0.04);
+  }
+  .mode-card.marathon .mode-name { color: var(--cyan); text-shadow: 0 0 8px rgba(0, 200, 255, 0.3); }
+  .mode-card.marathon:hover {
+    border-color: rgba(0, 200, 255, 0.55);
+    background: rgba(0, 200, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 200, 255, 0.15), 0 0 10px rgba(0, 200, 255, 0.05);
+  }
+  .mode-card.marathon:hover .mode-arrow { color: var(--cyan); }
+
+  /* Sprint Mode Theme (Green) */
+  .mode-card.sprint {
+    border-color: rgba(0, 255, 136, 0.22);
+    background: rgba(0, 255, 136, 0.04);
+  }
+  .mode-card.sprint .mode-name { color: #00ff88; text-shadow: 0 0 8px rgba(0, 255, 136, 0.3); }
+  .mode-card.sprint:hover {
+    border-color: rgba(0, 255, 136, 0.55);
+    background: rgba(0, 255, 136, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 255, 136, 0.15), 0 0 10px rgba(0, 255, 136, 0.05);
+  }
+  .mode-card.sprint:hover .mode-arrow { color: #00ff88; }
+
+  /* Daily Challenge Theme (Gold/Amber) */
+  .mode-card.daily {
+    border-color: rgba(255, 230, 0, 0.22);
+    background: rgba(255, 230, 0, 0.03);
+  }
+  .mode-card.daily .mode-name { color: #ffe600; text-shadow: 0 0 8px rgba(255, 230, 0, 0.3); }
+  .mode-card.daily:hover {
+    border-color: rgba(255, 230, 0, 0.55);
+    background: rgba(255, 230, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(255, 230, 0, 0.15), 0 0 10px rgba(255, 230, 0, 0.05);
+  }
+  .mode-card.daily:hover .mode-arrow { color: #ffe600; }
+
+  /* --- Pause / Game Over Elements Polish --- */
+  .glass-panel .pause-header,
+  .glass-panel .game-over-header {
+    font-size: 22px !important; margin-bottom: 16px !important;
+  }
+  
+  .glass-panel .action-btn.full-width {
+    width: 100%;
+  }
+  .glass-panel .action-btn.full-width.restart {
+    margin-top: 8px;
+  }
+
+  /* --- Game Over Score Stats Cohesive Card --- */
+  .game-over-stats {
+    width: 100%; text-align: center; margin-bottom: 16px;
+    background: rgba(0, 0, 0, 0.35); padding: 14px 12px;
+    border-radius: 10px; border: 1px solid rgba(0, 200, 255, 0.12);
+    box-sizing: border-box;
+  }
+  .game-over-stats .stat-item {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; font-family: 'Orbitron', monospace;
+  }
+  .game-over-stats .stat-item:last-child { margin-bottom: 0; }
+  .game-over-stats .stat-label {
+    color: rgba(255, 255, 255, 0.5); font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; font-weight: 700;
+  }
+  .game-over-stats .stat-val {
+    font-size: 14px; font-weight: 900; color: #fff;
+    text-shadow: 0 0 10px rgba(0, 200, 255, 0.5);
+  }
+  .game-over-stats .stat-val.highlight {
+    color: #ffe600; text-shadow: 0 0 10px rgba(255, 230, 0, 0.6);
+    font-size: 15px;
+  }
+
+  /* --- Daily Challenge Overlay Polish --- */
+  .daily-header {
+    font-size: 18px !important; margin-bottom: 14px !important;
+    color: #ffe600 !important; text-shadow: 0 0 10px #ffe600, 0 0 20px rgba(255,230,0,0.2) !important;
+    background: none !important; -webkit-text-fill-color: #ffe600 !important;
+    animation: pulse 2s ease-in-out infinite !important;
+    letter-spacing: 2px !important;
+  }
+  .daily-icon {
+    font-size: 36px; margin: 10px 0;
+  }
+  .daily-icon.pulse {
+    animation: pulse 1.5s infinite;
+  }
+  .daily-subtitle {
+    font-size: 9px; letter-spacing: 1px; color: rgba(0, 255, 136, 0.85);
+    text-transform: uppercase; margin-bottom: 12px; font-family: 'Orbitron', monospace;
+    font-weight: 700;
+  }
+  .daily-countdown-lbl {
+    font-size: 8px; letter-spacing: 2px; color: rgba(0, 200, 255, 0.6);
+    text-transform: uppercase; margin-bottom: 2px; font-weight: 700;
+  }
+  .daily-completed-lbl {
+    font-size: 11px; letter-spacing: 0.5px; color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 16px; text-align: center; line-height: 1.5;
+  }
+  .briefing-card {
+    font-size: 10px; line-height: 1.65; color: rgba(255, 255, 255, 0.8);
+    text-align: left; margin-bottom: 14px; padding: 14px;
+    background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(0, 200, 255, 0.15);
+    border-radius: 10px; width: 100%; box-sizing: border-box;
+  }
+  .briefing-card p {
+    margin: 0 0 8px 0;
+  }
+  .briefing-card p:last-child {
+    margin: 0;
+  }
+  .warning-card {
+    font-size: 9px; line-height: 1.45; color: #ff5b5b;
+    font-weight: 700; text-align: center; margin-bottom: 14px;
+    padding: 10px 12px; background: rgba(255, 91, 91, 0.08);
+    border: 1px solid rgba(255, 91, 91, 0.25); border-radius: 8px;
+    width: 100%; box-sizing: border-box;
+  }
+
+  /* --- Donation UI (Ko-fi Modal & Footer) --- */
+  #donation-modal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.72);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 99999; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  }
+  .donation-modal-box {
+    background: rgba(4,4,30,0.97); border: 1px solid rgba(255,215,0,0.35);
+    border-radius: 14px; padding: 26px 22px; max-width: 290px; width: 88%;
+    text-align: center; font-family: 'Orbitron', monospace;
+    box-shadow: 0 0 40px rgba(255,215,0,0.12);
+  }
+  .donation-modal-box .donation-coffee {
+    font-size: 28px; margin-bottom: 12px;
+  }
+  .donation-modal-box .donation-title {
+    font-size: 11px; font-weight: 900; letter-spacing: 2.5px;
+    color: #ffe600; text-shadow: 0 0 10px rgba(255, 230, 0, 0.4);
+    margin-bottom: 8px;
+  }
+  .donation-modal-box .donation-desc {
+    font-size: 9.5px; color: rgba(255,255,255,0.6);
+    letter-spacing: 0.5px; line-height: 1.6; margin-bottom: 22px;
+  }
+  .donation-modal-box .donation-buttons {
+    display: flex; gap: 8px;
+  }
+  .donation-modal-box .donation-btn {
+    flex: 1; padding: 11px 0; border-radius: 8px;
+    font-family: 'Orbitron', monospace; font-size: 9px;
+    letter-spacing: 1.5px; cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; justify-content: center;
+    gap: 5px; transition: all 0.2s ease;
+  }
+  .donation-modal-box .donation-btn.cancel {
+    background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.5);
+  }
+  .donation-modal-box .donation-btn.cancel:hover {
+    border-color: rgba(255,255,255,0.35); color: #fff;
+  }
+  .donation-modal-box .donation-btn.open {
+    background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.4);
+    color: #ffe600; text-shadow: 0 0 8px rgba(255, 230, 0, 0.3);
+  }
+  .donation-modal-box .donation-btn.open:hover {
+    background: rgba(255,215,0,0.22); border-color: rgba(255,215,0,0.65);
+    box-shadow: 0 0 15px rgba(255,215,0,0.3);
+  }
+
+  .donation-footer-wrap {
+    margin-top: 16px; width: 100%; text-align: center;
+  }
+  .donation-footer-wrap .coffee-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 10px 22px; background: rgba(255,215,0,0.07);
+    border: 1px solid rgba(255,215,0,0.3); border-radius: 10px;
+    color: #ffe600; font-family: 'Orbitron', monospace; font-size: 10px;
+    letter-spacing: 2px; cursor: pointer; transition: all 0.2s ease;
+    text-shadow: 0 0 5px rgba(255, 230, 0, 0.3);
+  }
+  .donation-footer-wrap .coffee-btn:hover {
+    background: rgba(255,215,0,0.16); border-color: rgba(255,215,0,0.6);
+    box-shadow: 0 0 15px rgba(255,215,0,0.25);
+    transform: translateY(-1px);
+  }
+  .donation-footer-wrap .coffee-btn:active {
+    transform: translateY(0);
+  }
+  .donation-footer-wrap .coffee-sub {
+    font-size: 8px; letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.45); margin-top: 6px;
+  }
+
+  /* --- Footer links wrapping --- */
+  .footer-links-wrap {
+    margin-top: 14px; text-align: center; font-size: 10px; letter-spacing: 1.5px;
+  }
+  .footer-links-wrap .footer-link {
+    color: rgba(255, 255, 255, 0.45); text-decoration: none; margin: 0 8px;
+    font-size: 9px; font-weight: 700; transition: color .2s;
+  }
+  .footer-links-wrap .footer-link:hover {
+    color: var(--cyan);
+  }
 </style>
 <!-- Vercel Speed Insights -->
 <script defer src="/_vercel/speed-insights/script.js"></script>
@@ -857,7 +1214,7 @@
   <!-- Desktop title header -->
   <div id="desktop-header">
     <span class="dh-title">GLOWTRIS</span>
-    <span class="dh-version">v1.1</span>
+    <span class="dh-version">v1.1.1</span>
   </div>
 
   <!-- Mobile-only compact header -->
@@ -1663,14 +2020,14 @@
     });
   }
   function pauseBGM() {
-    if (!audioCtx) return;
-    if (masterGain) masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    if (audioCtx.state === "running") audioCtx.suspend();
+    stopBGM();
   }
   function resumeBGM() {
     if (!audioCtx) return;
-    if (masterGain) masterGain.gain.setValueAtTime(S.muteAudio ? 0 : 1, audioCtx.currentTime);
     if (audioCtx.state === "suspended") audioCtx.resume();
+    bgmPlaying = true;
+    bgmNextTime = audioCtx.currentTime + 0.1;
+    bgmScheduleLoop();
   }
   function playBeep(freq, type, dur, vol, delay = 0, freqEnd = null) {
     const ctx = getAudioCtx();
@@ -1724,6 +2081,19 @@
     playBeep(880, "square", 0.07, 0.22);
     playBeep(1046, "square", 0.06, 0.18, 0.06);
     playBeep(1318, "sawtooth", 0.14, 0.28, 0.1);
+  }
+  function sfxUIHover() {
+    if (!S.muteAudio) playBeep(800, "sine", 0.04, 0.02);
+  }
+  var _lastUIClick = 0;
+  function sfxUIClick() {
+    const now = performance.now();
+    if (now - _lastUIClick < 50) return;
+    _lastUIClick = now;
+    if (!S.muteAudio) {
+      playBeep(1200, "square", 0.05, 0.04);
+      playBeep(1600, "sine", 0.05, 0.03, 0.02);
+    }
   }
   function sfxAchievementUnlock() {
     if (S.muteAudio) return;
@@ -2087,8 +2457,8 @@
       gc2.clearRect(0, 0, bgc.width, bgc.height);
       for (const neb of nebulae) {
         const gr = gc2.createRadialGradient(neb.x, neb.y, 0, neb.x, neb.y, neb.r);
-        gr.addColorStop(0, `hsla(${neb.hue},85%,25%,0.045)`);
-        gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360},80%,15%,0.02)`);
+        gr.addColorStop(0, `hsla(${neb.hue},95%,35%,0.12)`);
+        gr.addColorStop(0.5, `hsla(${(neb.hue + 40) % 360},90%,20%,0.06)`);
         gr.addColorStop(1, "transparent");
         gc2.fillStyle = gr;
         const nbx = Math.max(0, neb.x - neb.r), nby = Math.max(0, neb.y - neb.r);
@@ -2609,9 +2979,28 @@
     drawMiniPiece(hcDx, S.held, hcD.width, hcD.height);
     drawMiniPiece(hcMx, S.held, hcM.width, hcM.height);
   }
-  function spawnLineClearParticles(rows) {
+  function spawnLineClearParticles(rows, tspin = false, isAllClear = false) {
     if (S.animIntensity === "off") return;
     if (S.particles.length >= MAX_PARTICLES) return;
+    if (isAllClear) {
+      const starCount2 = S.lowPerfMode ? 30 : 60;
+      for (let i = 0; i < starCount2; i++) {
+        const a = Math.random() * Math.PI * 2, sp = Math.random() * 15 + 5;
+        S.particles.push({ x: COLS / 2 * S.CELL, y: ROWS / 2 * S.CELL, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: Math.random() * 0.015 + 8e-3, color: ["#ffe600", "#ffffff", "#ffaa00"][Math.floor(Math.random() * 3)], size: Math.random() * 8 + 4, type: "star" });
+      }
+      return;
+    }
+    if (tspin) {
+      const pCount = S.lowPerfMode ? 10 : 20;
+      for (const row of rows) {
+        for (let i = 0; i < pCount; i++) {
+          const a = Math.random() * Math.PI * 2, sp = Math.random() * 8 + 3;
+          S.particles.push({ x: COLS / 2 * S.CELL, y: (row + 0.5) * S.CELL, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 1, decay: Math.random() * 0.02 + 0.01, color: ["#a000ff", "#ff0080", "#ffffff"][Math.floor(Math.random() * 3)], size: Math.random() * 6 + 3, type: "star" });
+        }
+        S.particles.push({ x: COLS / 2 * S.CELL, y: (row + 0.5) * S.CELL, vx: 0, vy: 0, life: 1, decay: 0.03, color: "#a000ff", size: 6, maxRadius: COLS / 2 * S.CELL * 2.5, type: "radial-ring" });
+      }
+      return;
+    }
     for (const row of rows) {
       S.particles.push({ x: COLS / 2 * S.CELL, y: (row + 0.5) * S.CELL, vx: 0, vy: 0, life: 1, decay: 0.04, color: "#ffffff", size: 3, maxRadius: COLS / 2 * S.CELL * 1.5, type: "radial-ring" });
       S.particles.push({ x: COLS / 2 * S.CELL, y: (row + 0.5) * S.CELL, vx: 0, vy: 0, life: 1, decay: 0.03, color: "#00c8ff", size: 5, maxRadius: COLS / 2 * S.CELL * 2.3, type: "radial-ring" });
@@ -2788,12 +3177,24 @@
       return;
     }
     const s = S.score.toLocaleString();
+    if ($score.textContent !== s && $score.textContent !== "") {
+      if (!S.lowPerfMode) {
+        $score.classList.remove("score-bounce-active");
+        void $score.offsetWidth;
+        $score.classList.add("score-bounce-active");
+        if ($scoreM) {
+          $scoreM.classList.remove("score-bounce-active");
+          void $scoreM.offsetWidth;
+          $scoreM.classList.add("score-bounce-active");
+        }
+      }
+    }
     $score.textContent = s;
-    $scoreM.textContent = s;
+    if ($scoreM) $scoreM.textContent = s;
     $lines.textContent = S.lines;
-    $linesM.textContent = S.lines;
+    if ($linesM) $linesM.textContent = S.lines;
     $level.textContent = S.level;
-    $levelM.textContent = S.level;
+    if ($levelM) $levelM.textContent = S.level;
     const hi = S.hiScore.toLocaleString();
     $hiScore.textContent = hi;
     $hiScoreM.textContent = hi;
@@ -3026,7 +3427,10 @@
   function openHowToPlay() {
     _htpOpenTs = Date.now();
     document.getElementById("htp-overlay").style.display = "flex";
-    setTimeout(() => { document.getElementById("htp-close")?.focus(); }, 10);
+    setTimeout(() => {
+      var _a;
+      (_a = document.getElementById("htp-close")) == null ? void 0 : _a.focus();
+    }, 10);
   }
   function closeHowToPlay() {
     if (Date.now() - _htpOpenTs < 350) return;
@@ -3035,7 +3439,10 @@
   function openStats() {
     _statsOpenTs = Date.now();
     document.getElementById("stats-overlay").style.display = "flex";
-    setTimeout(() => { document.querySelector("#stats-overlay .close-btn")?.focus(); }, 10);
+    setTimeout(() => {
+      var _a;
+      (_a = document.querySelector("#stats-overlay .close-btn")) == null ? void 0 : _a.focus();
+    }, 10);
     requestAnimationFrame(() => {
       const sGames = parseInt(localStorage.getItem(LS.TOTAL_GAMES) || "0");
       const sScore = parseInt(localStorage.getItem(LS.TOTAL_SCORE) || "0");
@@ -3067,9 +3474,11 @@
           const cleanLabel = ach.label.replace(/'/g, "\\'");
           const cleanDesc = ach.description.replace(/'/g, "\\'");
           return `
-              <div class="ach-badge-wrap" style="position:relative;cursor:pointer"
+              <div class="ach-badge-wrap" style="position:relative;cursor:pointer" tabindex="0"
                    onmouseenter="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
                    onmouseleave="hideAchTooltip()"
+                   onfocus="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')"
+                   onblur="hideAchTooltip()"
                    onclick="showAchTooltip(this,'${cleanLabel}','${cleanDesc}',${isUnlocked},'${dateStr}')">
                 <div class="ach-badge ${isUnlocked ? "unlocked" : "locked"}" style="width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;background:${isUnlocked ? "rgba(0,200,255,0.1)" : "rgba(255,255,255,0.03)"};border:1px solid ${isUnlocked ? "var(--cyan)" : "rgba(255,255,255,0.1)"};box-shadow:${isUnlocked ? "0 0 10px rgba(0,200,255,0.3)" : "none"};opacity:${isUnlocked ? 1 : 0.25}">
                   ${ach.icon}
@@ -3124,6 +3533,17 @@
 
   // src/screens.js
   var $overlay = document.getElementById("overlay");
+  function rollNumber(el, val, dur) {
+    if (!el) return;
+    const start = performance.now();
+    function update(t) {
+      const p = Math.min(1, (t - start) / dur);
+      const easeOutExp = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+      el.textContent = Math.floor(easeOutExp * val).toLocaleString();
+      if (p < 1) requestAnimationFrame(update);
+    }
+    requestAnimationFrame(update);
+  }
   var _gateTimer = null;
   function showDailyGateOverlay(todayStr) {
     clearInterval(_gateTimer);
@@ -3144,14 +3564,14 @@
     };
     $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600">\u{1F3C6} DAILY CHALLENGE</h1>
-      <div style="font-size:36px;margin:10px 0">\u{1F3C5}</div>
-      <div style="font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.75);margin-bottom:14px;text-align:center;">
+      <h1 class="daily-header">\u{1F3C6} DAILY CHALLENGE</h1>
+      <div class="daily-icon">\u{1F3C5}</div>
+      <div class="daily-completed-lbl">
         CHALLENGE COMPLETED FOR TODAY!<br>COME BACK TOMORROW.
       </div>
-      <div style="font-size:8px;letter-spacing:2px;color:rgba(0,200,255,0.6);text-transform:uppercase;margin-bottom:2px">NEXT CHALLENGE IN</div>
+      <div class="daily-countdown-lbl">NEXT CHALLENGE IN</div>
       <div id="daily-countdown" style="font-size:24px;font-weight:900;color:var(--cyan);text-shadow:0 0 10px var(--cyan);margin-bottom:20px;letter-spacing:1.5px">--:--:--</div>
-      <button class="action-btn" style="width:100%" onclick="showModeSelector()">BACK</button>
+      <button class="action-btn full-width" onclick="showModeSelector()">BACK</button>
     </div>
   `;
     $overlay.style.display = "flex";
@@ -3165,25 +3585,25 @@
       return;
     }
     $overlay.innerHTML = `
-    <div class="glass-panel" style="width: min(300px, 90vw);">
-      <h1 style="font-size:18px;margin-bottom:14px;color:#ffe600;text-shadow:0 0 10px #ffe600;letter-spacing:2px">\u{1F3C6} DAILY CHALLENGE</h1>
-      <div style="font-size:36px;margin:10px 0;animation:pulse 1.5s infinite">\u{1F6F0}\uFE0F</div>
-      <div style="font-size:8px;letter-spacing:1px;color:rgba(0,255,136,0.85);text-transform:uppercase;margin-bottom:12px;font-family:'Orbitron',monospace">SAME BLOCKS FOR EVERYONE!</div>
+    <div class="glass-panel">
+      <h1 class="daily-header">\u{1F3C6} DAILY CHALLENGE</h1>
+      <div class="daily-icon pulse">\u{1F6F0}\uFE0F</div>
+      <div class="daily-subtitle">SAME BLOCKS FOR EVERYONE!</div>
 
-      <div id="briefing-box" style="font-size:10px;line-height:1.6;color:rgba(255,255,255,0.8);text-align:left;margin-bottom:12px;padding:12px;background:rgba(0,0,0,0.4);border:1px solid rgba(0,200,255,0.15);border-radius:8px;width:100%;box-sizing:border-box">
-        <p style="margin:0 0 8px 0;color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
-        <p style="margin:0 0 8px 0">Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
-        <p style="margin:0;color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
+      <div class="briefing-card">
+        <p style="color:#ffe600;font-weight:900;letter-spacing:1px">[WELCOME TO THE DAILY MISSION!]</p>
+        <p>Today, every player in the whole world will get the <strong>exact same blocks</strong> in the same order!</p>
+        <p style="color:var(--cyan)">Luck doesn't matter today! Only your real skills will make you number one on the leaderboard.</p>
       </div>
 
-      <div style="font-size:9px;line-height:1.4;color:#ff5b5b;font-weight:700;text-align:center;margin-bottom:12px;padding:8px 10px;background:rgba(255,91,91,0.08);border:1px solid rgba(255,91,91,0.25);border-radius:6px;width:100%;box-sizing:border-box">
+      <div class="warning-card">
         \u26A0\uFE0F Warning: You can only play ONCE today!<br>
         Once you start, there are no retries!
       </div>
 
-      <div class="btn-row" style="width:100%;flex-direction:column;gap:8px;flex-wrap:nowrap">
-        <button class="action-btn" id="daily-launch-btn" style="width:100%" onclick="launchDailyChallenge()">START CHALLENGE</button>
-        <button class="action-btn ghost" style="width:100%" onclick="showModeSelector()">GO BACK</button>
+      <div class="btn-row main-actions">
+        <button class="action-btn" id="daily-launch-btn" onclick="launchDailyChallenge()">START CHALLENGE</button>
+        <button class="action-btn ghost" onclick="showModeSelector()">GO BACK</button>
       </div>
     </div>
   `;
@@ -3197,8 +3617,8 @@
       pauseBGM();
       $overlay.innerHTML = `
       <div class="glass-panel">
-        <h1 style="font-size:22px;margin-bottom:14px">PAUSED</h1>
-        <div class="settings-box" style="width:100%">
+        <h1 class="pause-header">PAUSED</h1>
+        <div class="settings-box">
           <button class="toggle-btn${S.muteAudio ? " muted" : ""}" id="ov-mute-btn" onclick="toggleMute()">${S.muteAudio ? "\u{1F507} AUDIO OFF" : "\u{1F50A} AUDIO ON"}</button>
           <button class="toggle-btn${S.ghostVisible ? "" : " muted"}" id="ov-ghost-btn" onclick="updateGhost()">${S.ghostVisible ? "\u{1F47B} GHOST ON" : "\u{1F47B} GHOST OFF"}</button>
           <button class="toggle-btn${S.colorblindMode ? " cb-active" : " muted"}" id="ov-cb-btn" onclick="updateColorblind()">${S.colorblindMode ? "\u{1F533} CB MODE ON" : "\u{1F533} CB MODE OFF"}</button>
@@ -3219,8 +3639,8 @@
             <span class="settings-val" id="ov-lock-val">${S.lockMs}ms</span>
           </div>
         </div>
-        <button class="action-btn" style="width:100%" onclick="togglePause()">RESUME</button>
-        <button class="action-btn ghost" style="margin-top:8px;width:100%" onclick="showStartScreen()">RESTART</button>
+        <button class="action-btn full-width" onclick="togglePause()">RESUME</button>
+        <button class="action-btn ghost full-width restart" onclick="showStartScreen()">RESTART</button>
       </div>`;
       $overlay.style.display = "flex";
     } else {
@@ -3278,7 +3698,7 @@
     const savedName = localStorage.getItem(LS.NAME) || "";
     let pbBadges = [];
     if (S.isDailyMode) {
-      pbBadges.push(`<div class="pb-badge score-pb" style="background:rgba(255,230,0,0.12);border-color:#ffe600;color:#ffe600">\u{1F3C5} DAILY CHALLENGE</div>`);
+      pbBadges.push(`<div class="pb-badge score-pb">\u{1F3C5} DAILY CHALLENGE</div>`);
     } else {
       if (isNewBest) pbBadges.push(`<div class="pb-badge score-pb">\u{1F3C6} RECORD SCORE</div>`);
       if (isBestLevel) pbBadges.push(`<div class="pb-badge level-pb">\u{1F451} RECORD LEVEL: L${S.level}</div>`);
@@ -3298,24 +3718,35 @@
     }
     $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:20px;margin-bottom:18px">${S.isDailyMode ? "DAILY CHALLENGE" : "GAME OVER"}</h1>
-      ${!S.isDailyMode && isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">\u2605 NEW BEST \u2605</div>' : ""}
-      <div style="width:100%;text-align:center;margin-bottom:${badgesHTML ? "16px" : "22px"}">
-        <div class="sub" style="margin-bottom:3px">SCORE: ${S.score.toLocaleString()}</div>
-        <div class="sub" style="color:#ffe600;text-shadow:0 0 10px #ffe600">BEST: ${S.hiScore.toLocaleString()}</div>
+      <h1 class="game-over-header">${S.isDailyMode ? "DAILY CHALLENGE" : "GAME OVER"}</h1>
+      ${!S.isDailyMode && isNewBest ? '<div class="new-best-badge">\u2605 NEW BEST \u2605</div>' : ""}
+      
+      <div class="game-over-stats">
+        <div class="stat-item">
+          <span class="stat-label">SCORE</span>
+          <span class="stat-val" id="gov-score-val">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">BEST</span>
+          <span class="stat-val highlight" id="gov-hi-val">0</span>
+        </div>
       </div>
+
       ${badgesHTML ? `<div style="width:100%;margin-bottom:18px">${badgesHTML}</div>` : ""}
+      
       <div style="width:100%">
-        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
-        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
-          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitScore()">SUBMIT</button>
-          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
+        <div class="btn-row sub-actions">
+          <button id="lb-submit-btn" class="action-btn sm" onclick="submitScore()">SUBMIT</button>
+          <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
       ${_donationHTML()}
     </div>`;
     $overlay.style.display = "flex";
+    rollNumber(document.getElementById("gov-score-val"), S.score, 1400);
+    rollNumber(document.getElementById("gov-hi-val"), S.hiScore, 1400);
     const inp = document.getElementById("lb-name");
     inp.focus();
     inp.select();
@@ -3329,18 +3760,20 @@
     const prevBestLine = prevBest > 0 && !isNewBest ? `<div style="font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.3);margin-bottom:10px">BEST: ${fmtTime(prevBest)}</div>` : "";
     $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:20px;margin-bottom:6px">\u{1F3C1} SPRINT COMPLETE!</h1>
-      ${isNewBest ? '<div class="new-best-badge" style="margin-bottom:10px">\u2605 NEW BEST \u2605</div>' : prevBestLine}
-      <div style="width:100%;text-align:center;margin-bottom:16px">
-        <div style="font-size:9px;letter-spacing:3px;color:rgba(0,200,255,0.6);margin-bottom:4px">FINISH TIME</div>
-        <div style="font-size:46px;font-weight:900;color:#ffe600;text-shadow:0 0 20px rgba(255,230,0,0.7);letter-spacing:2px;font-family:monospace">${fmtTime(timeMs)}</div>
-        <div style="font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);margin-top:6px">${lpm} LPM</div>
+      <h1 class="game-over-header" style="margin-bottom:8px !important">\u{1F3C1} SPRINT COMPLETE!</h1>
+      ${isNewBest ? '<div class="new-best-badge">\u2605 NEW BEST \u2605</div>' : prevBestLine}
+      
+      <div class="game-over-stats" style="padding:16px 12px">
+        <div style="font-size:9px;letter-spacing:3px;color:rgba(0,200,255,0.6);margin-bottom:6px">FINISH TIME</div>
+        <div style="font-size:40px;font-weight:900;color:#ffe600;text-shadow:0 0 20px rgba(255,230,0,0.7);letter-spacing:2px;font-family:monospace;line-height:1.2">${fmtTime(timeMs)}</div>
+        <div style="font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.55);margin-top:8px">${lpm} LPM</div>
       </div>
+
       <div style="width:100%">
-        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false" style="width:100%;max-width:none;box-sizing:border-box;margin-bottom:6px">
-        <div class="btn-row" style="width:100%;margin-top:0;gap:6px">
-          <button id="lb-submit-btn" class="action-btn sm" style="flex:1" onclick="submitSprintScore(${timeMs})">SUBMIT</button>
-          <button class="action-btn sm ghost" style="flex:1" onclick="showStartScreen()">PLAY AGAIN</button>
+        <input id="lb-name" class="neon-input" maxlength="12" placeholder="ENTER NAME" value="${savedName}" autocomplete="off" spellcheck="false">
+        <div class="btn-row sub-actions">
+          <button id="lb-submit-btn" class="action-btn sm" onclick="submitSprintScore(${timeMs})">SUBMIT</button>
+          <button class="action-btn sm ghost" onclick="showStartScreen()">PLAY AGAIN</button>
         </div>
       </div>
       <div id="lb-result" style="margin-top:14px;width:100%;display:flex;flex-direction:column;align-items:center"></div>
@@ -3371,10 +3804,10 @@
     <div class="glass-panel">
       <h1>GLOWTRIS</h1>
       <div id="start-lb">
-        <div class="lb-mode-toggle" style="display:flex;gap:4px;margin-bottom:6px;width:100%">
-          <button id="lb-mode-marathon" class="lb-tab ${S.lbMode === "marathon" ? "active" : ""}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('marathon')">MARATHON</button>
-          <button id="lb-mode-sprint" class="lb-tab ${S.lbMode === "sprint" ? "active" : ""}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('sprint')">\u26A1 SPRINT</button>
-          <button id="lb-mode-daily" class="lb-tab ${S.lbMode === "daily" ? "active" : ""}" style="font-size:7px;letter-spacing:1px;padding:4px 2px" onclick="setLbMode('daily')">\u{1F3C6} DAILY</button>
+        <div class="lb-mode-toggle">
+          <button id="lb-mode-marathon" class="lb-tab ${S.lbMode === "marathon" ? "active" : ""}" onclick="setLbMode('marathon')">MARATHON</button>
+          <button id="lb-mode-sprint" class="lb-tab ${S.lbMode === "sprint" ? "active" : ""}" onclick="setLbMode('sprint')">\u26A1 SPRINT</button>
+          <button id="lb-mode-daily" class="lb-tab ${S.lbMode === "daily" ? "active" : ""}" onclick="setLbMode('daily')">\u{1F3C6} DAILY</button>
         </div>
         <div class="lb-tabs-container lb-tabs">
           ${S.lbMode === "daily" ? `
@@ -3392,15 +3825,15 @@
         </div>
         <div class="lb-inner"></div>
       </div>
-      <div class="btn-row" style="margin-bottom:6px;width:100%;flex-direction:column;gap:6px;flex-wrap:nowrap">
-        <button class="action-btn" style="width:100%" onclick="showModeSelector()">PLAY</button>
+      <div class="btn-row main-actions">
+        <button class="action-btn" onclick="showModeSelector()">PLAY</button>
       </div>
-      <div class="btn-row" style="gap:6px;width:100%">
-        <button class="action-btn ghost" style="flex:1" onclick="openHowToPlay()">HOW TO PLAY</button>
-        <button class="action-btn ghost" style="flex:1" onclick="openStats()">STATS</button>
+      <div class="btn-row sub-actions">
+        <button class="action-btn ghost" onclick="openHowToPlay()">HOW TO PLAY</button>
+        <button class="action-btn ghost" onclick="openStats()">STATS</button>
       </div>
       ${_donationHTML()}
-      <div style="margin-top:10px;text-align:center;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.18)">
+      <div class="footer-links-wrap">
         <a href="/privacy.html" class="footer-link">PRIVACY</a>
         <span style="color:rgba(255,255,255,0.12)">\xB7</span>
         <a href="/terms.html" class="footer-link">TERMS</a>
@@ -3410,54 +3843,54 @@
     loadStartLeaderboard();
   }
   function showModeSelector() {
-    const sprintBest = S._sprintHiTime > 0 ? `<span style="color:rgba(0,255,136,0.7)">Best: ${fmtTime(S._sprintHiTime)}</span>` : '<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
+    const sprintBest = S._sprintHiTime > 0 ? `<span style="color:rgba(0,255,136,0.75)">Best: ${fmtTime(S._sprintHiTime)}</span>` : '<span style="color:rgba(255,255,255,0.3)">No record yet</span>';
     const hiS = parseInt(localStorage.getItem(LS.HI) || "0");
-    const marathonBest = hiS > 0 ? `<span style="color:rgba(0,200,255,0.7)">Best: ${hiS.toLocaleString()}</span>` : '<span style="color:rgba(255,255,255,0.25)">No record yet</span>';
+    const marathonBest = hiS > 0 ? `<span style="color:rgba(0,200,255,0.75)">Best: ${hiS.toLocaleString()}</span>` : '<span style="color:rgba(255,255,255,0.3)">No record yet</span>';
     const todayStr = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10).replace(/-/g, "");
     const dailyDone = localStorage.getItem(LS.DAILY_DATE) === todayStr;
-    const dailySub = dailyDone ? '<span style="color:rgba(255,230,0,0.7)">\u2713 Completed today</span>' : '<span style="color:rgba(255,255,255,0.25)">Not played today</span>';
+    const dailySub = dailyDone ? '<span style="color:rgba(255,230,0,0.75)">\u2713 Completed today</span>' : '<span style="color:rgba(255,255,255,0.3)">Not played today</span>';
     $overlay.innerHTML = `
     <div class="glass-panel">
-      <h1 style="font-size:16px;margin-bottom:16px;letter-spacing:3px">SELECT MODE</h1>
+      <h1 style="font-size:16px;margin-bottom:18px;letter-spacing:3px">SELECT MODE</h1>
 
-      <div style="width:100%;display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
 
         <!-- MARATHON -->
-        <div onclick="startGame()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,200,255,0.25);background:rgba(0,200,255,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(0,200,255,0.12)';this.style.borderColor='rgba(0,200,255,0.5)'" onmouseout="this.style.background='rgba(0,200,255,0.05)';this.style.borderColor='rgba(0,200,255,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">\u{1F3AE}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:var(--cyan);margin-bottom:3px">MARATHON</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Clear lines, rack up score. No time limit \u2014 how high can you go?</div>
-            <div style="font-size:8px;margin-top:4px">${marathonBest}</div>
+        <div class="mode-card marathon" tabindex="0" onclick="startGame()">
+          <div class="mode-icon">\u{1F3AE}</div>
+          <div class="mode-info">
+            <div class="mode-name">MARATHON</div>
+            <div class="mode-desc">Clear lines, rack up score. No time limit \u2014 how high can you go?</div>
+            <div class="mode-best">${marathonBest}</div>
           </div>
-          <div style="font-size:18px;color:rgba(0,200,255,0.5);flex-shrink:0">\u203A</div>
+          <div class="mode-arrow">\u203A</div>
         </div>
 
         <!-- SPRINT -->
-        <div onclick="startSprintMode()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(0,255,136,0.25);background:rgba(0,255,136,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(0,255,136,0.12)';this.style.borderColor='rgba(0,255,136,0.5)'" onmouseout="this.style.background='rgba(0,255,136,0.05)';this.style.borderColor='rgba(0,255,136,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">\u26A1</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#00ff88;margin-bottom:3px">SPRINT 40L</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Clear 40 lines as fast as possible. Fastest time wins the leaderboard.</div>
-            <div style="font-size:8px;margin-top:4px">${sprintBest}</div>
+        <div class="mode-card sprint" tabindex="0" onclick="startSprintMode()">
+          <div class="mode-icon">\u26A1</div>
+          <div class="mode-info">
+            <div class="mode-name">SPRINT 40L</div>
+            <div class="mode-desc">Clear 40 lines as fast as possible. Fastest time wins the leaderboard.</div>
+            <div class="mode-best">${sprintBest}</div>
           </div>
-          <div style="font-size:18px;color:rgba(0,255,136,0.5);flex-shrink:0">\u203A</div>
+          <div class="mode-arrow">\u203A</div>
         </div>
 
         <!-- DAILY CHALLENGE -->
-        <div onclick="startDailyChallenge()" style="cursor:pointer;display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;border:1px solid rgba(255,230,0,0.25);background:rgba(255,230,0,0.05);transition:background .15s,border-color .15s" onmouseover="this.style.background='rgba(255,230,0,0.1)';this.style.borderColor='rgba(255,230,0,0.5)'" onmouseout="this.style.background='rgba(255,230,0,0.05)';this.style.borderColor='rgba(255,230,0,0.25)'">
-          <div style="font-size:28px;line-height:1;flex-shrink:0">\u{1F3C6}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:900;letter-spacing:2px;color:#ffe600;margin-bottom:3px">DAILY CHALLENGE</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55);letter-spacing:.5px;line-height:1.5">Today's fixed piece sequence. Same for everyone \u2014 pure skill, no luck.</div>
-            <div style="font-size:8px;margin-top:4px">${dailySub}</div>
+        <div class="mode-card daily" tabindex="0" onclick="startDailyChallenge()">
+          <div class="mode-icon">\u{1F3C6}</div>
+          <div class="mode-info">
+            <div class="mode-name">DAILY CHALLENGE</div>
+            <div class="mode-desc">Today's fixed piece sequence. Same for everyone \u2014 pure skill, no luck.</div>
+            <div class="mode-best">${dailySub}</div>
           </div>
-          <div style="font-size:18px;color:rgba(255,230,0,0.5);flex-shrink:0">\u203A</div>
+          <div class="mode-arrow">\u203A</div>
         </div>
 
       </div>
 
-      <button class="action-btn ghost" style="width:100%" onclick="showStartScreen()">\u2190 BACK</button>
+      <button class="action-btn ghost full-width" onclick="showStartScreen()">\u2190 BACK</button>
     </div>`;
     $overlay.style.display = "flex";
   }
@@ -3465,37 +3898,34 @@
   // src/leaderboard.js
   function _openDonation() {
     if (!SUPPORT_URL) return;
+    if (document.getElementById("donation-modal")) return;
     const modal = document.createElement("div");
     modal.id = "donation-modal";
-    modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center;z-index:99999;backdrop-filter:blur(6px)";
     modal.innerHTML = `
-    <div style="background:rgba(4,4,30,0.97);border:1px solid rgba(255,215,0,0.35);border-radius:14px;padding:26px 22px;max-width:270px;width:88%;text-align:center;font-family:'Orbitron',monospace;box-shadow:0 0 40px rgba(255,215,0,0.12)">
-      <div style="font-size:26px;margin-bottom:12px">\u2615</div>
-      <div style="font-size:10px;font-weight:900;letter-spacing:2px;color:#ffe600;margin-bottom:8px">SUPPORT GLOWTRIS</div>
-      <div style="font-size:8.5px;color:rgba(255,255,255,0.5);letter-spacing:0.5px;line-height:1.7;margin-bottom:20px">Opens Ko-fi in a new tab.</div>
-      <div style="display:flex;gap:8px">
-        <button onclick="document.getElementById('donation-modal').remove()"
-          style="flex:1;padding:10px 0;background:transparent;border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:rgba(255,255,255,0.4);font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1.5px;cursor:pointer;transition:border-color 0.15s"
-          onmouseover="this.style.borderColor='rgba(255,255,255,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.12)'">CANCEL</button>
+    <div class="donation-modal-box">
+      <div class="donation-coffee">\u2615</div>
+      <div class="donation-title">SUPPORT GLOWTRIS</div>
+      <div class="donation-desc">Opens Ko-fi in a new tab.</div>
+      <div class="donation-buttons">
+        <button onclick="document.getElementById('donation-modal').remove()" class="donation-btn cancel">CANCEL</button>
         <a href="${SUPPORT_URL}" target="_blank" rel="noopener noreferrer"
-          onclick="document.getElementById('donation-modal').remove()"
-          style="flex:1;padding:10px 0;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.4);border-radius:8px;color:#ffe600;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1.5px;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s"
-          onmouseover="this.style.background='rgba(255,215,0,0.2)'" onmouseout="this.style.background='rgba(255,215,0,0.1)'">OPEN \u2197</a>
+          onclick="document.getElementById('donation-modal').remove()" class="donation-btn open">OPEN \u2197</a>
       </div>
     </div>`;
     modal.addEventListener("click", (e) => {
       if (e.target === modal) modal.remove();
     });
     document.body.appendChild(modal);
+    setTimeout(() => {
+      const btn = modal.querySelector(".cancel");
+      if (btn) btn.focus();
+    }, 10);
   }
   function _donationHTML() {
     if (!SUPPORT_URL) return "";
-    return `<div style="margin-top:14px;width:100%;text-align:center">
-    <button onclick="_openDonation()"
-       style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.3);border-radius:9px;color:#ffe600;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:background 0.2s,box-shadow 0.2s"
-       onmouseover="this.style.background='rgba(255,215,0,0.14)';this.style.boxShadow='0 0 12px rgba(255,215,0,0.2)'"
-       onmouseout="this.style.background='rgba(255,215,0,0.07)';this.style.boxShadow='none'">\u2615 BUY ME A COFFEE</button>
-    <div style="font-size:7px;letter-spacing:1.5px;color:rgba(255,255,255,0.22);margin-top:5px">keeps glowtris 100% ad-free</div>
+    return `<div class="donation-footer-wrap">
+    <button onclick="_openDonation()" class="coffee-btn">\u2615 BUY ME A COFFEE</button>
+    <div class="coffee-sub">keeps glowtris 100% ad-free</div>
   </div>`;
   }
   async function submitSprintScore(timeMs) {
@@ -3958,6 +4388,16 @@ ${window.location.origin}`;
   }
 
   // src/game.js
+  document.addEventListener("mouseover", (e) => {
+    const btn = e.target.closest(".action-btn, .lb-tab, .toggle-btn, .mode-card, .ach-badge-wrap");
+    if (btn && (!e.relatedTarget || !btn.contains(e.relatedTarget))) sfxUIHover();
+  });
+  document.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap")) sfxUIClick();
+  });
+  document.addEventListener("touchstart", (e) => {
+    if (e.target.closest(".action-btn, .lb-tab, .toggle-btn, .tbtn, .mode-card, .ach-badge-wrap")) sfxUIClick();
+  }, { passive: true });
   document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
   document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
   document.addEventListener("touchmove", (e) => {
@@ -4067,8 +4507,13 @@ ${window.location.origin}`;
         }
       }
       if (S.combo > 1 && S.animIntensity !== "off") {
-        S.comboFlash = 15;
+        S.comboFlash = 15 + (S.combo >= 4 ? 15 : 0);
         S.comboFlashColor = S.combo >= 5 ? "#ff0080" : S.combo >= 3 ? "#a000ff" : "#00c8ff";
+        if (S.combo >= 4 && S.animIntensity === "full") {
+          S.shakeFrames = Math.max(S.shakeFrames, 10 + S.combo * 3);
+          S.shakeMag = Math.max(S.shakeMag, Math.min(2.5, S.combo * 0.35));
+          S.shakeAllDir = true;
+        }
       }
       addScore(pts, cleared.length, tspin);
       S.lines += cleared.length;
@@ -4109,7 +4554,7 @@ ${window.location.origin}`;
           S.board.splice(r, 1);
           S.board.unshift(Array(COLS).fill(null));
         }
-        spawnLineClearParticles(snap);
+        spawnLineClearParticles(snap, tspin, false);
         if (snap.length >= 4 && !tspin && S.animIntensity === "full") {
           S.shakeFrames = 25;
           S.shakeMag = 0.7;
@@ -4123,6 +4568,7 @@ ${window.location.origin}`;
           addScore(bonus, 0, false);
           showScorePopup(bonus, -1, false);
           triggerAllClearFlash();
+          spawnLineClearParticles(snap, false, true);
           unlockAchievement("all_clear");
         }
         S.flashLines = /* @__PURE__ */ new Set();
@@ -4225,13 +4671,84 @@ ${window.location.origin}`;
     else if (code === "KeyM") el = _keyGuide.mute;
     if (el) el.classList.toggle("key-pressed", isPressed);
   }
+  function handleUINavigation(e) {
+    const overlay = document.getElementById("overlay");
+    const help = document.getElementById("htp-overlay");
+    const stats = document.getElementById("stats-overlay");
+    const donation = document.getElementById("donation-modal");
+    let activeOverlay = null;
+    if (donation) activeOverlay = donation;
+    else if (help && help.style.display === "flex") activeOverlay = help;
+    else if (stats && stats.style.display === "flex") activeOverlay = stats;
+    else if (overlay && overlay.style.display === "flex") activeOverlay = overlay;
+    if (!activeOverlay) return false;
+    const active = document.activeElement;
+    if (e.code === "Escape" || e.code === "Backspace") {
+      if (e.code === "Backspace" && active && active.tagName === "INPUT" && active.type === "text") return false;
+      const btn = Array.from(activeOverlay.querySelectorAll("button")).find((b) => {
+        const t = b.textContent.toUpperCase();
+        return b.classList.contains("close-btn") || b.classList.contains("cancel") || t.includes("BACK") || t === "RESUME" || t === "CANCEL";
+      });
+      if (btn) {
+        e.preventDefault();
+        sfxUIClick();
+        btn.click();
+        return true;
+      }
+    }
+    if (active && active.tagName === "INPUT" && active.type === "text") {
+      if (e.code === "Enter") return false;
+      if (e.code === "ArrowLeft" || e.code === "ArrowRight") return false;
+    }
+    const isDown = e.code === "ArrowDown" || e.code === "KeyS";
+    const isUp = e.code === "ArrowUp" || e.code === "KeyW";
+    const isRight = e.code === "ArrowRight" || e.code === "KeyD";
+    const isLeft = e.code === "ArrowLeft" || e.code === "KeyA";
+    const scrollable = activeOverlay.querySelector("#htp-scroll, #stats-scroll");
+    if (scrollable && (isDown || isUp)) {
+      scrollable.scrollTop += isDown ? 60 : -60;
+      e.preventDefault();
+      return true;
+    }
+    const focusables = Array.from(activeOverlay.querySelectorAll('button, input, a[href], [tabindex="0"]')).filter((el) => el.offsetWidth > 0 && el.offsetHeight > 0 && !el.disabled);
+    if (focusables.length === 0) return false;
+    let idx = focusables.indexOf(active);
+    const oldIdx = idx;
+    if (isDown || isRight || e.code === "Tab" && !e.shiftKey) {
+      if (active && active.type === "range" && (isLeft || isRight)) return false;
+      e.preventDefault();
+      idx = (idx + 1) % focusables.length;
+      focusables[idx].focus();
+      if (idx !== oldIdx) sfxUIHover();
+      return true;
+    }
+    if (isUp || isLeft || e.code === "Tab" && e.shiftKey) {
+      if (active && active.type === "range" && (isLeft || isRight)) return false;
+      e.preventDefault();
+      idx = idx <= 0 ? focusables.length - 1 : idx - 1;
+      focusables[idx].focus();
+      if (idx !== oldIdx) sfxUIHover();
+      return true;
+    }
+    if (e.code === "Enter" || e.code === "Space") {
+      if (active && focusables.includes(active) && active.tagName !== "INPUT") {
+        e.preventDefault();
+        sfxUIClick();
+        active.click();
+        return true;
+      }
+    }
+    return false;
+  }
   document.addEventListener("keydown", (e) => {
+    if (e.code === "KeyM") toggleMute();
+    if (handleUINavigation(e)) return;
     updateKeyGuideState(e.code, true);
     if (!S._kbMode && window.matchMedia("(pointer:coarse)").matches) _enableKbMode();
     if (KEYS[e.code]) return;
     KEYS[e.code] = true;
     if (!S.gameRunning) return;
-    if (e.code === "KeyP") {
+    if (e.code === "KeyP" || e.code === "Escape") {
       togglePause();
       return;
     }
@@ -4266,9 +4783,6 @@ ${window.location.origin}`;
       case "KeyC":
       case "ShiftLeft":
         holdPiece();
-        break;
-      case "KeyM":
-        toggleMute();
         break;
     }
   });
@@ -4360,12 +4874,12 @@ ${window.location.origin}`;
       on = true;
       el.classList.add("pressed");
       if (!S.gameRunning && mode !== "any") return;
-      if ((S.gamePaused || S._countdownVal) && mode === "game") return;
+      if ((S.gamePaused || S._countdownVal) && mode !== "any") return;
       onPress();
       if (mode === "repeat") {
         to = setTimeout(() => {
           iv = setInterval(() => {
-            if (S.gameRunning && !S.gamePaused) onPress();
+            if (S.gameRunning && !S.gamePaused && !S._countdownVal) onPress();
           }, S.arr);
         }, S.das);
       }
@@ -4677,7 +5191,7 @@ ${window.location.origin}`;
       animFrame = null;
     }
   });
-  var _VERSION = "v1.1";
+  var _VERSION = "v1.1.1";
   window.onerror = function(msg, src, line, col, err) {
     console.error("[glowtris " + _VERSION + "] uncaught error", {
       msg,

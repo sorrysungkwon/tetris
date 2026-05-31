@@ -232,14 +232,14 @@ export function stopBGM(){
 }
 
 export function pauseBGM(){
-  if(!audioCtx)return;
-  if(masterGain)masterGain.gain.setValueAtTime(0,audioCtx.currentTime);
-  if(audioCtx.state==='running')audioCtx.suspend();
+  stopBGM();
 }
 export function resumeBGM(){
   if(!audioCtx)return;
-  if(masterGain)masterGain.gain.setValueAtTime(S.muteAudio?0:1,audioCtx.currentTime);
   if(audioCtx.state==='suspended')audioCtx.resume();
+  bgmPlaying = true;
+  bgmNextTime = audioCtx.currentTime + 0.1;
+  bgmScheduleLoop();
 }
 
 export function playBeep(freq,type,dur,vol,delay=0,freqEnd=null){
@@ -273,7 +273,13 @@ export function sfxTSpin(){
   playBeep(1318,'sawtooth',.14,.28,.1);
 }
 export function sfxUIHover(){ if(!S.muteAudio) playBeep(800, 'sine', 0.04, 0.02); }
-export function sfxUIClick(){ if(!S.muteAudio) { playBeep(1200, 'square', 0.05, 0.04); playBeep(1600, 'sine', 0.05, 0.03, 0.02); } }
+let _lastUIClick = 0;
+export function sfxUIClick(){
+  const now = performance.now();
+  if (now - _lastUIClick < 50) return;
+  _lastUIClick = now;
+  if(!S.muteAudio) { playBeep(1200, 'square', 0.05, 0.04); playBeep(1600, 'sine', 0.05, 0.03, 0.02); }
+}
 export function sfxAchievementUnlock(){
   if(S.muteAudio)return;
   [523, 659, 784, 1047].forEach((f, i) => {
