@@ -1183,7 +1183,8 @@
     <div id="htp-scroll">
       <div class="htp-section">KEYBOARD</div>
       <div class="htp-row"><span class="htp-key">← → / A D</span><span class="htp-lbl">Move</span></div>
-      <div class="htp-row"><span class="htp-key">↑ / W</span><span class="htp-lbl">Rotate</span></div>
+      <div class="htp-row"><span class="htp-key">↑ / W / X</span><span class="htp-lbl">Rotate CW</span></div>
+      <div class="htp-row"><span class="htp-key">Z / Ctrl</span><span class="htp-lbl">Rotate CCW</span></div>
       <div class="htp-row"><span class="htp-key">↓ / S</span><span class="htp-lbl">Soft Drop</span></div>
       <div class="htp-row"><span class="htp-key">SPC</span><span class="htp-lbl">Hard Drop</span></div>
       <div class="htp-row"><span class="htp-key">C</span><span class="htp-lbl">Hold</span></div>
@@ -1286,7 +1287,8 @@
       <div class="panel-title">KEYS</div>
       <div class="key-map">
         <div class="key-row" id="key-move"><kbd>← →</kbd><kbd>A D</kbd><span>move</span></div>
-        <div class="key-row" id="key-rotate"><kbd>↑</kbd><kbd>W</kbd><span>rotate</span></div>
+        <div class="key-row" id="key-rotate"><kbd>↑</kbd><kbd>W</kbd><span>rotate CW</span></div>
+        <div class="key-row" id="key-rotate-ccw"><kbd>Z</kbd><kbd>Ctrl</kbd><span>rotate CCW</span></div>
         <div class="key-row" id="key-soft"><kbd>↓</kbd><kbd>S</kbd><span>soft drop</span></div>
         <div class="key-row" id="key-hard"><kbd>SPC</kbd><span>hard drop</span></div>
         <div class="key-row" id="key-hold"><kbd>C</kbd><span>hold</span></div>
@@ -2151,7 +2153,6 @@
   var $scorePopup = document.getElementById("score-popup");
   var _rgbCache = /* @__PURE__ */ new Map();
   var _nudgeActive = false;
-  var _nudgeTimer = null;
   var stars = [];
   var nebulae = [];
   var bgHue = 0;
@@ -2311,19 +2312,6 @@
       hcD.style.width = 4 * S.CELL + "px";
       hcD.style.height = 3 * S.CELL + "px";
     }
-  }
-  function nudgeUI(dx, dy) {
-    if (S.animIntensity !== "full") return;
-    _nudgeActive = true;
-    clearTimeout(_nudgeTimer);
-    $app.style.transition = "none";
-    $app.style.transform = `translate(${dx}px,${dy}px)`;
-    void $app.offsetWidth;
-    $app.style.transition = "transform 0.26s cubic-bezier(0.15,2.8,0.5,0.82)";
-    $app.style.transform = "";
-    _nudgeTimer = setTimeout(() => {
-      _nudgeActive = false;
-    }, 300);
   }
   function _enableKbMode() {
     if (S._kbMode) return;
@@ -3058,11 +3046,10 @@
         continue;
       }
       if (p.type === "ring" || p.type === "radial-ring") {
+        p.life -= p.decay;
         if (S.lowPerfMode) {
-          p.life -= p.decay;
           continue;
         }
-        p.life -= p.decay;
         pctx.save();
         pctx.globalAlpha = Math.max(0, p.life);
         pctx.strokeStyle = p.color;
@@ -3197,7 +3184,7 @@
     if ($levelM) $levelM.textContent = S.level;
     const hi = S.hiScore.toLocaleString();
     $hiScore.textContent = hi;
-    $hiScoreM.textContent = hi;
+    if ($hiScoreM) $hiScoreM.textContent = hi;
     const pct = S.lines % LEVEL_LINES / LEVEL_LINES * 100;
     const hue = (S.level - 1) * 30;
     $levelBar.style.width = pct + "%";
@@ -3960,7 +3947,7 @@
         <button class="lb-tab" data-tab="sprint-weekly" onclick="renderLbTab('sprint-weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="sprint-all" onclick="renderLbTab('sprint-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.sprintDailyBoard || [], name, data.sprintDailyRank, timeMs, true)}</div>`;
-        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareSprintScore(${timeMs},${data.sprintRank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + _donationHTML();
+        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareSprintScore(${timeMs},${data.sprintRank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
       } else {
         btn.disabled = false;
         inp.disabled = false;
@@ -4132,7 +4119,7 @@ Can you beat it? ${window.location.origin}`;
         <button class="lb-tab active" data-tab="challenge" onclick="renderLbTab('challenge')">TODAY</button>
         <button class="lb-tab" data-tab="challenge-all" onclick="renderLbTab('challenge-all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.challengeBoard || [], name, data.challengeRank, S.score)}</div>`;
-        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.challengeRank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + _donationHTML();
+        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.challengeRank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
       } else if (data.board) {
         S._lbCache = {
           ...S._lbCache,
@@ -4157,7 +4144,7 @@ Can you beat it? ${window.location.origin}`;
         <button class="lb-tab" data-tab="weekly" onclick="renderLbTab('weekly')">WEEKLY</button>
         <button class="lb-tab" data-tab="all" onclick="renderLbTab('all')">ALL TIME</button>
       </div><div class="lb-inner">${lbHTML(data.dailyBoard || [], name, data.dailyRank, S.score)}</div>`;
-        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.rank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>` + _donationHTML();
+        res.innerHTML = rankMsg + tabs + `<div class="btn-row"><button class="action-btn sm ghost" onclick="shareScore(${S.score},${data.rank || 0})">SHARE</button><button class="action-btn sm" onclick="showStartScreen()">PLAY AGAIN</button></div>`;
       } else {
         btn.disabled = false;
         inp.disabled = false;
@@ -4436,8 +4423,28 @@ ${window.location.origin}`;
   }
   function makePiece(key) {
     const d = PIECES[key];
-    return { key, shape: d.shape.map((r) => [...r]), color: d.color, x: Math.floor(COLS / 2) - Math.floor(d.shape[0].length / 2), y: 0 };
+    return { key, shape: d.shape.map((r) => [...r]), color: d.color, x: Math.floor(COLS / 2) - Math.floor(d.shape[0].length / 2), y: 0, rot: 0 };
   }
+  var KICKS_JLSTZ = {
+    "0>1": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    "1>0": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    "1>2": [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+    "2>1": [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+    "2>3": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+    "3>2": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    "3>0": [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+    "0>3": [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]]
+  };
+  var KICKS_I = {
+    "0>1": [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+    "1>0": [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+    "1>2": [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+    "2>1": [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+    "2>3": [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+    "3>2": [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+    "3>0": [[0, 0], [1, 0], [-2, 0], [1, 2], [-2, -1]],
+    "0>3": [[0, 0], [-1, 0], [2, 0], [-1, -2], [2, 1]]
+  };
   function createBoard() {
     return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
   }
@@ -4451,22 +4458,36 @@ ${window.location.origin}`;
     }
     return true;
   }
-  function rotate(shape) {
+  function rotateCW(shape) {
     const R = shape.length, C = shape[0].length;
     return Array.from({ length: C }, (_, c) => Array.from({ length: R }, (_2, r) => shape[R - 1 - r][c]));
   }
-  function rotatePiece() {
-    const rot = rotate(S.current.shape);
-    for (const k of [0, -1, 1, -2, 2]) {
-      if (validPos(S.current, k, 0, rot)) {
-        S.current.shape = rot;
-        S.current.x += k;
+  function rotateCCW(shape) {
+    const R = shape.length, C = shape[0].length;
+    return Array.from({ length: C }, (_, c) => Array.from({ length: R }, (_2, r) => shape[r][C - 1 - c]));
+  }
+  function _tryRotate(newShape, fromRot, toRot) {
+    const key = `${fromRot}>${toRot}`;
+    const kicks = S.current.key === "I" ? KICKS_I : S.current.key === "O" ? [[0, 0]] : KICKS_JLSTZ;
+    const table = kicks[key] || [[0, 0]];
+    for (const [dx, dy] of table) {
+      if (validPos(S.current, dx, dy, newShape)) {
+        S.current.shape = newShape;
+        S.current.x += dx;
+        S.current.y += dy;
+        S.current.rot = toRot;
         cancelLock();
         lastWasRotate = true;
         sfxRotate();
-        return;
+        return true;
       }
     }
+    return false;
+  }
+  function rotatePiece(ccw = false) {
+    const from = S.current.rot;
+    const to = ccw ? (from + 3) % 4 : (from + 1) % 4;
+    _tryRotate(ccw ? rotateCCW(S.current.shape) : rotateCW(S.current.shape), from, to);
   }
   function cancelLock() {
     S.lockActive = false;
@@ -4540,8 +4561,6 @@ ${window.location.origin}`;
         if (S.level >= 5) unlockAchievement("level_5");
         if (S.level >= 10) unlockAchievement("level_10");
         if (S.level >= 15) unlockAchievement("level_15");
-      } else {
-        S.level = nextLvl;
       }
       dropInterval = Math.max(80, 800 - (S.level - 1) * 70);
       updateUI();
@@ -4757,13 +4776,11 @@ ${window.location.origin}`;
       case "KeyA":
         moveX(-1);
         startDAS(-1);
-        nudgeUI(12, -2);
         break;
       case "ArrowRight":
       case "KeyD":
         moveX(1);
         startDAS(1);
-        nudgeUI(-12, -2);
         break;
       case "ArrowDown":
       case "KeyS":
@@ -4773,7 +4790,13 @@ ${window.location.origin}`;
         break;
       case "ArrowUp":
       case "KeyW":
+      case "KeyX":
         rotatePiece();
+        break;
+      case "KeyZ":
+      case "ControlLeft":
+      case "ControlRight":
+        rotatePiece(true);
         break;
       case "Space":
         hardDrop();
